@@ -1,3 +1,19 @@
+# V2 AI Video Composer
+
+This repository is the **only writable development target for V2**.
+
+- Legacy repository: `inoriko920-dev/AI-Automatic-Video-Composer` — **read-only reference; do not modify**.
+- Imported legacy baseline commit: `7d77fc9f724d359c7da6c4796dffce5104740952`.
+- Imported baseline Git root tree: `7abd82b4a69428a0b1bd25a8d992f402cb0a2ff8`.
+- V2 planning source of truth: `docs/v2_planning/`.
+- Current implementation status and exact next action: `V2_IMPLEMENTATION_STATUS.md`.
+- STEP 13 CODING GATE: **PASS** on 2026-10-07 after planning review and explicit user continuation.
+- Current implementation wave: **Wave A — source-of-truth lock + baseline CI only; no functional application changes**.
+
+The historical README copied from the legacy repository is preserved below as baseline documentation.
+
+---
+
 # AI Automatic Video Composer
 
 Windows desktop application for composing narrative/infographic videos from scene DOCX + canonical `Axxx.png` assets.
