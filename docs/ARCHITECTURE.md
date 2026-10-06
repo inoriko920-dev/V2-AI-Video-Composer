@@ -126,7 +126,7 @@ deferred to Wave E so the existing effect behavior remains the reference baselin
 
 ## V2 Wave E — Foundational Keyframe Motion
 
-Status: **IMPLEMENTATION IN PROGRESS**
+Status: **PASS — WAVE E IMPLEMENTED**
 
 Wave E activates the first schema-v3 keyframe capability group in both preview and
 the FFmpeg final-render compiler: normalized X/Y position, scale, and rotation.
@@ -142,3 +142,13 @@ Schema-v3 tracks outside this production group remain persisted but fail-soft wi
 an explicit preflight warning. Bezier, velocity, overshoot, opacity, crop, blur,
 shadow, glow, and mask/reveal keyframes are not claimed as render-ready in Wave E.
 No UI or project schema change is introduced.
+
+
+### Wave E evidence
+
+PR #6 validation on implementation head `fea8ef55428594fb0a153d5c281a15d1419f168b`: Windows CI
+`37527046276` PASS and CodeQL `37527046425` PASS. All 580 cheap regression
+tests passed (1 deselected). Foundational keyframe X/Y position, scale, and
+rotation are now consumed by both preview intent and the FFmpeg final compiler,
+while unsupported schema-v3 tracks remain fail-soft with explicit preflight
+warnings.

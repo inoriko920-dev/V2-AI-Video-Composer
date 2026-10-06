@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave E — ACTIVE: foundational keyframe motion with preview/final parity**
+**Wave E — PASS / ready to merge: foundational keyframe motion with preview/final parity**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -227,5 +227,18 @@ Forbidden in Wave E:
 ## Wave E rollback point
 `8afb9c0d1ecfc4f16c3f41522a84014273cf7aa0`
 
+## Wave E evidence
+- Core activation commit: `d1cce4a090c03c72701a28aa630055883f1c218c`.
+- Legacy-guard fix commit: `85097b3570c142b26160d2d7b56b8348da7451e9`.
+- Final tested implementation head: `fea8ef55428594fb0a153d5c281a15d1419f168b`.
+- Pull request: `#6`.
+- Windows CI run `37527046276`: **PASS**.
+- CodeQL run `37527046425`: **PASS**.
+- Compile, Ruff, strict mypy, 580 cheap tests, STEP09 screenshot capture/verification, and artifact upload: **PASS**.
+- Supported X/Y position, scale, and rotation keyframes are active in preview + FFmpeg compiler.
+- Legacy effect behavior remains unchanged when active keyframe tracks are absent.
+- Unsupported keyframe properties/interpolation parameters remain fail-soft with preflight warnings.
+- Dependency manifests, project schema v3, timeline, and UI remain unchanged.
+
 ## Next exact action
-Run Wave E PR regression gates; merge only on PASS, then STOP before Wave F.
+Re-run CI/CodeQL on this evidence-only update, merge PR #6 only on PASS, then STOP before Wave F.
