@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave G — PASS / ready to merge: AI job orchestration + key-pool health/cancellation hardening**
+**Wave G — COMPLETE / MERGED TO MAIN: AI job orchestration + key-pool health/cancellation hardening**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -363,5 +363,21 @@ Forbidden in Wave G:
 - Active credential text is explicitly redacted from provider errors.
 - Existing strict AI response validation, locked-target protection, and stale-project rejection remain intact.
 
+## Wave G closure
+- PR #8 merged to `main`.
+- Merge/squash commit: `de18f02b3403696fdb88da7a57ca7e254c7ad7e6`.
+- Final PR-head Windows CI run: `37533078793` — **PASS**.
+- Final PR-head CodeQL run: `37533078907` — **PASS**.
+- 596 cheap regression tests passed; 1 deselected.
+- Gemini Auto runs through BackgroundCall/JobManager with progress and cooperative cancellation.
+- One job can rotate through all configured Gemini slots up to 100, each slot at most once.
+- Runtime key health is secret-free and classified as available / cooldown / disabled.
+- Provider errors redact the exact active credential plus existing secret patterns.
+- Strict structured AI validation, locked-target protection, and stale-result rejection remain intact.
+- No new provider, schema change, plaintext fallback, render/timeline/animation change, or runtime dependency was introduced.
+- Legacy repository remained read-only.
+
 ## Next exact action
-Re-run CI/CodeQL on this evidence-only update, merge PR #8 only on PASS, then STOP before Wave H.
+**STOP after Wave G.**
+
+On the next explicit user instruction to continue, begin **Wave H — UI/UX parity and professional evolution hardening**.
