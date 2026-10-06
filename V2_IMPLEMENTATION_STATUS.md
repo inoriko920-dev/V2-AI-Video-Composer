@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave D — PASS / ready to merge: animation/keyframe data model + schema v3 migration; current effects preserved**
+**Wave D — COMPLETE / MERGED TO MAIN: animation/keyframe data model + schema v3 migration; current effects preserved**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -178,5 +178,19 @@ Forbidden in Wave D:
 - Existing FFmpeg effect semantics remain unchanged when keyframe tracks are present.
 - Dependency manifests unchanged; no new effect/backend/UI implementation introduced.
 
+## Wave D closure
+- PR #5 merged to `main`.
+- Merge/squash commit: `358f488ab6fe07366794063a2c5140b2ac4a4ba5`.
+- Final PR-head Windows CI run: `37523013810` — **PASS**.
+- Final PR-head CodeQL run: `37523013790` — **PASS**.
+- Project schema is now v3 with explicit v1 -> v2 -> v3 migration.
+- Legacy enter/exit/intensity/lock effect semantics remain unchanged.
+- Keyframe tracks remain persisted-only and are not consumed by preview/FFmpeg yet.
+- First overwrite of a valid legacy-schema project preserves a non-clobbering pre-v3 backup.
+- No runtime dependency, new visual effect, alternate backend, timeline redesign, or UI redesign was introduced.
+- Legacy repository remained read-only.
+
 ## Next exact action
-Re-run CI/CodeQL on this evidence-only update, merge PR #5 only on PASS, then STOP before Wave E.
+**STOP after Wave D.**
+
+On the next explicit user instruction to continue, begin **Wave E — new motion/effect implementations in small capability groups with preview/final parity tests**.

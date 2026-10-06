@@ -114,3 +114,11 @@ PR #5 validation on implementation head `29c45921ba53fdce3d96c3bc80b6965127236c5
 `37522687807` PASS and CodeQL `37522687755` PASS. The project schema is v3,
 v1/v2 migration is explicit and tested, and current FFmpeg effect semantics remain
 unchanged because keyframe tracks are intentionally not consumed until Wave E.
+
+
+### Wave D closure
+
+PR #5 was merged to `main` at `358f488ab6fe07366794063a2c5140b2ac4a4ba5`. Final PR-head validation:
+Windows CI `37523013810` PASS and CodeQL `37523013790` PASS. Keyframe tracks
+remain persisted-only in Wave D; preview and FFmpeg consumption are deliberately
+deferred to Wave E so the existing effect behavior remains the reference baseline.
