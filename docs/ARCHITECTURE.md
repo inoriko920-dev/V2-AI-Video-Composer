@@ -250,7 +250,7 @@ fallback was added.
 
 ## V2 Wave H — UI/UX Parity and Professional Interaction Hardening
 
-Status: **IMPLEMENTATION IN PROGRESS**
+Status: **PASS — WAVE H IMPLEMENTED**
 
 Wave H does not create a new visual design. The frozen UI-001..UI-042 set remains
 the source of truth, with the eight STEP09 representative states used as automated
@@ -268,3 +268,13 @@ The bounded hardening in this wave:
 
 No new UI prompt/image package, layout redesign, project schema, runtime dependency,
 render path, timeline model, animation compiler, or provider behavior is introduced.
+
+
+### Wave H evidence
+
+PR #9 validation on implementation head `05312888fe1b5cd4386c2ca793cd2353e9a01ebf`: Windows CI
+`37535304722` PASS and CodeQL `37535304543` PASS. All 602 cheap regression
+tests passed (1 deselected), and all eight representative STEP09 1920x1080 Qt
+screenshots were captured and verified. The wave restored guarded-menu Scene
+animation copy/paste parity, made interaction availability truthful, and added
+restrained focus/disabled styling without introducing a new UI design.

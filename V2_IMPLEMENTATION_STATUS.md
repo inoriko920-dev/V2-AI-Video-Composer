@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave H — ACTIVE: UI/UX parity and professional interaction hardening**
+**Wave H — PASS / ready to merge: UI/UX parity and professional interaction hardening**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -409,5 +409,20 @@ Forbidden in Wave H:
 ## Wave H rollback point
 `a2a82e4fbfee5276075c79789657a3d70bdaab9c`
 
+## Wave H evidence
+- UI parity/action-state implementation commit: `d68c5cb330df101e3b111e6a1a0fe545148108bd`.
+- UI contract tests commit: `c03bbfb18db81ff0ab6651fb1114fb7493e6cda6`.
+- Mypy declaration fix: `05312888fe1b5cd4386c2ca793cd2353e9a01ebf`.
+- Final tested implementation head: `05312888fe1b5cd4386c2ca793cd2353e9a01ebf`.
+- Pull request: `#9`.
+- Windows CI run `37535304722`: **PASS**.
+- CodeQL run `37535304543`: **PASS**.
+- Secret scan, dependency graph, compile, Ruff, strict mypy, 602 cheap tests, all 8 STEP09 screenshot captures/verification, and artifact upload: **PASS**.
+- Guarded runtime Edit menu now retains Salin/Tempel Animasi Scene.
+- Copy/paste availability reflects live selected Scene, animation clipboard source, and target validity.
+- Background cancel action reflects live job state; animation-mode selector requires an active project.
+- Focus/disabled QSS remains inside the existing frozen white/blue token system.
+- No new UI prompt/image package, layout redesign, schema change, runtime dependency, render/timeline/animation/provider behavior change was introduced.
+
 ## Next exact action
-Run Wave H PR regression + screenshot gates; merge only on PASS, then STOP before Wave I.
+Re-run CI/CodeQL on this evidence-only update, merge PR #9 only on PASS, then STOP before Wave I.
