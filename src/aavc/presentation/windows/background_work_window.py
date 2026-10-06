@@ -20,8 +20,16 @@ from aavc.presentation.windows.ai_menu_window import configured_gemini_slots
 from aavc.presentation.windows.ai_native_motion_window import AiNativeMotionMainWindow
 
 
+def background_cancel_action_enabled(*, background_busy: bool) -> bool:
+    """Return whether the shared cancel action should be actionable."""
+
+    return background_busy
+
+
 class BackgroundWorkMainWindow(AiNativeMotionMainWindow):
     """Keep blocking provider/render work outside the Qt GUI thread."""
+
+    _cancel_background_action: Any | None
 
     def _build_menu(self, action_type: Any) -> None:
         super()._build_menu(action_type)
@@ -38,7 +46,21 @@ class BackgroundWorkMainWindow(AiNativeMotionMainWindow):
         cancel_action.triggered.connect(
             lambda _checked=False: self._cancel_background_from_menu()
         )
+        cancel_action.setStatusTip(
+            "Minta pembatalan aman untuk Render atau Auto (AI) yang sedang berjalan"
+        )
         ai_menu.addAction(cancel_action)
+        self._cancel_background_action = cancel_action
+        self._refresh_background_action_state()
+
+    def _refresh_background_action_state(self) -> None:
+        action = self._cancel_background_action
+        if action is not None:
+            action.setEnabled(
+                background_cancel_action_enabled(
+                    background_busy=self._background_busy()
+                )
+            )
 
     def _cancel_background_from_menu(self) -> None:
         if self.cancel_background_work():
@@ -58,6 +80,7 @@ class BackgroundWorkMainWindow(AiNativeMotionMainWindow):
         self._background_success: Callable[[Any], None] | None = None
         self._background_error_title = "Pekerjaan gagal"
         self._background_name = ""
+        self._cancel_background_action = None
         super().__init__(services, initial_state=initial_state)
 
     def _background_busy(self) -> bool:
@@ -99,6 +122,7 @@ class BackgroundWorkMainWindow(AiNativeMotionMainWindow):
         self._background_success = success
         self._background_error_title = error_title
         self._background_name = name
+        self._refresh_background_action_state()
         self.window.statusBar().showMessage(f"{name} sedang berjalan…")
         call.start()
         timer.start()
@@ -110,6 +134,8 @@ class BackgroundWorkMainWindow(AiNativeMotionMainWindow):
             return False
         cancelled = call.cancel()
         if cancelled:
+            if self._cancel_background_action is not None:
+                self._cancel_background_action.setEnabled(False)
             self.window.statusBar().showMessage(
                 f"Membatalkan {self._background_name}…",
                 5000,
@@ -126,6 +152,7 @@ class BackgroundWorkMainWindow(AiNativeMotionMainWindow):
         self._background_success = None
         self._background_error_title = "Pekerjaan gagal"
         self._background_name = ""
+        self._refresh_background_action_state()
 
     def _poll_background_work(self) -> None:
         call = self._background_call

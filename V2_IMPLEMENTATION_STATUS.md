@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave G — COMPLETE / MERGED TO MAIN: AI job orchestration + key-pool health/cancellation hardening**
+**Wave H — PASS / ready to merge: UI/UX parity and professional interaction hardening**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -377,7 +377,52 @@ Forbidden in Wave G:
 - No new provider, schema change, plaintext fallback, render/timeline/animation change, or runtime dependency was introduced.
 - Legacy repository remained read-only.
 
-## Next exact action
-**STOP after Wave G.**
+## Wave H scope
+Allowed:
+- use the existing frozen 42-reference UI set only; no new UI prompt/image generation;
+- restore Scene animation copy/paste actions lost by the GuardedMainWindow menu rebuild;
+- keep copy/paste actions truthfully enabled only when source/target state is valid;
+- keep background cancel action disabled unless a Render/Auto (AI) job is actually active;
+- disable the animation-mode selector when no project is active;
+- add restrained focus, disabled, selection, and tooltip styling using the existing white/blue design tokens;
+- preserve the current 1920x1080 reference shell and 1280x720 minimum viewport contract;
+- run all 8 STEP09 Qt screenshot captures as the visual smoke gate.
 
-On the next explicit user instruction to continue, begin **Wave H — UI/UX parity and professional evolution hardening**.
+Forbidden in Wave H:
+- no new UI images/prompts;
+- no layout redesign, panel replacement, or navigation model change;
+- no new product feature or project schema change;
+- no render/timeline/animation/provider behavior change;
+- no runtime dependency change;
+- no static PNG runtime screens.
+
+## Wave H acceptance criteria
+1. Final runtime Edit menu contains Salin/Tempel Animasi Scene after the guarded-menu rebuild.
+2. Copy is enabled only for a selected Scene that owns animation assignments.
+3. Paste is enabled only when the copied source still exists and the selected target is different.
+4. Background cancel is actionable only while a background job is active.
+5. Animation mode selector is disabled without an active project.
+6. Keyboard focus/disabled visual states remain consistent with frozen white/blue direction.
+7. All 8 representative STEP09 screenshots render successfully at 1920x1080 with no startup/QSS regression.
+8. Windows CI, Ruff, strict mypy, full cheap tests, screenshot gate, and CodeQL pass.
+
+## Wave H rollback point
+`a2a82e4fbfee5276075c79789657a3d70bdaab9c`
+
+## Wave H evidence
+- UI parity/action-state implementation commit: `d68c5cb330df101e3b111e6a1a0fe545148108bd`.
+- UI contract tests commit: `c03bbfb18db81ff0ab6651fb1114fb7493e6cda6`.
+- Mypy declaration fix: `05312888fe1b5cd4386c2ca793cd2353e9a01ebf`.
+- Final tested implementation head: `05312888fe1b5cd4386c2ca793cd2353e9a01ebf`.
+- Pull request: `#9`.
+- Windows CI run `37535304722`: **PASS**.
+- CodeQL run `37535304543`: **PASS**.
+- Secret scan, dependency graph, compile, Ruff, strict mypy, 602 cheap tests, all 8 STEP09 screenshot captures/verification, and artifact upload: **PASS**.
+- Guarded runtime Edit menu now retains Salin/Tempel Animasi Scene.
+- Copy/paste availability reflects live selected Scene, animation clipboard source, and target validity.
+- Background cancel action reflects live job state; animation-mode selector requires an active project.
+- Focus/disabled QSS remains inside the existing frozen white/blue token system.
+- No new UI prompt/image package, layout redesign, schema change, runtime dependency, render/timeline/animation/provider behavior change was introduced.
+
+## Next exact action
+Re-run CI/CodeQL on this evidence-only update, merge PR #9 only on PASS, then STOP before Wave I.

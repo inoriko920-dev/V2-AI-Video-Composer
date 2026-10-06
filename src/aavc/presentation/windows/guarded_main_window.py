@@ -112,6 +112,24 @@ class GuardedMainWindow(MainWindow):
             lambda _checked=False: self.duplicate_selected_scene()
         )
         edit_menu.addAction(duplicate_scene)
+        edit_menu.addSeparator()
+
+        copy_animation = action_type("Salin Animasi Scene", self.window)
+        copy_animation.setObjectName("CopySceneAnimationAction")
+        copy_animation.setStatusTip(
+            "Salin seluruh assignment animasi Scene terpilih berdasarkan slot aset"
+        )
+        copy_animation.triggered.connect(self.copy_selected_scene_animation)
+        edit_menu.addAction(copy_animation)
+
+        paste_animation = action_type("Tempel Animasi Scene", self.window)
+        paste_animation.setObjectName("PasteSceneAnimationAction")
+        paste_animation.setStatusTip(
+            "Tempel assignment animasi yang disalin ke Scene target berdasarkan slot aset"
+        )
+        paste_animation.triggered.connect(self.paste_animation_to_selected_scene)
+        edit_menu.addAction(paste_animation)
+        edit_menu.addSeparator()
 
         delete_scene = action_type("Hapus Scene", self.window)
         delete_scene.setShortcut("Delete")
