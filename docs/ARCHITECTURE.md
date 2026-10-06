@@ -290,3 +290,38 @@ STEP13 originally ordered the optional mature-backend spike before UI polish. Th
 executed history used Wave H for the approved UI polish. Merged history is not renamed;
 the still-unexecuted optional mature-backend/dependency spike is therefore assigned to
 Wave I, and Wave J remains the release/final-regression wave.
+
+
+## V2 Wave I — Optional Mature Backend Dependency Gate
+
+Status: **IMPLEMENTATION IN PROGRESS**
+
+Wave I does not change the production backend. FFmpeg/ffprobe CLI remains the
+reference and fallback final-render path.
+
+PyAV 19.0.1 is the only candidate selected for an isolated Windows/Python 3.12
+spike because a binary Windows x64 wheel exists and the package license is
+BSD-3-Clause. The spike lives outside `src/` and is installed only by a dedicated
+CI workflow. libopenshot 1.0.1 and MLT 7.42.0 remain deferred because their
+current release packaging presents a larger native-library and redistribution
+surface than the application presently needs.
+
+A passing spike is evidence of technical feasibility only. It does not add PyAV
+to application dependencies or authorize replacement of the FFmpeg reference path.
+
+
+### Wave I dependency-gate evidence
+
+PR #10 validation on implementation head `50921e920559dff80dabbe1ecc61b7ed2a6848e7` passed all three gates:
+Windows CI `37537178052`, CodeQL `37537178050`, and Optional Backend Spike
+`37537178273`.
+
+The isolated PyAV 19.0.1 Windows/Python 3.12 test imported in ~0.727 seconds,
+encoded/decoded a three-frame 64x64 MPEG-4 sample in ~0.011 seconds total, and
+measured an installed distribution footprint of 71,471,760 bytes. Package metadata
+reported BSD-3-Clause and linked FFmpeg library versions were visible.
+
+Decision: technical feasibility is proven, but PyAV is **not promoted** into the
+application runtime because there is no measured product requirement that justifies
+the extra dependency/portable footprint yet. FFmpeg/ffprobe CLI remains the
+reference and fallback final-render path.

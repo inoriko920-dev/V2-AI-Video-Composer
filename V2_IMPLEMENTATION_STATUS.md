@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave H — COMPLETE / MERGED TO MAIN: UI/UX parity and professional interaction hardening**
+**Wave I — PASS / ready to merge: optional mature-backend spike and dependency gate**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -444,7 +444,49 @@ rewriting merged history while still completing every planned workstream, the re
 optional mature-backend dependency spike is assigned to **Wave I**. Wave J remains the
 full regression / Windows packaging / user test / release-candidate / final-release wave.
 
-## Next exact action
-**STOP after Wave H.**
+## Wave I scope
+Allowed:
+- verify current mature-backend release/license/Windows packaging evidence;
+- run an isolated PyAV 19.0.1 Windows/Python 3.12 binary-wheel spike;
+- test import, FFmpeg library visibility, synthetic encode/decode, latency, and installed footprint;
+- record an explicit accept/defer decision for PyAV, libopenshot, MLT, and OpenTimelineIO;
+- preserve FFmpeg CLI as the production reference and fallback path.
 
-On the next explicit user instruction to continue, begin **Wave I — optional mature-backend spike(s) and dependency gate**.
+Forbidden in Wave I:
+- no new application runtime dependency;
+- no replacement of FFmpeg final rendering;
+- no ProjectState/schema/UI/timeline/provider behavior change;
+- no GPL openshot-qt code;
+- no bundling of LGPL native libraries without a separate packaging/license gate.
+
+## Wave I acceptance criteria
+1. Normal app dependency manifests remain unchanged.
+2. Isolated Windows spike installs PyAV only as a binary wheel on Python 3.12.
+3. PyAV metadata/license and linked FFmpeg libraries are recorded.
+4. Synthetic encode/decode succeeds within conservative latency/footprint guardrails.
+5. Candidate decision record names reasons for defer/promotion and an explicit rollback path.
+6. Existing Windows CI, screenshot gate, and CodeQL remain PASS.
+7. Passing the spike does not silently promote PyAV into production runtime.
+
+## Wave I rollback point
+`80d02aa711ddf66b109d9b492c2b7cc43aa505b0`
+
+## Wave I evidence
+- Isolated spike implementation commit: `50921e920559dff80dabbe1ecc61b7ed2a6848e7`.
+- Pull request: `#10`.
+- Windows CI run `37537178052`: **PASS**.
+- CodeQL run `37537178050`: **PASS**.
+- Optional Backend Spike run `37537178273`: **PASS**.
+- 605 cheap regression tests passed; 1 deselected.
+- PyAV version: `19.0.1`; Python: `3.12.10`; license metadata: `BSD-3-Clause`.
+- PyAV import latency: ~0.727 s.
+- Synthetic MPEG-4 encode: ~0.0092 s; decode: ~0.0020 s; total round-trip: ~0.0112 s.
+- 3/3 synthetic frames decoded at 64x64.
+- Installed PyAV distribution footprint: 71,471,760 bytes (~68.2 MiB).
+- Linked FFmpeg libraries exposed by PyAV: libavcodec/libavdevice/libavfilter/libavformat 63.1.102, libavutil 61.1.102, libswresample 7.1.102, libswscale 10.1.102.
+- Runtime dependency manifests remain unchanged; PyAV is **not adopted** into production runtime.
+- libopenshot 1.0.1 and MLT 7.42.0 remain deferred; OpenTimelineIO remains unnecessary for the current focused timeline.
+- FFmpeg/ffprobe CLI remains the production reference/fallback final-render strategy.
+
+## Next exact action
+Re-run CI/CodeQL/Optional Backend Spike on this evidence-only update, merge PR #10 only on PASS, then STOP before Wave J.
