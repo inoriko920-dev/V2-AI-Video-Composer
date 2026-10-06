@@ -21,7 +21,9 @@ class ValidationIssue:
 
 
 def _path_is_file(value: str | None) -> bool:
-    return bool(value) and Path(value).expanduser().is_file()
+    if value is None or not value:
+        return False
+    return Path(value).expanduser().is_file()
 
 
 def validate_project(project: ProjectState) -> tuple[ValidationIssue, ...]:
