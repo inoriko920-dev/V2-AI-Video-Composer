@@ -246,3 +246,25 @@ cheap regression tests passing and 1 deselected. Gemini Auto now uses the canoni
 background job path with progress/cancellation and bounded up-to-100-slot failover;
 runtime diagnostics remain secret-free and no new provider or plaintext credential
 fallback was added.
+
+
+## V2 Wave H — UI/UX Parity and Professional Interaction Hardening
+
+Status: **IMPLEMENTATION IN PROGRESS**
+
+Wave H does not create a new visual design. The frozen UI-001..UI-042 set remains
+the source of truth, with the eight STEP09 representative states used as automated
+Qt rendering smoke evidence.
+
+The bounded hardening in this wave:
+- restores Scene animation copy/paste actions at the final GuardedMainWindow layer,
+  where the Edit menu is rebuilt;
+- adds truthful enable/disable state for animation copy/paste, background-job cancel,
+  and the animation-mode selector;
+- extends the existing white/blue QSS with restrained focus and disabled states plus
+  consistent selection/tooltips;
+- keeps the same shell geometry, navigation routes, panels, dialogs, and runtime
+  widget architecture.
+
+No new UI prompt/image package, layout redesign, project schema, runtime dependency,
+render path, timeline model, animation compiler, or provider behavior is introduced.
