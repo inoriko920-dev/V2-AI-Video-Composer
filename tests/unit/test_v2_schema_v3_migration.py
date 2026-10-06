@@ -28,7 +28,7 @@ def _project():
 
 
 def test_v1_to_v3_migration_is_deterministic_and_non_mutating() -> None:
-    payload = _project().to_dict()
+    payload = json.loads(dumps_project(_project()))
     payload["schema_version"] = 1
     for key in [
         "animations",
