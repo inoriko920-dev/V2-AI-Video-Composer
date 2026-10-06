@@ -1,3 +1,4 @@
+import tomllib
 from pathlib import Path
 
 from aavc import __version__
@@ -7,8 +8,10 @@ from aavc.bootstrap.startup import FOUNDATION_SMOKE_TOKEN, main
 from aavc.jobs import JobManager
 
 
-def test_package_version_matches_maintenance_release() -> None:
-    assert __version__ == "0.1.1"
+def test_package_version_matches_declared_project_version() -> None:
+    root = Path(__file__).resolve().parents[2]
+    project = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+    assert __version__ == project["project"]["version"]
 
 
 def test_composition_root_builds_without_qt() -> None:
