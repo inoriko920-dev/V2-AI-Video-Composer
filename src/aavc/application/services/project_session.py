@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from aavc.application.commands.project_commands import ProjectCommand
+from aavc.application.commands.transaction import ProjectTransaction
 from aavc.application.services.history import ProjectHistory
 from aavc.domain.project.models import ProjectState
 from aavc.persistence.project_repository import ProjectRepository
@@ -88,6 +89,14 @@ class ProjectSession:
 
     def execute(self, command: ProjectCommand) -> ProjectState:
         return self._require_history().execute(command)
+
+    def execute_many(
+        self,
+        commands: tuple[ProjectCommand, ...],
+        *,
+        description: str = "Edit batch project",
+    ) -> ProjectState:
+        return self.execute(ProjectTransaction(commands, description))
 
     def undo(self) -> ProjectState:
         return self._require_history().undo()
