@@ -55,11 +55,26 @@ def test_validation_category_matches_engine_issue_types() -> None:
 
     assert validation_category(asset_issue) == "Media"
     assert validation_category(scene_issue) == "Scene"
+    keyframe_issue = ValidationIssue(
+        "KEYFRAME_TRACK_FALLBACK",
+        "WARNING",
+        "Opacity fallback",
+        2,
+        "A001",
+    )
+    media_file_issue = ValidationIssue(
+        "SUBTITLE_NOT_FOUND",
+        "ERROR",
+        "Subtitle hilang",
+    )
+
     assert validation_category(render_issue) == "Render"
+    assert validation_category(keyframe_issue) == "Render"
+    assert validation_category(media_file_issue) == "Media"
     assert validation_category(other_issue) == "Project"
 
 
-def test_only_missing_asset_gets_relink_action() -> None:
+def test_validation_actions_route_to_repair_or_scene() -> None:
     asset_issue = ValidationIssue(
         "ASSET_NOT_READY",
         "ERROR",
@@ -74,5 +89,20 @@ def test_only_missing_asset_gets_relink_action() -> None:
         3,
     )
 
+    render_issue = ValidationIssue(
+        "KEYFRAME_TRACK_FALLBACK",
+        "WARNING",
+        "Opacity belum aktif",
+        4,
+        "A010",
+    )
+    media_issue = ValidationIssue(
+        "NARRATION_NOT_FOUND",
+        "ERROR",
+        "Narasi hilang",
+    )
+
     assert validation_issue_action(asset_issue) == ("Relink", "A009")
-    assert validation_issue_action(scene_issue) is None
+    assert validation_issue_action(scene_issue) == ("Buka Scene", "3")
+    assert validation_issue_action(render_issue) == ("Buka Scene", "4")
+    assert validation_issue_action(media_issue) == ("Impor Media", "")
