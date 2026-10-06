@@ -104,12 +104,13 @@ def render_project_selection(
         if verify_output:
             ffprobe_path = ffprobe or resolve_ffprobe().path
             validation_runner = probe_runner or ProcessRunner()
-            validator = lambda candidate: verify_render_output(
-                candidate,
-                manifest,
-                ffprobe=ffprobe_path,
-                runner=validation_runner,
-            )
+            def validator(candidate: Path) -> object:
+                return verify_render_output(
+                    candidate,
+                    manifest,
+                    ffprobe=ffprobe_path,
+                    runner=validation_runner,
+                )
         return execute_ffmpeg(
             command,
             runner=runner,

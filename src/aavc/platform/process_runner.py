@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import subprocess
 import time
+from contextlib import suppress
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from threading import Thread
@@ -96,10 +97,8 @@ class ProcessRunner:
                 for line in stream:
                     target.append(line)
                     if callback is not None:
-                        try:
+                        with suppress(Exception):
                             callback(line.rstrip("\r\n"))
-                        except Exception:
-                            pass
             finally:
                 stream.close()
 
