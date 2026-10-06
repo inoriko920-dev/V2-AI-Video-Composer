@@ -18,14 +18,14 @@ def _project():
     )
 
 
-def test_old_schema_loads_into_schema_two() -> None:
+def test_old_schema_loads_into_current_schema() -> None:
     project = _project()
     payload = project.to_dict()
     payload["schema_version"] = 1
     for key in ["animations", "subtitle_style", "subtitle_animation", "render_quality"]:
         payload.pop(key, None)
     restored = loads_project(json.dumps(payload))
-    assert restored.schema_version == 2
+    assert restored.schema_version == 3
     assert restored.subtitle_style.preset_name == "Dokumenter"
 
 

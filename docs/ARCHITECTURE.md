@@ -88,3 +88,29 @@ PR #4 was merged to `main` at `6c703538a16f7fe0ea56186a16d812f36a26ee7e`. Final 
 Windows CI `37520211708` PASS and CodeQL `37520211301` PASS. FFmpeg/ffprobe
 remain the reference toolchain, dependency manifests are unchanged, and no
 alternate backend was adopted.
+
+
+## V2 Wave D — Animation/Keyframe Data Model
+
+Status: **PASS — WAVE D IMPLEMENTED**
+
+Wave D introduces a backend-neutral keyframe storage contract without activating it
+in preview or FFmpeg rendering. Existing `AnimationAssignment` fields remain
+canonical for current effects.
+
+- keyframe time is normalized to scene time `0.0..1.0`;
+- scalar tracks cover position, scale, rotation, opacity, crop, blur, shadow,
+  glow, and mask progress;
+- interpolation/easing plus optional velocity/overshoot are persisted;
+- project schema advances to v3 through explicit v1 -> v2 -> v3 migration;
+- the first save over a valid older schema preserves a
+  `.pre-schema-v3.bak` backup without clobbering an existing backup;
+- renderer/compiler behavior remains intentionally unchanged until Wave E.
+
+
+### Wave D evidence
+
+PR #5 validation on implementation head `29c45921ba53fdce3d96c3bc80b6965127236c53`: Windows CI
+`37522687807` PASS and CodeQL `37522687755` PASS. The project schema is v3,
+v1/v2 migration is explicit and tested, and current FFmpeg effect semantics remain
+unchanged because keyframe tracks are intentionally not consumed until Wave E.

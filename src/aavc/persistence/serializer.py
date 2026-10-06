@@ -2,10 +2,21 @@ from __future__ import annotations
 
 import json
 import math
+import shutil
 from pathlib import Path
 from typing import Any, cast
 from uuid import uuid4
 
+from aavc.domain.animation import (
+    KEYFRAME_EASINGS,
+    KEYFRAME_INTERPOLATIONS,
+    TRANSFORM_PROPERTIES,
+    AnimationKeyframe,
+    AnimationKeyframeTrack,
+    KeyframeEasing,
+    KeyframeInterpolation,
+    TransformProperty,
+)
 from aavc.domain.project.models import (
     AnimationAssignment,
     AssetBinding,
@@ -16,13 +27,16 @@ from aavc.domain.project.models import (
     SubtitleAnimationSettings,
     SubtitleStyle,
 )
+from aavc.persistence.migrations import migrate_project_payload
 
-CURRENT_SCHEMA_VERSION = 2
+CURRENT_SCHEMA_VERSION = 3
 _ASSET_STATUSES = {"READY", "MISSING", "CORRUPT", "DUPLICATE"}
 
 
 def dumps_project(project: ProjectState) -> str:
-    return json.dumps(project.to_dict(), ensure_ascii=False, indent=2, sort_keys=True)
+    payload = project.to_dict()
+    payload["schema_version"] = CURRENT_SCHEMA_VERSION
+    return json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True)
 
 
 def _mapping(value: Any, field: str) -> dict[str, Any]:
@@ -74,6 +88,17 @@ def _finite_number(
     if non_negative and number < 0:
         raise ValueError(f"{field} tidak boleh negatif")
     return number
+
+
+def _optional_finite_number(
+    value: Any,
+    field: str,
+    *,
+    non_negative: bool = False,
+) -> float | None:
+    if value is None:
+        return None
+    return _finite_number(value, field, non_negative=non_negative)
 
 
 def _deserialize_scene(raw: Any, index: int) -> Scene:
@@ -128,6 +153,75 @@ def _deserialize_binding(raw: Any, index: int) -> AssetBinding:
     )
 
 
+def _deserialize_keyframe(
+    raw: Any,
+    *,
+    animation_index: int,
+    track_index: int,
+    keyframe_index: int,
+) -> AnimationKeyframe:
+    prefix = (
+        f"animations[{animation_index}].keyframe_tracks[{track_index}]"
+        f".keyframes[{keyframe_index}]"
+    )
+    data = _mapping(raw, prefix)
+    time = _finite_number(data.get("time"), f"{prefix}.time", non_negative=True)
+    if time > 1.0:
+        raise ValueError(f"{prefix}.time harus pada rentang 0–1")
+    interpolation = _string(
+        data.get("interpolation", "linear"),
+        f"{prefix}.interpolation",
+    )
+    if interpolation not in KEYFRAME_INTERPOLATIONS:
+        raise ValueError(f"{prefix}.interpolation tidak didukung: {interpolation}")
+    easing = _string(data.get("easing", "linear"), f"{prefix}.easing")
+    if easing not in KEYFRAME_EASINGS:
+        raise ValueError(f"{prefix}.easing tidak didukung: {easing}")
+    return AnimationKeyframe(
+        time=time,
+        value=_finite_number(data.get("value"), f"{prefix}.value"),
+        interpolation=cast(KeyframeInterpolation, interpolation),
+        easing=cast(KeyframeEasing, easing),
+        velocity=_optional_finite_number(
+            data.get("velocity"),
+            f"{prefix}.velocity",
+        ),
+        overshoot=_optional_finite_number(
+            data.get("overshoot"),
+            f"{prefix}.overshoot",
+            non_negative=True,
+        ),
+    )
+
+
+def _deserialize_keyframe_track(
+    raw: Any,
+    *,
+    animation_index: int,
+    track_index: int,
+) -> AnimationKeyframeTrack:
+    prefix = f"animations[{animation_index}].keyframe_tracks[{track_index}]"
+    data = _mapping(raw, prefix)
+    property_name = _string(data.get("property_name"), f"{prefix}.property_name")
+    if property_name not in TRANSFORM_PROPERTIES:
+        raise ValueError(f"{prefix}.property_name tidak didukung: {property_name}")
+    keyframes = tuple(
+        _deserialize_keyframe(
+            value,
+            animation_index=animation_index,
+            track_index=track_index,
+            keyframe_index=keyframe_index,
+        )
+        for keyframe_index, value in enumerate(
+            _list(data.get("keyframes"), f"{prefix}.keyframes")
+        )
+    )
+    return AnimationKeyframeTrack(
+        property_name=cast(TransformProperty, property_name),
+        keyframes=keyframes,
+    )
+
+
 def _deserialize_animation(raw: Any, index: int) -> AnimationAssignment:
     data = _mapping(raw, f"animations[{index}]")
     intensity = _finite_number(
@@ -138,6 +232,19 @@ def _deserialize_animation(raw: Any, index: int) -> AnimationAssignment:
     locked = data.get("locked", False)
     if type(locked) is not bool:
         raise ValueError(f"animations[{index}].locked harus berupa boolean")
+    keyframe_tracks = tuple(
+        _deserialize_keyframe_track(
+            value,
+            animation_index=index,
+            track_index=track_index,
+        )
+        for track_index, value in enumerate(
+            _list(
+                data.get("keyframe_tracks", []),
+                f"animations[{index}].keyframe_tracks",
+            )
+        )
+    )
     return AnimationAssignment(
         scene_number=_integer(
             data.get("scene_number"), f"animations[{index}].scene_number"
@@ -151,6 +258,7 @@ def _deserialize_animation(raw: Any, index: int) -> AnimationAssignment:
         ),
         intensity=intensity,
         locked=locked,
+        keyframe_tracks=keyframe_tracks,
     )
 
 
@@ -216,6 +324,11 @@ def loads_project(text: str) -> ProjectState:
             f"schema {source_schema_version} lebih baru dari schema "
             f"{CURRENT_SCHEMA_VERSION} yang didukung aplikasi ini"
         )
+    data = migrate_project_payload(
+        data,
+        source_version=source_schema_version,
+        target_version=CURRENT_SCHEMA_VERSION,
+    )
 
     scenes = tuple(
         _deserialize_scene(raw, index)
@@ -302,12 +415,42 @@ def temporary_sibling_path(path: str | Path, *, label: str) -> Path:
     )
 
 
+def _existing_schema_version(path: Path) -> int | None:
+    if not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    version = payload.get("schema_version", 1)
+    if type(version) is not int or version < 1:
+        return None
+    return version
+
+
+def migration_backup_path(path: str | Path) -> Path:
+    destination = Path(path)
+    return destination.with_suffix(
+        destination.suffix + f".pre-schema-v{CURRENT_SCHEMA_VERSION}.bak"
+    )
+
+
 def save_project(project: ProjectState, path: str | Path) -> Path:
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
     temporary = temporary_sibling_path(destination, label="save")
     try:
         temporary.write_text(dumps_project(project), encoding="utf-8")
+        existing_version = _existing_schema_version(destination)
+        if (
+            existing_version is not None
+            and existing_version < CURRENT_SCHEMA_VERSION
+        ):
+            backup = migration_backup_path(destination)
+            if not backup.exists():
+                shutil.copy2(destination, backup)
         temporary.replace(destination)
         return destination
     finally:
