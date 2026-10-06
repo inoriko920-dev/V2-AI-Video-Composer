@@ -166,6 +166,8 @@ class AnimationMenuMainWindow(ProjectMenuMainWindow):
             self._auto_motion_all_action.setEnabled(
                 auto_motion_all_enabled(has_project=has_project)
             )
+        if self._animation_mode_combo is not None:
+            self._animation_mode_combo.setEnabled(has_project)
 
     def _remember_selected_scene(self, scene_number: int) -> None:
         super()._remember_selected_scene(scene_number)
