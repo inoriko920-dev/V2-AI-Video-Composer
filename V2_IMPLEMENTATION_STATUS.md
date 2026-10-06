@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave J — ACTIVE: 0.2.0rc1 full regression, Windows packaging, and user-test release gate**
+**Wave J — RC AUTOMATED PASS / USER TEST PENDING: 0.2.0rc1 Windows portable**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -541,3 +541,25 @@ Re-run CI, CodeQL, and the Wave J RC package workflow on this evidence commit. M
 the 0.2.0rc1 source to main only if all three gates remain PASS. Then provide the
 final RC artifact from the merged/evidence-equivalent source for user testing. Do not
 publish v0.2.0 yet.
+
+
+## Wave J RC merge closure
+- PR #12 merged to `main`.
+- Merge/squash commit: `87423af0972d525ac913c1f3f60131c307dfd14b`.
+- Final PR-head Windows CI run: `37540612107` — **PASS**.
+- Final PR-head CodeQL run: `37540612532` — **PASS**.
+- Final PR-head Wave J RC package run: `37540612157` — **PASS**.
+- 605 regression tests passed; 1 deselected.
+- STEP09 screenshot gate: **PASS**.
+- Windows PyInstaller onedir build: **PASS**.
+- Packaged EXE foundation smoke/content/secret gate: **PASS**.
+- Final user-test artifact ID: `11448575102`.
+- Final user-test artifact digest: `sha256:eb0ffb8aba66228ff451e242ef8469fd1e11084003c42460a43b850021f4fbc9`.
+- Final STEP09 evidence artifact ID: `11447914213`.
+- Existing published v0.1.0/v0.1.1 tags/releases remain untouched.
+- Final `v0.2.0` publication is **BLOCKED** pending user-test acceptance.
+
+## Next exact action
+Give the 0.2.0rc1 Windows user-test artifact to the user. Do not publish final
+`v0.2.0` until the user reports that no blocker remains. If the user reports a
+blocker, fix it in V2 and repeat the RC gate before any final release.

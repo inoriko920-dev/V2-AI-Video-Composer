@@ -18,7 +18,7 @@ Read V2_MASTER_PLANNING_INDEX.docx, then STEP 00 through STEP 13 in order. STEP 
 
 **PASS — 2026-10-07.** All STEP 00–13 planning DOCX files and the master index are present and reviewed, and the user explicitly instructed the project to continue. Implementation must still follow STEP 13 one wave at a time.
 
-Wave A through Wave I are **COMPLETE** with their required gates PASS. Wave H executed the approved frozen-reference UI/UX parity work, and Wave I completed the deferred mature-backend dependency gate through an isolated PyAV Windows spike while deliberately keeping application runtime dependencies unchanged. PyAV proved feasible but was not promoted; FFmpeg/ffprobe CLI remains the production reference/fallback. Wave J is the next and final implementation wave: full regression, Windows packaging, user test, release candidate, and final release.
+Wave A through Wave I are **COMPLETE** with their required gates PASS. Wave H executed the approved frozen-reference UI/UX parity work, and Wave I completed the deferred mature-backend dependency gate through an isolated PyAV Windows spike while deliberately keeping application runtime dependencies unchanged. PyAV proved feasible but was not promoted; FFmpeg/ffprobe CLI remains the production reference/fallback. Wave J is the active final implementation wave. Its 0.2.0rc1 automated regression/Windows packaging gate has passed and the RC source is merged; user-test acceptance is now required before final v0.2.0 publication.
 
 ## Mature-component direction
 

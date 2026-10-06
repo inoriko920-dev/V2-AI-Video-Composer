@@ -189,3 +189,9 @@ The first Wave J RC gate passed on PR #12: Windows CI, CodeQL, 605 regression te
 STEP09 screenshots, PyInstaller onedir, packaged foundation smoke, SHA-256 bundle
 generation, and Actions artifact upload all passed. Final v0.2.0 publication remains
 blocked until user-test acceptance.
+
+
+### V2 0.2.0rc1 user-test status
+Automated RC gates are **PASS** and PR #12 is merged. The Windows portable
+`0.2.0rc1` build is ready for user testing. Final `v0.2.0` is intentionally not
+published until user acceptance confirms there is no blocker.
