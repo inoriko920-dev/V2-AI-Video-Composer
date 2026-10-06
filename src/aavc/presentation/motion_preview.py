@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from aavc.animation import evaluate_effect
+from aavc.animation import evaluate_assignment_keyframe, evaluate_effect
 from aavc.animation.compiler import (
     is_native_visual_alpha_effect,
     is_native_visual_motion_effect,
@@ -95,7 +95,7 @@ def native_visual_preview_opacity(
 ) -> float:
     """Evaluate native alpha using the same timing window as FFmpeg."""
 
-    if assignment is None or assignment.intensity <= 0:
+    if assignment is None:
         return 1.0
 
     duration = max(0.001, float(duration_seconds))
@@ -135,19 +135,27 @@ def native_visual_preview_scale(
     window = min(0.25, duration / 2.0)
     scale = 1.0
 
-    for effect, entering in (
-        (assignment.enter_effect, True),
-        (assignment.exit_effect, False),
-    ):
-        if not is_native_visual_scale_effect(effect):
-            continue
-        if entering:
-            progress = current / window
-        else:
-            exit_start = max(0.0, duration - window)
-            progress = (current - exit_start) / window
-        scale *= evaluate_effect(effect, progress, entering=entering).scale
+    if assignment.intensity > 0:
+        for effect, entering in (
+            (assignment.enter_effect, True),
+            (assignment.exit_effect, False),
+        ):
+            if not is_native_visual_scale_effect(effect):
+                continue
+            if entering:
+                progress = current / window
+            else:
+                exit_start = max(0.0, duration - window)
+                progress = (current - exit_start) / window
+            scale *= evaluate_effect(effect, progress, entering=entering).scale
 
+    keyframe_scale = evaluate_assignment_keyframe(
+        assignment,
+        "scale",
+        current / duration,
+    )
+    if keyframe_scale is not None:
+        scale *= keyframe_scale
     return max(0.01, scale)
 
 
@@ -159,7 +167,7 @@ def native_visual_preview_rotation(
 ) -> float:
     """Evaluate native Tumble rotation using the same timing window as FFmpeg."""
 
-    if assignment is None or assignment.intensity <= 0:
+    if assignment is None:
         return 0.0
 
     duration = max(0.001, float(duration_seconds))
@@ -168,22 +176,30 @@ def native_visual_preview_rotation(
     intensity = max(0.0, min(2.0, float(assignment.intensity)))
     rotation = 0.0
 
-    for effect, entering in (
-        (assignment.enter_effect, True),
-        (assignment.exit_effect, False),
-    ):
-        if not is_native_visual_rotation_effect(effect):
-            continue
-        if entering:
-            progress = current / window
-        else:
-            exit_start = max(0.0, duration - window)
-            progress = (current - exit_start) / window
-        rotation += (
-            evaluate_effect(effect, progress, entering=entering).rotation_degrees
-            * intensity
-        )
+    if assignment.intensity > 0:
+        for effect, entering in (
+            (assignment.enter_effect, True),
+            (assignment.exit_effect, False),
+        ):
+            if not is_native_visual_rotation_effect(effect):
+                continue
+            if entering:
+                progress = current / window
+            else:
+                exit_start = max(0.0, duration - window)
+                progress = (current - exit_start) / window
+            rotation += (
+                evaluate_effect(effect, progress, entering=entering).rotation_degrees
+                * intensity
+            )
 
+    keyframe_rotation = evaluate_assignment_keyframe(
+        assignment,
+        "rotation_degrees",
+        current / duration,
+    )
+    if keyframe_rotation is not None:
+        rotation += keyframe_rotation
     return rotation
 
 
@@ -195,7 +211,7 @@ def native_motion_preview_offset(
 ) -> PreviewMotionOffset:
     """Evaluate native motion using the same 0.25s timing contract as FFmpeg."""
 
-    if assignment is None or assignment.intensity <= 0:
+    if assignment is None:
         return PreviewMotionOffset()
 
     duration = max(0.001, float(duration_seconds))
@@ -205,19 +221,35 @@ def native_motion_preview_offset(
     offset_x = 0.0
     offset_y = 0.0
 
-    for effect, entering in (
-        (assignment.enter_effect, True),
-        (assignment.exit_effect, False),
-    ):
-        if not is_native_visual_motion_effect(effect):
-            continue
-        if entering:
-            progress = current / window
-        else:
-            exit_start = max(0.0, duration - window)
-            progress = (current - exit_start) / window
-        delta = evaluate_effect(effect, progress, entering=entering)
-        offset_x += delta.offset_x * intensity
-        offset_y += delta.offset_y * intensity
+    if assignment.intensity > 0:
+        for effect, entering in (
+            (assignment.enter_effect, True),
+            (assignment.exit_effect, False),
+        ):
+            if not is_native_visual_motion_effect(effect):
+                continue
+            if entering:
+                progress = current / window
+            else:
+                exit_start = max(0.0, duration - window)
+                progress = (current - exit_start) / window
+            delta = evaluate_effect(effect, progress, entering=entering)
+            offset_x += delta.offset_x * intensity
+            offset_y += delta.offset_y * intensity
 
+    normalized_time = current / duration
+    keyframe_x = evaluate_assignment_keyframe(
+        assignment,
+        "position_x",
+        normalized_time,
+    )
+    keyframe_y = evaluate_assignment_keyframe(
+        assignment,
+        "position_y",
+        normalized_time,
+    )
+    if keyframe_x is not None:
+        offset_x += keyframe_x
+    if keyframe_y is not None:
+        offset_y += keyframe_y
     return PreviewMotionOffset(offset_x, offset_y)
