@@ -1,0 +1,179 @@
+[
+  [
+    "04",
+    "Media and Render Core Stability Plan",
+    {
+      "purpose": "Make V2 rendering more resilient, observable, cancellable, and backend-flexible while retaining the proven FFmpeg path.",
+      "evidence": [
+        "Current code already uses ProcessRunner ownership, staged filter graphs, atomic destination replacement, tolerant output decoding, and real Windows FFmpeg validation.",
+        "A prior audit found real FFmpeg compatibility changes, demonstrating why tool capability detection and regression tests are necessary."
+      ],
+      "decisions": [
+        "FFmpeg CLI remains the reference backend until an alternative proves equivalent or superior in controlled tests.",
+        "Every render must write to staging and atomically finalize only after validation.",
+        "Long renders must be cancellable, progress-reporting, and safe on app close.",
+        "Backend-specific optimizations must not change canonical timeline timing semantics without explicit migration approval."
+      ],
+      "tasks": [
+        "Add backend capability probe with cached version/features and explicit unsupported-state messages.",
+        "Define render manifest containing source inputs, timeline duration, expected output properties, backend, options, and checksum-relevant settings.",
+        "Add post-render verification using ffprobe or equivalent: stream presence, duration tolerance, dimensions, fps, audio/subtitle expectations, non-zero file size.",
+        "Design retry policy only for safe transient failures; never silently downgrade quality or effects.",
+        "Benchmark 10, 100, and 500-scene projects; include Unicode/apostrophe/long-path Windows cases.",
+        "Plan render cache only for immutable intermediate assets with content-derived keys and explicit invalidation.",
+        "Preserve a fallback-to-reference-backend switch for V2 troubleshooting."
+      ],
+      "gate": [
+        "PASS when failed renders cannot destroy a previous valid output.",
+        "PASS when cancellation and app-close behavior are deterministic.",
+        "PASS when output validation catches truncated/invalid results.",
+        "PASS when alternative backend must match reference timing and visual acceptance thresholds before default use."
+      ],
+      "deliverables": [
+        "Render backend contract",
+        "Capability probe plan",
+        "Render validation matrix",
+        "Benchmark plan",
+        "Fallback strategy"
+      ],
+      "risks": [
+        "Native backend crashes",
+        "Non-deterministic caching",
+        "FFmpeg version drift",
+        "Command/path edge cases",
+        "Long project memory growth"
+      ]
+    }
+  ],
+  [
+    "05",
+    "Animation and Motion Engine V2",
+    {
+      "purpose": "Upgrade animation quality from a small render-backed subset toward a coherent keyframe/easing/effect system with preview/final parity.",
+      "evidence": [
+        "Registry contains 21 named effects.",
+        "Current FFmpeg native compiler explicitly supports a narrower set of capabilities across alpha, scale, rotation, and motion.",
+        "Current effect expressions use fixed short windows and intensity scaling; this is stable but limited for cinematic motion."
+      ],
+      "decisions": [
+        "Separate effect identity from implementation: EffectDefinition + parameter schema + capability requirements + preview compiler + final compiler.",
+        "Add canonical keyframe curves/easing primitives instead of hardcoding every animation as bespoke FFmpeg text.",
+        "Do not advertise an effect as production-ready until both preview and final render implementations pass parity tests.",
+        "Preserve deterministic random animation with seed and lock semantics."
+      ],
+      "tasks": [
+        "Define keyframe model: normalized time, value, interpolation, easing, optional velocity/overshoot parameters.",
+        "Define transforms: position, scale, rotation, opacity, crop, blur amount, shadow/glow parameters, mask/reveal progress.",
+        "Implement effect families in waves: foundational transforms; cinematic pan/zoom/drift; entrance/exit; reveal/mask; style effects; optional advanced tracking/segmentation only after mature backend support.",
+        "Define safe-zone and layout constraints so motion never unintentionally reveals empty canvas or breaks SINGLE/DOUBLE composition contracts.",
+        "Create golden scene fixtures and frame sampling tests comparing preview intent and final output.",
+        "Define user controls: duration, easing, intensity, direction, per-asset lock, copy/paste, randomize, reset.",
+        "Plan animation presets as data, not UI-hardcoded logic."
+      ],
+      "gate": [
+        "PASS when every production effect has explicit preview + render support.",
+        "PASS when animation parameters serialize safely and migrate from V1 assignments.",
+        "PASS when deterministic seeds reproduce the same assignments.",
+        "PASS when motion remains within defined visual/layout constraints."
+      ],
+      "deliverables": [
+        "Animation data model",
+        "Effect capability matrix",
+        "Preset schema",
+        "Parity/golden-frame tests",
+        "Migration rules"
+      ],
+      "risks": [
+        "Preview/render mismatch",
+        "Effect explosion",
+        "Heavy filters hurting performance",
+        "Breaking existing assignment serialization"
+      ]
+    }
+  ],
+  [
+    "06",
+    "Timeline, Editing, and Feature Upgrade Plan",
+    {
+      "purpose": "Mature editing behavior without discarding the current workflow or turning V2 into an uncontrolled full NLE rewrite.",
+      "evidence": [
+        "Repository already contains timeline navigation, in/out, zoom/scroll, markers, magnetic controls, keyboard seek, preview seek, play selection, subtitle editing, narration recording, and validation workflows."
+      ],
+      "decisions": [
+        "Keep the product focused on automatic narrative/infographic composition; add NLE-like editing only where it directly improves correction and control.",
+        "Every feature addition must map to a concrete user problem and fit ProjectState or an approved schema extension.",
+        "Manual editing must remain undoable and recoverable."
+      ],
+      "tasks": [
+        "Build a compatibility matrix for all current commands/actions and mark V2 enhancements.",
+        "Standardize selection model, playhead, range, snap, markers, scene boundaries, and asset target behavior.",
+        "Plan non-destructive trim/duration editing, per-scene timing override, duplicate/move scene, copy/paste animation/style, multi-select operations, and batch validation.",
+        "Plan optional richer timeline tracks only if justified by product goals; avoid premature unrestricted multitrack editing.",
+        "Define undo/redo command granularity and transaction boundaries for batch operations.",
+        "Define validation center improvements: broken media, timing overlap, unsupported effect/backend, missing tool, provider issues, migration warnings."
+      ],
+      "gate": [
+        "PASS when current workflows remain reachable with equal or fewer steps.",
+        "PASS when every mutating action participates in undo/recovery strategy.",
+        "PASS when feature additions do not silently convert the product into a generic editor with uncontrolled scope."
+      ],
+      "deliverables": [
+        "Feature compatibility matrix",
+        "Timeline interaction specification",
+        "Undo transaction plan",
+        "Validation UX plan"
+      ],
+      "risks": [
+        "Scope creep",
+        "Timeline state complexity",
+        "Undo inconsistencies",
+        "UI overcrowding"
+      ]
+    }
+  ],
+  [
+    "07",
+    "AI Automation, Provider, and Job Orchestration Plan",
+    {
+      "purpose": "Make AI assistance more reliable and human-friendly while keeping it bounded by deterministic editing/render rules.",
+      "evidence": [
+        "Current system already supports Gemini credentials in Windows Credential Manager, key slots 1-100, bounded Gemini Auto, background execution, and stale-result rejection.",
+        "Raw keys are intentionally excluded from ProjectState, logs, and status diagnostics."
+      ],
+      "decisions": [
+        "AI remains an assistant that proposes/executes approved application commands; it must not bypass domain validation.",
+        "Keep Gemini as the primary provider unless a later approved plan expands providers.",
+        "Provider failures must never corrupt the project or block manual editing.",
+        "Agent text should be natural-language Indonesian for the user-facing assistant while machine contracts remain structured."
+      ],
+      "tasks": [
+        "Define AI tool/command schema for scene analysis, animation assignment, validation, repair suggestions, and batch edits.",
+        "Introduce job classes with progress, cancellation, timeout, retry classification, and stale-result guards.",
+        "Design API-key pool health state: available, cooldown, quota/rate-limited, invalid, disabled; never expose secrets.",
+        "Define deterministic post-AI validation so AI cannot assign unsupported effects or invalid scene targets.",
+        "Plan conversation context boundaries and user confirmation rules for destructive/bulk actions.",
+        "Add offline/manual fallback paths for every core workflow."
+      ],
+      "gate": [
+        "PASS when AI output is always validated through application/domain commands.",
+        "PASS when provider failure leaves project state unchanged or safely recoverable.",
+        "PASS when key rotation/status diagnostics reveal no secret values.",
+        "PASS when long AI work is cancellable and does not freeze UI."
+      ],
+      "deliverables": [
+        "AI command contract",
+        "Key-pool state machine",
+        "Job orchestration rules",
+        "Failure/retry matrix",
+        "Agent UX specification"
+      ],
+      "risks": [
+        "Quota storms",
+        "Duplicate/stale mutations",
+        "Secret leakage",
+        "Natural-language ambiguity",
+        "UI lockups"
+      ]
+    }
+  ]
+]
