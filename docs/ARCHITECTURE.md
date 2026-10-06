@@ -202,3 +202,28 @@ cheap regression tests passing. Manual multi-command changes now have atomic
 single-step history semantics, Scene animation copy/paste preserves keyframe
 assignments and lock protection, and Validation Center routes users directly to
 repair/navigation actions without changing the project schema or render backend.
+
+
+## V2 Wave G — AI Job and Key-Pool Hardening
+
+Status: **IMPLEMENTATION IN PROGRESS**
+
+Wave G keeps Gemini as the only configured AI provider and hardens the existing
+provider boundary rather than expanding product scope.
+
+- Gemini Auto uses the canonical BackgroundCall/JobManager runtime path with
+  cooperative cancellation and progress;
+- each configured slot can be attempted at most once per job, up to the existing
+  100-slot pool limit;
+- runtime key health is secret-free: AVAILABLE, COOLDOWN, or DISABLED;
+- attempt diagnostics record only slot/key IDs, outcome classification and bounded
+  cooldown values;
+- quota/retryable failures cool down; invalid/missing/unreadable credentials disable
+  only that runtime key entry;
+- provider error text is redacted using both existing patterns and exact active
+  credential replacement;
+- successful AI output still passes strict structured parsing and application-command
+  validation before mutation; stale project results are discarded.
+
+No project schema, render path, timeline model, animation compiler, provider set, or
+credential storage mechanism changes in Wave G.

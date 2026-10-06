@@ -159,3 +159,9 @@ Current post-release source state: **0.2 stability-hardened test build verified 
 AI Automatic Video Composer project source is licensed under the **MIT License**. See `LICENSE`.
 
 Third-party dependencies retain their own licenses. FFmpeg/ffprobe are external dependencies and are not redistributed by AAVC.
+
+
+## V2 implementation wave status
+- Wave F: **COMPLETE** — transactional manual editing and validation UX passed CI.
+- Wave G: **ACTIVE** — Gemini background cancellation/progress and secret-free key-pool health diagnostics under gate.
+- Next gate: Wave G Windows CI + CodeQL; Wave H must not start before PASS/merge.
