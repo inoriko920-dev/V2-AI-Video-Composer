@@ -9,7 +9,8 @@ This repository is the **only writable development target for V2**.
 - Current implementation status and exact next action: `V2_IMPLEMENTATION_STATUS.md`.
 - STEP 13 CODING GATE: **PASS** on 2026-10-07 after planning review and explicit user continuation.
 - Wave A: **COMPLETE** — source-of-truth lock + baseline CI passed with no functional application changes.
-- Next explicit step: **Wave B — architecture interfaces/capability model with FFmpeg behavior unchanged**.
+- Wave B: **COMPLETE** — backend capability contracts added; FFmpeg behavior/dependencies unchanged.
+- Next explicit step: **Wave C — render validation/progress/cancellation hardening and benchmark harness**.
 
 The historical README copied from the legacy repository is preserved below as baseline documentation.
 

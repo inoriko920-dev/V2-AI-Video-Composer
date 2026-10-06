@@ -61,3 +61,10 @@ behavior.
 - Windows CI `37516960210`: PASS.
 - CodeQL `37516960048`: PASS.
 - No dependency manifest or current FFmpeg export-path changes were introduced.
+
+
+### Wave B closure
+
+PR #3 was merged to `main` at `79a688194b2c38ec4eb74ca6b4818bdb7938eb7f`. Final PR-head validation:
+Windows CI `37517200788` PASS and CodeQL `37517200581` PASS. The FFmpeg
+reference export implementation and dependency manifests remained unchanged.

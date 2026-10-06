@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave B — PASS / ready to merge: architecture interfaces/capability model; FFmpeg behavior unchanged**
+**Wave B — COMPLETE / MERGED TO MAIN: architecture interfaces/capability model; FFmpeg behavior unchanged**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -94,5 +94,18 @@ Forbidden in Wave B:
 - Dependency manifests unchanged.
 - Existing `render_project()`, FFmpeg builder/executor, project schema, timeline behavior, animation behavior, and UI behavior unchanged.
 
+## Wave B closure
+- PR #3 merged to `main`.
+- Merge/squash commit: `79a688194b2c38ec4eb74ca6b4818bdb7938eb7f`.
+- Final PR-head Windows CI run: `37517200788` — **PASS**.
+- Final PR-head CodeQL run: `37517200581` — **PASS**.
+- No new runtime dependency was adopted.
+- FFmpeg export behavior remained unchanged.
+- Legacy repository remained read-only.
+
 ## Next exact action
-Merge PR #3 after this evidence-only update remains green, then STOP before Wave C.
+**STOP after Wave B.**
+
+On the next explicit user instruction to continue, begin **Wave C — render validation/progress/cancellation hardening and benchmark harness**.
+
+Wave C must retain FFmpeg as the reference backend and must not adopt optional mature backends.
