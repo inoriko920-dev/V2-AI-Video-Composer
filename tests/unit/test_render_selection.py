@@ -74,6 +74,7 @@ def test_render_selection_adds_video_trim_and_output_duration(tmp_path: Path) ->
         end_seconds=end,
         ffmpeg="fake-ffmpeg",
         runner=runner,
+        verify_output=False,
     )
 
     assert result.output_path == str(output.resolve())
@@ -102,6 +103,7 @@ def test_render_selection_trims_audio_on_same_global_range(tmp_path: Path) -> No
         end_seconds=end,
         ffmpeg="fake-ffmpeg",
         runner=runner,
+        verify_output=False,
     )
 
     command = runner.commands[0]
@@ -131,6 +133,7 @@ def test_render_selection_burns_subtitles_before_video_trim(tmp_path: Path) -> N
         end_seconds=end,
         ffmpeg="fake-ffmpeg",
         runner=runner,
+        verify_output=False,
     )
 
     filters = runner.filter_graphs[0]

@@ -71,7 +71,13 @@ def test_render_project_maps_options_into_ffmpeg_command(tmp_path: Path) -> None
         burn_subtitles=False,
     )
 
-    result = render_project(_project(), options, ffmpeg="fake-ffmpeg", runner=runner)
+    result = render_project(
+        _project(),
+        options,
+        ffmpeg="fake-ffmpeg",
+        runner=runner,
+        verify_output=False,
+    )
 
     assert result.output_path == str(output.resolve())
     assert output.read_bytes() == b"fake-mp4"
