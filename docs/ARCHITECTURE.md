@@ -202,3 +202,37 @@ cheap regression tests passing. Manual multi-command changes now have atomic
 single-step history semantics, Scene animation copy/paste preserves keyframe
 assignments and lock protection, and Validation Center routes users directly to
 repair/navigation actions without changing the project schema or render backend.
+
+
+## V2 Wave G — AI Job and Key-Pool Hardening
+
+Status: **PASS — WAVE G IMPLEMENTED**
+
+Wave G keeps Gemini as the only configured AI provider and hardens the existing
+provider boundary rather than expanding product scope.
+
+- Gemini Auto uses the canonical BackgroundCall/JobManager runtime path with
+  cooperative cancellation and progress;
+- each configured slot can be attempted at most once per job, up to the existing
+  100-slot pool limit;
+- runtime key health is secret-free: AVAILABLE, COOLDOWN, or DISABLED;
+- attempt diagnostics record only slot/key IDs, outcome classification and bounded
+  cooldown values;
+- quota/retryable failures cool down; invalid/missing/unreadable credentials disable
+  only that runtime key entry;
+- provider error text is redacted using both existing patterns and exact active
+  credential replacement;
+- successful AI output still passes strict structured parsing and application-command
+  validation before mutation; stale project results are discarded.
+
+No project schema, render path, timeline model, animation compiler, provider set, or
+credential storage mechanism changes in Wave G.
+
+
+### Wave G evidence
+
+PR #8 validation on implementation head `a1934c277736a90344eb77733d52a8ea2ba018e8`: Windows CI
+`37532793976` PASS and CodeQL `37532794112` PASS. 596 cheap tests passed
+with 1 deselected. Gemini Auto now uses cancellable background job orchestration,
+all configured slots can participate in bounded one-pass failover up to 100, and
+provider/key-pool diagnostics remain secret-free.

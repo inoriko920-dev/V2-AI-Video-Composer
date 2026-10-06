@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave F — COMPLETE / MERGED TO MAIN: transactional manual editing + validation UX hardening**
+**Wave G — PASS / ready to merge: AI job orchestration + key-pool health/cancellation hardening**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -315,7 +315,53 @@ Forbidden in Wave F:
 - Project schema, render compiler, backend selection, and runtime dependency manifests remain unchanged.
 - Legacy repository remained read-only.
 
-## Next exact action
-**STOP after Wave F.**
+## Wave G scope
+Allowed:
+- run Gemini Auto through the canonical background JobManager path;
+- cooperative cancellation between provider attempts and progress reporting;
+- deterministic failover across configured Gemini slots, each slot at most once per job;
+- support all configured slots up to the existing 100-slot limit;
+- secret-free provider attempt diagnostics and key-pool health states;
+- classify runtime key health as available / cooldown / disabled with sanitized failure reason;
+- surface success diagnostics in user-facing status without exposing secret material;
+- preserve stale-result rejection before ProjectState mutation;
+- provide a visible "Batalkan Pekerjaan Berjalan" AI-menu action.
 
-On the next explicit user instruction to continue, begin **Wave G — AI/job/key-pool UX hardening**.
+Forbidden in Wave G:
+- no new AI provider;
+- no project schema change;
+- no render/timeline/animation behavior change;
+- no plaintext credential fallback;
+- no raw secret in ProjectState, diagnostics, logs, or status;
+- no automatic destructive/bulk project mutation outside validated application commands;
+- no broad UI redesign.
+
+## Wave G acceptance criteria
+1. Long Gemini Auto work runs outside the GUI thread through JobManager/BackgroundCall.
+2. User cancellation stops failover before another key attempt and cancelled results never mutate ProjectState.
+3. Provider failover can rotate through up to 100 configured slots, each at most once per job.
+4. Key health/attempt diagnostics contain no raw secret values.
+5. Quota/retryable failures enter bounded cooldown; invalid/missing credentials become disabled for that runtime pool.
+6. Provider error text is sanitized, including exact active credential replacement.
+7. Existing bounded AI JSON validation + locked-target protection + stale-project guard remain intact.
+8. Windows CI, strict mypy, full cheap regression tests, screenshot gate, and CodeQL pass.
+
+## Wave G rollback point
+`0018ac66ce60aeda5215ae449a911ee10ae62bcc`
+
+## Wave G evidence
+- Provider diagnostics/cancellation commit: `ddfc0eaf667aec70c1cc4a13b168f387ca359c07`.
+- Background Auto (AI) integration commit: `122dc4241aabde8d3832db6cb6d4d0c40c16c239`.
+- Secret redaction hardening commit: `9e802f6e0f17937b04b776741c118bd23d4d0283`.
+- Pull request: `#8`.
+- Windows CI run `37532793976`: **PASS**.
+- CodeQL run `37532794112`: **PASS**.
+- Compile, Ruff, strict mypy, 596 cheap tests, STEP09 screenshot capture/verification, and artifact upload: **PASS**.
+- One Gemini job can rotate through all configured slots up to 100, each slot at most once.
+- Cancellation stops failover before another key attempt.
+- Runtime diagnostics expose only secret-free key IDs/status/outcomes.
+- Active credential text is explicitly redacted from provider errors.
+- Existing strict AI response validation, locked-target protection, and stale-project rejection remain intact.
+
+## Next exact action
+Re-run CI/CodeQL on this evidence-only update, merge PR #8 only on PASS, then STOP before Wave H.

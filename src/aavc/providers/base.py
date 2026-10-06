@@ -43,6 +43,10 @@ class ProviderExhaustedError(RuntimeError):
     """Raised when no configured provider credential can serve the request."""
 
 
+class ProviderCancelledError(RuntimeError):
+    """Raised when cooperative provider failover cancellation is requested."""
+
+
 class AIProvider(Protocol):
     name: str
 

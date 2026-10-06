@@ -6,7 +6,9 @@ from typing import Any
 from aavc.application.commands import SetAnimationAssignmentsBatch
 from aavc.application.services.ai_animation_service import (
     DEFAULT_GEMINI_ANIMATION_MODEL,
-    plan_gemini_native_motion,
+    AiAnimationPlanResult,
+    ai_run_status_text,
+    plan_gemini_native_motion_detailed,
 )
 from aavc.application.services.export_service import ExportOptions, render_project
 from aavc.application.services.selection_export_service import render_project_selection
@@ -20,6 +22,31 @@ from aavc.presentation.windows.ai_native_motion_window import AiNativeMotionMain
 
 class BackgroundWorkMainWindow(AiNativeMotionMainWindow):
     """Keep blocking provider/render work outside the Qt GUI thread."""
+
+    def _build_menu(self, action_type: Any) -> None:
+        super()._build_menu(action_type)
+        ai_menu: Any | None = None
+        for menu_action in self.window.menuBar().actions():
+            if menu_action.text() == "AI":
+                ai_menu = menu_action.menu()
+                break
+        if ai_menu is None:
+            return
+        ai_menu.addSeparator()
+        cancel_action = action_type("Batalkan Pekerjaan Berjalan", self.window)
+        cancel_action.setObjectName("CancelBackgroundWorkAction")
+        cancel_action.triggered.connect(
+            lambda _checked=False: self._cancel_background_from_menu()
+        )
+        ai_menu.addAction(cancel_action)
+
+    def _cancel_background_from_menu(self) -> None:
+        if self.cancel_background_work():
+            return
+        self._show_project_notice(
+            "Tidak ada pekerjaan aktif",
+            "Tidak ada pekerjaan background yang sedang berjalan.",
+        )
 
     def __init__(
         self,
@@ -253,7 +280,13 @@ class BackgroundWorkMainWindow(AiNativeMotionMainWindow):
             return
 
         def completed(result: Any) -> None:
-            assignments = tuple(result or ())
+            if not isinstance(result, AiAnimationPlanResult):
+                self._show_project_notice(
+                    "Hasil Auto (AI) tidak valid",
+                    "Job Auto (AI) selesai tanpa hasil terstruktur; project tidak diubah.",
+                )
+                return
+            assignments = result.assignments
             if session.current != project:
                 self._show_project_notice(
                     "Hasil Auto (AI) tidak diterapkan",
@@ -273,20 +306,24 @@ class BackgroundWorkMainWindow(AiNativeMotionMainWindow):
             self._refresh_validation_badge()
             self.refresh_editor_overview()
             self._refresh_animation_menu_state()
+            diagnostics_text = ai_run_status_text(result.diagnostics)
             self.window.statusBar().showMessage(
-                f"Auto (AI) menerapkan {len(assignments)} assignment native melalui {normalized_model}. "
+                f"Auto (AI) menerapkan {len(assignments)} assignment melalui "
+                f"{normalized_model}; {diagnostics_text}. "
                 "Gunakan Undo untuk membatalkan atau Simpan untuk menyimpan project.",
-                9000,
+                12000,
             )
 
         self._start_background_work(
             name=f"Auto (AI) — {normalized_model}",
-            work=lambda: plan_gemini_native_motion(
+            cancellable_work=lambda token, progress: plan_gemini_native_motion_detailed(
                 project,
                 credentials=credentials,
                 credential_slots=slots,
                 model=normalized_model,
                 allowed_effects=NATIVE_MOTION_CHOICES,
+                cancel_requested=lambda: token.is_cancelled,
+                progress_callback=progress,
             ),
             success=completed,
             error_title="Auto (AI) gagal",
