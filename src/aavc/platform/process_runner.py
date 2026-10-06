@@ -135,6 +135,7 @@ class ProcessRunner:
         if cancelled:
             raise ProcessCancelledError("Proses eksternal dibatalkan")
         if timed_out:
+            assert timeout_seconds is not None
             raise subprocess.TimeoutExpired(list(argv), timeout_seconds)
 
         return ProcessResult(
