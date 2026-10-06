@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass
 from typing import Any
 
 from aavc.domain.project.models import AnimationAssignment, ProjectState
@@ -9,9 +10,24 @@ from aavc.platform.credentials import CredentialStore
 from aavc.providers.adapters.gemini import GeminiProvider
 from aavc.providers.base import ProviderRequest
 from aavc.providers.key_pool import ApiKeyPool
-from aavc.providers.manager import ProviderManager
+from aavc.providers.manager import ProviderManager, ProviderRunDiagnostics
 
 DEFAULT_GEMINI_ANIMATION_MODEL = "gemini-3.5-flash-lite"
+
+
+@dataclass(frozen=True, slots=True)
+class AiAnimationPlanResult:
+    assignments: tuple[AnimationAssignment, ...]
+    diagnostics: ProviderRunDiagnostics
+
+
+def ai_run_status_text(diagnostics: ProviderRunDiagnostics) -> str:
+    health = diagnostics.pool_health
+    return (
+        f"{diagnostics.attempt_count} attempt; "
+        f"{health.available} available / {health.cooldown} cooldown / "
+        f"{health.disabled} disabled"
+    )
 
 
 def _unlocked_animation_targets(
@@ -220,15 +236,17 @@ def parse_ai_animation_response(
     return tuple(parsed)
 
 
-def plan_gemini_native_motion(
+def plan_gemini_native_motion_detailed(
     project: ProjectState,
     *,
     credentials: CredentialStore,
     credential_slots: Sequence[int],
     model: str,
     allowed_effects: Sequence[str],
-) -> tuple[AnimationAssignment, ...]:
-    """Run one bounded Gemini plan through the secure rotating credential pool."""
+    cancel_requested: Callable[[], bool] | None = None,
+    progress_callback: Callable[[float], None] | None = None,
+) -> AiAnimationPlanResult:
+    """Run one bounded Gemini plan with runtime diagnostics and cancellation."""
 
     slots = tuple(dict.fromkeys(int(slot) for slot in credential_slots))
     if not slots:
@@ -241,6 +259,8 @@ def plan_gemini_native_motion(
         reference = f"gemini-slot-{slot:03d}"
         pool.register(key_id=f"slot-{slot:03d}", credential_ref=reference)
 
+    if progress_callback is not None:
+        progress_callback(0.05)
     request = build_ai_animation_request(
         project,
         model=model,
@@ -250,11 +270,43 @@ def plan_gemini_native_motion(
         provider=GeminiProvider(),
         key_pool=pool,
         credentials=credentials,
-        max_attempts=min(4, len(slots)),
+        max_attempts=len(slots),
     )
-    response = manager.generate(request)
-    return parse_ai_animation_response(
+    response, diagnostics = manager.generate_with_diagnostics(
+        request,
+        cancel_requested=cancel_requested,
+        progress_callback=(
+            (lambda value: progress_callback(0.10 + value * 0.75))
+            if progress_callback is not None
+            else None
+        ),
+    )
+    if progress_callback is not None:
+        progress_callback(0.90)
+    assignments = parse_ai_animation_response(
         response.text,
         project,
         allowed_effects=allowed_effects,
     )
+    if progress_callback is not None:
+        progress_callback(1.0)
+    return AiAnimationPlanResult(assignments, diagnostics)
+
+
+def plan_gemini_native_motion(
+    project: ProjectState,
+    *,
+    credentials: CredentialStore,
+    credential_slots: Sequence[int],
+    model: str,
+    allowed_effects: Sequence[str],
+) -> tuple[AnimationAssignment, ...]:
+    """Compatibility wrapper returning only validated animation assignments."""
+
+    return plan_gemini_native_motion_detailed(
+        project,
+        credentials=credentials,
+        credential_slots=credential_slots,
+        model=model,
+        allowed_effects=allowed_effects,
+    ).assignments
