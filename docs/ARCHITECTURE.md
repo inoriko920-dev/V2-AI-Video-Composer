@@ -92,7 +92,7 @@ alternate backend was adopted.
 
 ## V2 Wave D — Animation/Keyframe Data Model
 
-Status: **IMPLEMENTATION IN PROGRESS**
+Status: **PASS — WAVE D IMPLEMENTED**
 
 Wave D introduces a backend-neutral keyframe storage contract without activating it
 in preview or FFmpeg rendering. Existing `AnimationAssignment` fields remain
@@ -106,3 +106,11 @@ canonical for current effects.
 - the first save over a valid older schema preserves a
   `.pre-schema-v3.bak` backup without clobbering an existing backup;
 - renderer/compiler behavior remains intentionally unchanged until Wave E.
+
+
+### Wave D evidence
+
+PR #5 validation on implementation head `29c45921ba53fdce3d96c3bc80b6965127236c53`: Windows CI
+`37522687807` PASS and CodeQL `37522687755` PASS. The project schema is v3,
+v1/v2 migration is explicit and tested, and current FFmpeg effect semantics remain
+unchanged because keyframe tracks are intentionally not consumed until Wave E.

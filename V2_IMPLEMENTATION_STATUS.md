@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave D — ACTIVE: animation/keyframe data model + schema v3 migration; current effects preserved**
+**Wave D — PASS / ready to merge: animation/keyframe data model + schema v3 migration; current effects preserved**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -167,5 +167,16 @@ Forbidden in Wave D:
 ## Wave D rollback point
 `5d7389596cd28d1fd3b59184f0dd2088e7a6d301`
 
+## Wave D evidence
+- Domain keyframe model commit: `9ffe4cd1e26ff7a36add652899860ed3ace0d4e6`.
+- Schema v3 migration commit: `a3390bf216b30a49e8c1e002f7130ce6b1523176`.
+- Test/model integration head: `29c45921ba53fdce3d96c3bc80b6965127236c53`.
+- Pull request: `#5`.
+- Windows CI run `37522687807`: **PASS**.
+- CodeQL run `37522687755`: **PASS**.
+- Compile, Ruff, strict mypy, 572 cheap tests, STEP09 screenshot capture/verification, and artifact upload: **PASS**.
+- Existing FFmpeg effect semantics remain unchanged when keyframe tracks are present.
+- Dependency manifests unchanged; no new effect/backend/UI implementation introduced.
+
 ## Next exact action
-Run Wave D PR gates. Merge only on PASS, then STOP before Wave E.
+Re-run CI/CodeQL on this evidence-only update, merge PR #5 only on PASS, then STOP before Wave E.
