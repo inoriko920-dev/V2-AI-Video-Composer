@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave I — COMPLETE / MERGED TO MAIN: optional mature-backend spike and dependency gate**
+**Wave J — ACTIVE: 0.2.0rc1 full regression, Windows packaging, and user-test release gate**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -501,7 +501,20 @@ Forbidden in Wave I:
 - Runtime dependency manifests, ProjectState/schema, UI, timeline, render behavior, and provider behavior remain unchanged.
 - Legacy repository remained read-only.
 
-## Next exact action
-**STOP after Wave I.**
+## Wave J scope
+Phase 1 (current):
+- set V2 RC version to 0.2.0rc1;
+- run compile, Ruff, strict mypy, regression tests, STEP09 screenshot gate;
+- build/verify Windows 11 x64 PyInstaller onedir portable;
+- create portable ZIP + exact-commit source ZIP + SHA256SUMS + BUILD_INFO;
+- upload a user-test RC artifact without publishing a GitHub Release.
 
-On the next explicit user instruction to continue, begin **Wave J — full regression, Windows packaging, user-test build, release candidate, and final release gate**.
+Final publication remains blocked until the RC user-test has no blocker.
+
+## Wave J rollback point
+`7e7eb21a77d68849990082fe4aca6219c23cd1bb`
+
+## Next exact action
+Open the Wave J RC pull request, require CI + CodeQL + RC packaging gate PASS,
+then merge the RC source only if every automated gate passes. Do not publish v0.2.0
+until user-test acceptance.

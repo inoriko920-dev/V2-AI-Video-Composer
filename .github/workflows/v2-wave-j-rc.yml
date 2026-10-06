@@ -1,0 +1,141 @@
+name: V2 Wave J RC 0.2.0
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: wave-j-rc-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  rc-gate:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12.10'
+          cache: 'pip'
+
+      - name: Reject committed secrets
+        run: python scripts/check_no_secrets.py
+
+      - name: Install pinned dependencies
+        run: |
+          python -m pip install "pip==26.2.1"
+          python -m pip install -r requirements.lock
+          python -m pip install -e .
+
+      - name: Verify dependency graph
+        run: python -m pip check
+
+      - name: Verify RC version
+        shell: pwsh
+        run: |
+          $runtime = (python -c "from aavc import __version__; print(__version__)").Trim()
+          if ($runtime -ne "0.2.0rc1") { throw "Expected runtime 0.2.0rc1, got $runtime" }
+          $metadata = (python -c "from importlib.metadata import version; print(version('ai-automatic-video-composer'))").Trim()
+          if ($metadata -ne "0.2.0rc1") { throw "Expected metadata 0.2.0rc1, got $metadata" }
+
+      - name: Compile
+        run: python -m compileall -q src
+
+      - name: Ruff
+        run: python -m ruff check src tests
+
+      - name: Mypy
+        run: python -m mypy src/aavc
+
+      - name: Regression tests
+        run: python -m pytest -m "not integration and not visual and not e2e" -q
+
+      - name: Capture STEP09 actual UI
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python scripts/capture_step09_ui.py
+
+      - name: Verify STEP09 screenshots
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem artifacts/step09_actual/*.png
+          if ($files.Count -ne 8) {
+            throw "Expected 8 STEP09 screenshots, found $($files.Count)"
+          }
+          $tooSmall = $files | Where-Object { $_.Length -lt 1000 }
+          if ($tooSmall) {
+            throw "One or more STEP09 screenshots are unexpectedly small"
+          }
+
+      - name: Build Windows onedir
+        shell: pwsh
+        run: ./scripts/package.ps1
+
+      - name: Verify portable artifact
+        shell: pwsh
+        run: ./scripts/verify_portable.ps1
+
+      - name: Prepare RC user-test bundle
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force release | Out-Null
+          $portable = "release/AI-Automatic-Video-Composer-0.2.0-rc1-win64.zip"
+          $source = "release/AI-Automatic-Video-Composer-0.2.0-rc1-source.zip"
+          if (Test-Path $portable) { Remove-Item $portable -Force }
+          if (Test-Path $source) { Remove-Item $source -Force }
+
+          Compress-Archive -Path "dist/AI Automatic Video Composer/*" -DestinationPath $portable -CompressionLevel Optimal
+          git archive --format=zip --output=$source HEAD
+
+          Copy-Item RELEASE_NOTES_0.2.0_RC1.md release/RELEASE_NOTES_0.2.0_RC1.md
+          Copy-Item docs/V2_0.2.0_RC1_USER_TEST.md release/V2_0.2.0_RC1_USER_TEST.md
+          Copy-Item MAINTENANCE.md release/MAINTENANCE.md
+          Copy-Item BACKUP_AND_RECOVERY.md release/BACKUP_AND_RECOVERY.md
+
+          $commit = (git rev-parse HEAD).Trim()
+          "release_commit=$commit" | Set-Content release/BUILD_INFO.txt -Encoding utf8
+          "version=0.2.0rc1" | Add-Content release/BUILD_INFO.txt -Encoding utf8
+          "channel=release-candidate-user-test" | Add-Content release/BUILD_INFO.txt -Encoding utf8
+
+          $files = @($portable, $source)
+          $sumLines = foreach ($file in $files) {
+            $hash = (Get-FileHash $file -Algorithm SHA256).Hash.ToLower()
+            "$hash  $([System.IO.Path]::GetFileName($file))"
+          }
+          $sumLines | Set-Content release/SHA256SUMS.txt -Encoding utf8
+
+          foreach ($line in Get-Content release/SHA256SUMS.txt) {
+            $parts = $line -split "\s+", 2
+            $expected = $parts[0]
+            $name = $parts[1]
+            $actual = (Get-FileHash (Join-Path release $name) -Algorithm SHA256).Hash.ToLower()
+            if ($actual -ne $expected) { throw "Checksum mismatch for $name" }
+          }
+
+          Get-ChildItem release | Select-Object Name, Length
+
+      - name: Upload RC user-test bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: AAVC-0.2.0-rc1-user-test
+          path: release/*
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload STEP09 UI evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: AAVC-0.2.0-rc1-step09-ui
+          path: artifacts/step09_actual/*.png
+          if-no-files-found: error
+          retention-days: 30

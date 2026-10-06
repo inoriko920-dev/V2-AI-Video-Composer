@@ -175,3 +175,10 @@ spike, but it was deliberately **not** added to the application runtime because 
 measured product need currently justifies the additional dependency/portable footprint.
 FFmpeg/ffprobe CLI remains the production reference/fallback. libopenshot/MLT remain
 deferred pending a concrete capability need and native packaging/license evidence.
+
+
+## V2 0.2.0 release-candidate gate
+Wave J is active. The V2 source is moving to `0.2.0rc1` for a Windows portable
+user-test build. This gate produces reproducible ZIP/checksum/source artifacts only;
+it does not create or replace a GitHub Release. Final `v0.2.0` publication remains
+blocked on RC user acceptance and final release validation.
