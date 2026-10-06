@@ -1,0 +1,33 @@
+# Fully resolved dependency snapshot for Windows / CPython 3.12.10.
+# Captured from a successful post-release 0.1.1 CI environment.
+# Regenerate deliberately after dependency review; do not use broad ranges here.
+# PEP 517 build isolation is pinned separately in pyproject.toml (setuptools==80.10.2).
+
+# Application runtime
+PySide6==6.11.2
+PySide6_Addons==6.11.2
+PySide6_Essentials==6.11.2
+shiboken6==6.11.2
+
+# Test and quality tooling
+pytest==9.1.1
+colorama==0.4.6
+iniconfig==2.3.0
+packaging==26.3
+pluggy==1.6.0
+Pygments==2.21.0
+ruff==0.16.8
+mypy==2.4.0
+ast-serialize==0.12.1
+librt==0.16.0
+mypy_extensions==1.1.0
+pathspec==1.1.1
+typing_extensions==4.16.0
+
+# Packaging tooling
+pyinstaller==6.22.3
+altgraph==0.17.5
+pefile==2024.8.26
+pyinstaller-hooks-contrib==2026.8
+pywin32-ctypes==0.2.3
+setuptools==84.0.0

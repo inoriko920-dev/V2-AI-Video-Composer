@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools==80.10.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-automatic-video-composer"
+version = "0.1.1"
+description = "AI Automatic Video Composer - Windows portable release"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "PySide6==6.11.2",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==9.1.1",
+  "ruff==0.16.8",
+  "mypy==2.4.0",
+  "pyinstaller==6.22.3",
+]
+
+[project.scripts]
+aavc = "aavc.bootstrap.startup:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+  "integration: external process/tool integration",
+  "visual: screenshot or image comparison",
+  "e2e: end-to-end product flow",
+  "packaging: packaged artifact tests",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+mypy_path = "src"
+packages = ["aavc"]
+warn_unused_configs = true

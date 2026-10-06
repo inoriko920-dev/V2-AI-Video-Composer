@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aavc.local/schema/project.schema.json",
+  "title": "AAVC Project Schema",
+  "type": "object",
+  "required": ["schema_version", "title", "source_docx", "asset_directory", "scenes", "bindings"],
+  "properties": {
+    "schema_version": {"const": 2},
+    "title": {"type": "string", "minLength": 1},
+    "source_docx": {"type": "string"},
+    "asset_directory": {"type": "string"},
+    "scenes": {"type": "array"},
+    "bindings": {"type": "array"}
+  },
+  "additionalProperties": true
+}

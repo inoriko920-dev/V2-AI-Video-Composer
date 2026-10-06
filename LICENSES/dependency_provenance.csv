@@ -1,0 +1,7 @@
+name,version,role,license_note,source
+Python,3.12.10,build/runtime interpreter,"PSF; pinned Windows toolchain; last full Python 3.12 maintenance release with binary installers",https://www.python.org/downloads/release/python-31210/
+PySide6,6.11.2,desktop UI,"Qt licensing depends on edition/modules; review before distribution",https://pypi.org/project/PySide6/
+pytest,9.1.1,test,MIT,https://pypi.org/project/pytest/
+ruff,0.16.8,lint,MIT,https://pypi.org/project/ruff/
+mypy,2.4.0,type check,MIT,https://pypi.org/project/mypy/
+PyInstaller,6.22.3,packaging,"GPLv2-or-later with special exception; review bundled notices",https://pypi.org/project/pyinstaller/

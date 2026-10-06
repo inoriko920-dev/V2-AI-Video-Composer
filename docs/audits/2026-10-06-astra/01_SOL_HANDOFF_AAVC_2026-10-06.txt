@@ -1,0 +1,14 @@
+SOL HANDOFF — AAVC ASTRA BUG AUDIT — 2026-10-06
+
+Baseline: main @ 8feeeb2e6e90489e5edb890ee67f3f59ca3d438c
+Role: SOL implementation. Planning STEP 00–15 remains closed.
+
+Implement in order:
+1) ASTRA-01 project deserialization/invariant validation shared by load and recovery; failure must preserve active session and recovery destination.
+2) ASTRA-02 move canonical FFmpeg filter graph out of the Windows command line while preserving ProcessRunner and atomic output.
+3) ASTRA-03 fix ASS filter path escaping for spaces/apostrophes/Unicode/Windows drive paths.
+4) ASTRA-04 playback clock based on monotonic elapsed time; redraw timer is not the clock.
+5) ASTRA-05 Pause preserves playhead/frame and Resume continues from the same position.
+
+Do not alter UI design, providers, feature scope, or published v0.1.1.
+Run focused regression tests first, then repo gates. Windows remains mandatory for final acceptance of command-length, drive-path, multimedia and portable packaging claims.

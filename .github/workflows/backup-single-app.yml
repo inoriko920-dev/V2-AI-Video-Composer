@@ -1,0 +1,211 @@
+name: Backup Single App
+
+on:
+  push:
+    paths:
+      - '.github/workflows/backup-single-app.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    env:
+      APP_NAME: AI-Automatic-Video-Composer
+      REPO_FULL: inoriko920-dev/AI-Automatic-Video-Composer
+      TARGET_SHA: ${{ github.sha }}
+    steps:
+      - name: Checkout full repository history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Prepare verified backup
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          export TZ=Asia/Jakarta
+          STAMP="$(date '+%Y-%m-%d_%H-%M-%S_WIB')"
+          HUMAN_TIME="$(date '+%Y-%m-%d %H:%M:%S WIB')"
+          OUT="$RUNNER_TEMP/backup-output"
+          ROOT="$OUT/${APP_NAME}-BACKUP-${STAMP}"
+          mkdir -p "$ROOT"/{GIT,SOURCE,BUILD,DOCS,RECOVERY}
+
+          git fetch --prune --tags origin '+refs/heads/*:refs/remotes/origin/*'
+          while IFS= read -r ref; do
+            name="${ref#refs/remotes/origin/}"
+            [ "$name" = "HEAD" ] && continue
+            git branch -f "$name" "$ref" >/dev/null 2>&1 || true
+          done < <(git for-each-ref --format='%(refname)' refs/remotes/origin/)
+
+          printf '%s\n' "$TARGET_SHA" > "$ROOT/MAIN_COMMIT.txt"
+          {
+            echo "APP_NAME=$APP_NAME"
+            echo "ORIGINAL_REPO=https://github.com/$REPO_FULL"
+            echo "DEFAULT_BRANCH=main"
+            echo "MAIN_COMMIT_BACKED_UP=$TARGET_SHA"
+            echo "BACKUP_TIME_WIB=$HUMAN_TIME"
+            echo "SOURCE_SNAPSHOT=SOURCE/${APP_NAME}-SOURCE-MAIN.zip"
+            echo "GIT_BUNDLE=GIT/${APP_NAME}-COMPLETE-GIT-HISTORY.bundle"
+          } > "$ROOT/REPOSITORY_INFO.txt"
+
+          git for-each-ref --sort=refname --format='%(refname) %(objectname)' refs/heads refs/remotes > "$ROOT/BRANCHES.txt"
+          git for-each-ref --sort=refname --format='%(refname) %(objectname)' refs/tags > "$ROOT/TAGS.txt"
+          git log --all --decorate --date=iso --pretty=format:'%H%x09%ad%x09%d%x09%s' > "$ROOT/COMMIT_HISTORY.txt"
+
+          git archive --format=zip --output="$ROOT/SOURCE/${APP_NAME}-SOURCE-MAIN.zip" "$TARGET_SHA"
+          test -s "$ROOT/SOURCE/${APP_NAME}-SOURCE-MAIN.zip"
+
+          git bundle create "$ROOT/GIT/${APP_NAME}-COMPLETE-GIT-HISTORY.bundle" --all
+          test -s "$ROOT/GIT/${APP_NAME}-COMPLETE-GIT-HISTORY.bundle"
+          git bundle verify "$ROOT/GIT/${APP_NAME}-COMPLETE-GIT-HISTORY.bundle" > "$ROOT/GIT_BUNDLE_VERIFY.txt" 2>&1
+          git bundle list-heads "$ROOT/GIT/${APP_NAME}-COMPLETE-GIT-HISTORY.bundle" > "$ROOT/GIT_BUNDLE_REFS.txt"
+
+          git archive --format=tar "$TARGET_SHA" docs README.md MAINTENANCE.md BACKUP_AND_RECOVERY.md SECURITY.md FINAL_RELEASE_MANIFEST.md 2>/dev/null | tar -x -C "$ROOT/DOCS" || true
+
+          if gh release view v0.1.1 --repo "$REPO_FULL" >/dev/null 2>&1; then
+            if ! gh release download v0.1.1 --repo "$REPO_FULL" --dir "$ROOT/BUILD" >/dev/null 2>&1; then
+              echo BUILD_NOT_AVAILABLE > "$ROOT/BUILD/BUILD_NOT_AVAILABLE.txt"
+            fi
+          else
+            echo BUILD_NOT_AVAILABLE > "$ROOT/BUILD/BUILD_NOT_AVAILABLE.txt"
+          fi
+          if [ -z "$(find "$ROOT/BUILD" -type f -print -quit)" ]; then
+            echo BUILD_NOT_AVAILABLE > "$ROOT/BUILD/BUILD_NOT_AVAILABLE.txt"
+          fi
+
+          {
+            grep -RhoE '\$\{\{[[:space:]]*secrets\.[A-Za-z0-9_]+' .github/workflows 2>/dev/null || true
+          } | sed -E 's/.*secrets\.([A-Za-z0-9_]+).*/\1/' | sort -u | sed '/^$/d' > "$ROOT/REQUIRED_SECRETS.txt"
+          if [ ! -s "$ROOT/REQUIRED_SECRETS.txt" ]; then
+            echo NONE_DETECTED_IN_WORKFLOWS > "$ROOT/REQUIRED_SECRETS.txt"
+          else
+            sed -i '1iSECRET_REQUIRED_BUT_NOT_BACKED_UP' "$ROOT/REQUIRED_SECRETS.txt"
+          fi
+
+          cat > "$ROOT/README_RESTORE.txt" <<EOF
+          BACKUP: $APP_NAME
+          BACKUP TIME: $HUMAN_TIME
+          MAIN COMMIT BACKED UP: $TARGET_SHA
+
+          Backup ini hanya untuk satu aplikasi/repo ini.
+          SOURCE/ = snapshot source yang mudah dibuka manusia.
+          GIT/ = Git Bundle lengkap untuk history/ref.
+          DOCS/ = dokumentasi penting.
+          BUILD/ = build release v0.1.1 jika tersedia.
+          RECOVERY/ = script pemulihan Windows 11.
+          EOF
+
+          cat > "$ROOT/BACKUP_INFO.txt" <<EOF
+          BACKUP_SCOPE=SINGLE_APP_ONLY
+          APP=$APP_NAME
+          DATE_TIME_WIB=$HUMAN_TIME
+          MAIN_COMMIT=$TARGET_SHA
+          GIT_BUNDLE_VERIFY=PASS
+          SOURCE_ZIP_NONEMPTY=PASS
+          OTHER_REPOSITORIES_INCLUDED=NO
+          EOF
+
+          cat > "$ROOT/STATUS_BACKUP.txt" <<EOF
+          BACKUP_STATUS=BACKUP_COMPLETE
+          SOURCE_STATUS=OK
+          GIT_HISTORY_STATUS=OK_VERIFIED_BUNDLE
+          BRANCH_TAG_METADATA=OK
+          DOCUMENTATION=OK
+          REQUIRED_SECRETS=RECORDED_NAMES_ONLY
+          BUILD_STATUS=$(if [ -f "$ROOT/BUILD/BUILD_NOT_AVAILABLE.txt" ]; then echo BUILD_NOT_AVAILABLE; else echo INCLUDED_FROM_RELEASE_V0.1.1; fi)
+          EOF
+
+          cat > "$ROOT/RECOVERY/PETUNJUK_PEMULIHAN.txt" <<EOF
+          PEMULIHAN KE GITHUB BARU - WINDOWS 11
+          1. Ekstrak ZIP backup.
+          2. Jalankan VERIFY_BACKUP.ps1.
+          3. Buat repo kosong baru di GitHub.
+          4. Jalankan RESTORE_TO_NEW_GITHUB.ps1.
+          5. Isi kembali secret dari REQUIRED_SECRETS.txt secara manual; nilai secret tidak ada di backup.
+          6. Jalankan CI/build dan cocokkan commit/checksum.
+          EOF
+
+          cat > "$ROOT/RECOVERY/VERIFY_BACKUP.ps1" <<'EOF'
+          $ErrorActionPreference = 'Stop'
+          $Root = Split-Path -Parent $PSScriptRoot
+          $SumFile = Join-Path $Root 'SHA256SUMS.txt'
+          $bad = 0
+          Get-Content $SumFile | ForEach-Object {
+            if ($_ -match '^([0-9a-fA-F]{64})\s+\*(.+)$') {
+              $expected = $matches[1].ToLower(); $rel = $matches[2]; $path = Join-Path $Root $rel
+              if (-not (Test-Path $path)) { Write-Host "MISSING $rel"; $bad++; return }
+              $actual = (Get-FileHash -Algorithm SHA256 $path).Hash.ToLower()
+              if ($actual -ne $expected) { Write-Host "FAIL $rel"; $bad++ } else { Write-Host "OK   $rel" }
+            }
+          }
+          $bundle = Join-Path $Root 'GIT\AI-Automatic-Video-Composer-COMPLETE-GIT-HISTORY.bundle'
+          $tmp = Join-Path $env:TEMP ('aavc-bundle-verify-' + [guid]::NewGuid())
+          New-Item -ItemType Directory -Path $tmp | Out-Null
+          git -C $tmp init --quiet
+          git -C $tmp bundle verify $bundle
+          Remove-Item -Recurse -Force $tmp
+          if ($LASTEXITCODE -ne 0) { throw 'Git Bundle gagal diverifikasi.' }
+          if ($bad -gt 0) { throw "Checksum gagal: $bad file." }
+          Write-Host 'BACKUP VERIFIED OK'
+          EOF
+
+          cat > "$ROOT/RECOVERY/RESTORE_TO_NEW_GITHUB.ps1" <<EOF
+          param([string]\$NewRemote = '')
+          \$ErrorActionPreference = 'Stop'
+          \$Root = Split-Path -Parent \$PSScriptRoot
+          \$Bundle = Join-Path \$Root 'GIT\\${APP_NAME}-COMPLETE-GIT-HISTORY.bundle'
+          if ([string]::IsNullOrWhiteSpace(\$NewRemote)) { \$NewRemote = Read-Host 'Masukkan URL repo GitHub baru' }
+          \$Dest = Join-Path (Get-Location) '${APP_NAME}-RESTORED'
+          if (Test-Path \$Dest) { throw "Folder sudah ada: \$Dest" }
+          git clone \$Bundle \$Dest
+          if (\$LASTEXITCODE -ne 0) { throw 'Clone dari bundle gagal.' }
+          Push-Location \$Dest
+          try {
+            git remote remove origin 2>\$null
+            git remote add origin \$NewRemote
+            \$go = Read-Host 'Push semua branch dan tag? ketik YA'
+            if (\$go -eq 'YA') { git push origin --all; git push origin --tags }
+          } finally { Pop-Location }
+          EOF
+
+          cat > "$ROOT/RECOVERY/RESTORE_SOURCE_ONLY.ps1" <<EOF
+          \$Root = Split-Path -Parent \$PSScriptRoot
+          Expand-Archive -Path (Join-Path \$Root 'SOURCE\\${APP_NAME}-SOURCE-MAIN.zip') -DestinationPath (Join-Path (Get-Location) '${APP_NAME}-SOURCE-RESTORED') -Force
+          EOF
+
+          cat > "$ROOT/RECOVERY/RESTORE_ALL.ps1" <<'EOF'
+          Write-Host '[1] Restore Git history + source ke GitHub baru'
+          Write-Host '[2] Ekstrak source saja'
+          $choice = Read-Host 'Pilih 1 atau 2'
+          if ($choice -eq '1') { & "$PSScriptRoot\RESTORE_TO_NEW_GITHUB.ps1" }
+          elseif ($choice -eq '2') { & "$PSScriptRoot\RESTORE_SOURCE_ONLY.ps1" }
+          EOF
+
+          (
+            cd "$ROOT"
+            find . -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum -b | sed 's#\*\./#*#'
+          ) > "$ROOT/SHA256SUMS.txt"
+          (cd "$ROOT" && sha256sum -c SHA256SUMS.txt >/dev/null)
+
+          mkdir -p "$OUT/final"
+          (cd "$OUT" && zip -qr "final/${APP_NAME}-BACKUP-${STAMP}.zip" "${APP_NAME}-BACKUP-${STAMP}")
+          FINAL_ZIP="$OUT/final/${APP_NAME}-BACKUP-${STAMP}.zip"
+          test -s "$FINAL_ZIP"
+          sha256sum "$FINAL_ZIP" > "$OUT/final/FINAL_ZIP_SHA256.txt"
+          unzip -t "$FINAL_ZIP" > "$OUT/final/ZIP_TEST.txt"
+
+      - name: Upload verified backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AI-Automatic-Video-Composer-backup
+          path: ${{ runner.temp }}/backup-output/final/*
+          if-no-files-found: error
+          retention-days: 30
+
+# backup-trigger-wib: 2026-10-06 23:46:27 WIB

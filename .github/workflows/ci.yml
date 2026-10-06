@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12.10'
+          cache: 'pip'
+      - name: Reject committed secrets
+        run: python scripts/check_no_secrets.py
+      - name: Install pinned dependencies
+        run: |
+          python -m pip install "pip==26.2.1"
+          python -m pip install -r requirements.lock
+          python -m pip install -e .
+      - name: Verify dependency graph
+        run: python -m pip check
+      - name: Compile
+        run: python -m compileall -q src
+      - name: Ruff
+        run: python -m ruff check src tests
+      - name: Mypy
+        run: python -m mypy src/aavc
+      - name: Cheap tests
+        run: python -m pytest -m "not integration and not visual and not e2e" -q
+      - name: Capture STEP09 actual UI
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python scripts/capture_step09_ui.py
+      - name: Verify STEP09 screenshots
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem artifacts/step09_actual/*.png
+          if ($files.Count -ne 8) {
+            throw "Expected 8 STEP09 screenshots, found $($files.Count)"
+          }
+          $tooSmall = $files | Where-Object { $_.Length -lt 1000 }
+          if ($tooSmall) {
+            throw "One or more STEP09 screenshots are unexpectedly small"
+          }
+          $files | Select-Object Name, Length
+      - name: Upload STEP09 actual UI
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: step09-ui-actual
+          path: artifacts/step09_actual/*.png
+          if-no-files-found: error

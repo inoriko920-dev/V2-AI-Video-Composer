@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Builds / packaging
+build/
+dist/
+*.spec.bak
+*.zip
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Runtime / user data
+*.aavcproj.autosave
+cache/
+logs/
+recovery/
+user_data/
+
+# Secrets
+.env
+.env.*
+*.key
+*.pem
+secrets.*
+
+# Tool binary intentionally not committed at STEP 08
+tools/ffmpeg/*.exe

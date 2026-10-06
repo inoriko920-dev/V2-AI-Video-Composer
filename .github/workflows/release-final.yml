@@ -1,0 +1,86 @@
+name: Historical Verification — Final 0.1.0
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  final-release:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: release/0.1.0
+      - name: Resolve frozen release source
+        shell: pwsh
+        run: |
+          $commit = (git rev-parse HEAD).Trim()
+          Write-Host "Historical release source commit: $commit"
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12.10'
+          cache: 'pip'
+      - name: Install pinned dependencies
+        run: |
+          python -m pip install "pip==26.2.1"
+          python -m pip install -r requirements.lock
+          python -m pip install -e .
+      - name: Compile
+        run: python -m compileall -q src
+      - name: Ruff
+        run: python -m ruff check src tests
+      - name: Mypy
+        run: python -m mypy src/aavc
+      - name: Cheap tests
+        run: python -m pytest -m "not integration and not visual and not e2e" -q
+      - name: Capture STEP09 actual UI
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python scripts/capture_step09_ui.py --output artifacts/step09-ui
+      - name: Verify STEP09 screenshots
+        shell: pwsh
+        run: |
+          $count = (Get-ChildItem artifacts/step09-ui -Filter "*_ACTUAL.png" -File).Count
+          if ($count -lt 8) { throw "Expected at least 8 STEP09 screenshots, got $count" }
+      - name: Build Windows onedir
+        shell: pwsh
+        run: ./scripts/package.ps1
+      - name: Verify portable artifact
+        shell: pwsh
+        run: ./scripts/verify_portable.ps1
+      - name: Prepare historical final-release verification bundle
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force release | Out-Null
+          $portable = "release/AI-Automatic-Video-Composer-0.1.0-win64.zip"
+          $source = "release/AI-Automatic-Video-Composer-0.1.0-source.zip"
+          if (Test-Path $portable) { Remove-Item $portable -Force }
+          if (Test-Path $source) { Remove-Item $source -Force }
+          Compress-Archive -Path "dist/AI Automatic Video Composer/*" -DestinationPath $portable -CompressionLevel Optimal
+          git archive --format=zip --output=$source HEAD
+          Copy-Item RELEASE_NOTES_0.1.0.md release/RELEASE_NOTES_0.1.0.md
+          Copy-Item MAINTENANCE.md release/MAINTENANCE.md
+          Copy-Item BACKUP_AND_RECOVERY.md release/BACKUP_AND_RECOVERY.md
+          $commit = (git rev-parse HEAD).Trim()
+          "release_commit=$commit" | Set-Content release/BUILD_INFO.txt -Encoding utf8
+          "version=0.1.0" | Add-Content release/BUILD_INFO.txt -Encoding utf8
+          $files = @($portable, $source)
+          $sumLines = foreach ($file in $files) {
+            $hash = (Get-FileHash $file -Algorithm SHA256).Hash.ToLower()
+            "$hash  $([System.IO.Path]::GetFileName($file))"
+          }
+          $sumLines | Set-Content release/SHA256SUMS.txt -Encoding utf8
+          Get-ChildItem release | Select-Object Name, Length
+      - name: Upload historical final-release verification bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: AAVC-0.1.0-final-historical-verification
+          path: release/*
+          if-no-files-found: error
+          retention-days: 30
