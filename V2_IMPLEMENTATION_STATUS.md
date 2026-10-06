@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave F — ACTIVE: transactional manual editing + validation UX hardening**
+**Wave F — PASS / ready to merge: transactional manual editing + validation UX hardening**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -284,5 +284,20 @@ Forbidden in Wave F:
 ## Wave F rollback point
 `8b38e2896f537f187ca745d54b347bf2c018f15b`
 
+## Wave F evidence
+- Core implementation commit: `27dffd785b6f8ac308903c94f7dce780065f7a41`.
+- Test integration commit: `f6610706533558774c7202a1a4bc495baf11df63`.
+- Final tested implementation head: `44356c6b06830c9657f08571f64040d48cb82ef4`.
+- Pull request: `#7`.
+- Windows CI run `37530396553`: **PASS**.
+- CodeQL run `37530396523`: **PASS**.
+- Compile, Ruff, strict mypy, 589 cheap tests, STEP09 screenshot capture/verification, and artifact upload: **PASS**.
+- Multi-command transactions are atomic and one-step undo/redo.
+- Batch duration edits validate before mutation.
+- Scene animation copy/paste preserves keyframes, maps by asset slot, and protects locked targets.
+- Live validation detects missing configured media and unsupported keyframe tracks.
+- Validation Center routes to Relink / Buka Scene / Impor Media without redesigning the frozen reference layout.
+- Project schema, render compiler, runtime dependencies, and backend selection remain unchanged.
+
 ## Next exact action
-Run Wave F PR regression gates; merge only on PASS, then STOP before Wave G.
+Re-run CI/CodeQL on this evidence-only update, merge PR #7 only on PASS, then STOP before Wave G.
