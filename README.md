@@ -12,7 +12,8 @@ This repository is the **only writable development target for V2**.
 - Wave B: **COMPLETE** — backend capability contracts added; FFmpeg behavior/dependencies unchanged.
 - Wave C: **COMPLETE** — staged-output validation, render cancellation/progress, FFmpeg capability probe, and benchmark harness passed CI.
 - Wave D: **COMPLETE** — schema v3 keyframe data model and backward migration passed CI; existing effects remain canonical.
-- Next explicit step: **Wave E — new motion/effect implementations in small capability groups with preview/final parity tests**.
+- Wave E: **ACTIVE** — foundational X/Y position, scale, and rotation keyframes under preview/final parity gate.
+- Next gate: Wave E Windows CI + CodeQL; Wave F must not start before PASS/merge.
 
 The historical README copied from the legacy repository is preserved below as baseline documentation.
 

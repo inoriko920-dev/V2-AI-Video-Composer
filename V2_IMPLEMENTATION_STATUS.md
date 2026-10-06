@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave D — COMPLETE / MERGED TO MAIN: animation/keyframe data model + schema v3 migration; current effects preserved**
+**Wave E — ACTIVE: foundational keyframe motion with preview/final parity**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -190,7 +190,42 @@ Forbidden in Wave D:
 - No runtime dependency, new visual effect, alternate backend, timeline redesign, or UI redesign was introduced.
 - Legacy repository remained read-only.
 
-## Next exact action
-**STOP after Wave D.**
+## Wave E scope
+Production-ready capability group:
+- position_x / position_y normalized keyframe motion;
+- scale keyframe motion;
+- rotation_degrees keyframe motion;
+- hold + linear interpolation;
+- linear / ease_in / ease_out / ease_in_out easing;
+- additive composition with current legacy enter/exit effects.
 
-On the next explicit user instruction to continue, begin **Wave E — new motion/effect implementations in small capability groups with preview/final parity tests**.
+Safety limits:
+- position: -0.10 .. +0.10 frame;
+- scale: 0.75 .. 1.50;
+- rotation: -30 .. +30 degrees.
+
+Fail-soft, not production-ready in Wave E:
+- opacity/crop/blur/shadow/glow/mask_progress keyframe tracks;
+- bezier interpolation;
+- velocity and overshoot parameters.
+
+Forbidden in Wave E:
+- no UI redesign or new animation controls;
+- no new runtime dependency or optional backend;
+- no project-schema change beyond existing v3;
+- no timeline/manual-editing work;
+- no silent support claims for tracks without preview + final compiler parity.
+
+## Wave E acceptance criteria
+1. Supported transform tracks evaluate identically in preview intent and FFmpeg expression semantics.
+2. Supported keyframes work even when legacy effect intensity is zero.
+3. Legacy effects remain unchanged and combine additively when keyframes coexist.
+4. Unsupported keyframe tracks are ignored with explicit preflight warning.
+5. Safety bounds clamp preview and final render consistently.
+6. Windows CI, strict mypy, full cheap regression tests, screenshot gate, and CodeQL pass.
+
+## Wave E rollback point
+`8afb9c0d1ecfc4f16c3f41522a84014273cf7aa0`
+
+## Next exact action
+Run Wave E PR regression gates; merge only on PASS, then STOP before Wave F.

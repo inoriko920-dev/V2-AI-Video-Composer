@@ -122,3 +122,23 @@ PR #5 was merged to `main` at `358f488ab6fe07366794063a2c5140b2ac4a4ba5`. Final 
 Windows CI `37523013810` PASS and CodeQL `37523013790` PASS. Keyframe tracks
 remain persisted-only in Wave D; preview and FFmpeg consumption are deliberately
 deferred to Wave E so the existing effect behavior remains the reference baseline.
+
+
+## V2 Wave E — Foundational Keyframe Motion
+
+Status: **IMPLEMENTATION IN PROGRESS**
+
+Wave E activates the first schema-v3 keyframe capability group in both preview and
+the FFmpeg final-render compiler: normalized X/Y position, scale, and rotation.
+
+Production support is intentionally narrow:
+- hold and linear interpolation;
+- linear/ease-in/ease-out/ease-in-out easing;
+- conservative shared safety clamps: position +/-10% frame, scale 0.75-1.50,
+  rotation +/-30 degrees;
+- additive composition with existing enter/exit effect behavior.
+
+Schema-v3 tracks outside this production group remain persisted but fail-soft with
+an explicit preflight warning. Bezier, velocity, overshoot, opacity, crop, blur,
+shadow, glow, and mask/reveal keyframes are not claimed as render-ready in Wave E.
+No UI or project schema change is introduced.
