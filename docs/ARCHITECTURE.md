@@ -152,3 +152,12 @@ tests passed (1 deselected). Foundational keyframe X/Y position, scale, and
 rotation are now consumed by both preview intent and the FFmpeg final compiler,
 while unsupported schema-v3 tracks remain fail-soft with explicit preflight
 warnings.
+
+
+### Wave E closure
+
+PR #6 was merged to `main` at `02d7c452f3a797d41cac7dd27c34a556601d2cea`. Final PR-head validation:
+Windows CI `37527374856` PASS and CodeQL `37527374907` PASS, with 580
+cheap regression tests passing. Foundational position X/Y, scale, and rotation
+keyframes now have matched preview intent and FFmpeg compiler support; unsupported
+schema-v3 tracks remain fail-soft and are not advertised as production-ready.

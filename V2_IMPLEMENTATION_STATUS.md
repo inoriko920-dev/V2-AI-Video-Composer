@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave E — PASS / ready to merge: foundational keyframe motion with preview/final parity**
+**Wave E — COMPLETE / MERGED TO MAIN: foundational keyframe motion with preview/final parity**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -240,5 +240,20 @@ Forbidden in Wave E:
 - Unsupported keyframe properties/interpolation parameters remain fail-soft with preflight warnings.
 - Dependency manifests, project schema v3, timeline, and UI remain unchanged.
 
+## Wave E closure
+- PR #6 merged to `main`.
+- Merge/squash commit: `02d7c452f3a797d41cac7dd27c34a556601d2cea`.
+- Final PR-head Windows CI run: `37527374856` — **PASS**.
+- Final PR-head CodeQL run: `37527374907` — **PASS**.
+- 580 cheap regression tests passed; 1 deselected.
+- position_x / position_y, scale, and rotation_degrees keyframes now run in preview + FFmpeg final compiler.
+- Shared safety limits and supported easing/interpolation are consistent across preview/final intent.
+- Legacy enter/exit effects remain unchanged when no active keyframe track exists and combine additively when tracks coexist.
+- Unsupported schema-v3 tracks remain persisted and fail-soft with explicit preflight warnings.
+- Project schema remains v3; dependency manifests, timeline behavior, and UI layout remain unchanged.
+- Legacy repository remained read-only.
+
 ## Next exact action
-Re-run CI/CodeQL on this evidence-only update, merge PR #6 only on PASS, then STOP before Wave F.
+**STOP after Wave E.**
+
+On the next explicit user instruction to continue, begin **Wave F — timeline/manual-editing improvements and validation UX**.

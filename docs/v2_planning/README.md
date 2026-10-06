@@ -18,7 +18,7 @@ Read V2_MASTER_PLANNING_INDEX.docx, then STEP 00 through STEP 13 in order. STEP 
 
 **PASS — 2026-10-07.** All STEP 00–13 planning DOCX files and the master index are present and reviewed, and the user explicitly instructed the project to continue. Implementation must still follow STEP 13 one wave at a time.
 
-Wave A, Wave B, Wave C, and Wave D are **COMPLETE** with Windows CI and CodeQL PASS. Wave D added project schema v3, explicit v1 -> v2 -> v3 migration, backend-neutral keyframe storage, and pre-migration backup protection while preserving current effect compiler semantics. The next explicit implementation step is **Wave E — new motion/effect implementations in small capability groups with preview/final parity tests**.
+Wave A through Wave E are **COMPLETE** with Windows CI and CodeQL PASS. Wave E activated the first production-ready schema-v3 keyframe capability group (normalized X/Y position, scale, rotation) in preview and FFmpeg final render with shared safety limits, easing, additive legacy behavior, and explicit fallback warnings. The next explicit implementation step is **Wave F — timeline/manual-editing improvements and validation UX**.
 
 ## Mature-component direction
 
