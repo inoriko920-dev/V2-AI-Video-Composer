@@ -22,17 +22,20 @@ def _project():
     )
 
 
+def _project_with_compatible_target():
+    project = _project()
+    source = next(scene for scene in project.scenes if len(scene.asset_ids) == 2)
+    target = replace(
+        source,
+        scene_number=max(scene.scene_number for scene in project.scenes) + 1,
+    )
+    return replace(project, scenes=(*project.scenes, target)), source, target
+
+
 def test_copy_scene_animations_maps_by_asset_slot_and_is_undoable(
     tmp_path: Path,
 ) -> None:
-    project = _project()
-    source = next(scene for scene in project.scenes if len(scene.asset_ids) == 2)
-    target = next(
-        scene
-        for scene in project.scenes
-        if scene.scene_number != source.scene_number
-        and len(scene.asset_ids) == len(source.asset_ids)
-    )
+    project, source, target = _project_with_compatible_target()
     track = AnimationKeyframeTrack(
         property_name="position_x",
         keyframes=(
@@ -102,14 +105,7 @@ def test_copy_scene_animations_rejects_slot_count_mismatch() -> None:
 def test_copy_scene_animations_respects_locked_target_atomically(
     tmp_path: Path,
 ) -> None:
-    project = _project()
-    source = next(scene for scene in project.scenes if len(scene.asset_ids) == 2)
-    target = next(
-        scene
-        for scene in project.scenes
-        if scene.scene_number != source.scene_number
-        and len(scene.asset_ids) == 2
-    )
+    project, source, target = _project_with_compatible_target()
     source_assignment = AnimationAssignment(
         source.scene_number,
         source.asset_ids[0],
