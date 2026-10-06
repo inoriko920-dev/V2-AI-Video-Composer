@@ -161,3 +161,25 @@ Windows CI `37527374856` PASS and CodeQL `37527374907` PASS, with 580
 cheap regression tests passing. Foundational position X/Y, scale, and rotation
 keyframes now have matched preview intent and FFmpeg compiler support; unsupported
 schema-v3 tracks remain fail-soft and are not advertised as production-ready.
+
+
+## V2 Wave F — Transactional Manual Editing and Validation UX
+
+Status: **IMPLEMENTATION IN PROGRESS**
+
+Wave F keeps the existing timeline architecture and adds bounded manual-editing
+primitives instead of replacing it with a generic NLE.
+
+- `ProjectTransaction` groups multiple immutable commands into one history entry;
+- `SetSceneDurationsBatch` validates all targets before any state change;
+- `CopySceneAnimations` maps assignments by asset slot, preserves keyframe tracks,
+  and respects locked target assignments;
+- the Edit menu exposes Undo/Redo plus Scene animation copy/paste using the current
+  selected Scene;
+- live validation now detects configured media that disappeared from disk and
+  schema-v3 keyframe tracks that are not production-ready;
+- Validation Center actions can relink media, open the affected Scene, or reopen
+  media import without changing the frozen reference dialog layout.
+
+No project schema, render compiler, backend dependency, or timeline storage model is
+changed in Wave F.
