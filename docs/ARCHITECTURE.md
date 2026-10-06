@@ -236,3 +236,13 @@ PR #8 validation on implementation head `a1934c277736a90344eb77733d52a8ea2ba018e
 with 1 deselected. Gemini Auto now uses cancellable background job orchestration,
 all configured slots can participate in bounded one-pass failover up to 100, and
 provider/key-pool diagnostics remain secret-free.
+
+
+### Wave G evidence
+
+PR #8 validation on implementation head `d5c7f4705699b993218672fd161a3d16d663fcdd`: Windows CI
+`37532793976` PASS and CodeQL `37532794112` PASS. All 596 cheap regression
+tests passed (1 deselected). Gemini Auto now uses the canonical background-job path
+with cooperative cancellation/progress; runtime provider/key-pool diagnostics remain
+secret-free and can classify available/cooldown/disabled entries across the existing
+100-slot credential pool.
