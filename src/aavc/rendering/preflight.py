@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 
+from aavc.animation import keyframe_track_support_reason
 from aavc.animation.compiler import is_native_visual_effect
 
 from .render_plan import RenderPlan
@@ -97,11 +98,24 @@ def validate_render_plan(plan: RenderPlan) -> PreflightReport:
                 )
             )
         for assignment in scene.animations:
-            if assignment is None or assignment.intensity <= 0:
+            if assignment is None:
                 continue
-            for effect in {assignment.enter_effect, assignment.exit_effect}:
-                if not is_native_visual_effect(effect):
-                    fallback_effects.add(effect)
+            if assignment.intensity > 0:
+                for effect in {assignment.enter_effect, assignment.exit_effect}:
+                    if not is_native_visual_effect(effect):
+                        fallback_effects.add(effect)
+            for track in assignment.keyframe_tracks:
+                reason = keyframe_track_support_reason(track)
+                if reason is not None:
+                    issues.append(
+                        PreflightIssue(
+                            "KEYFRAME_TRACK_FALLBACK",
+                            PreflightSeverity.WARNING,
+                            "Track keyframe "
+                            f"{track.property_name} pada Scene {scene.scene_number}/"
+                            f"{assignment.asset_id} diabaikan: {reason}",
+                        )
+                    )
         for asset_path in scene.asset_paths:
             path = Path(asset_path)
             if not path.is_file():

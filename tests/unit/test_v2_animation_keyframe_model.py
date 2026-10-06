@@ -53,7 +53,7 @@ def test_legacy_assignment_defaults_to_no_keyframe_tracks() -> None:
     assert assignment.keyframe_tracks == ()
 
 
-def test_wave_d_keyframes_do_not_change_existing_ffmpeg_effect_semantics(
+def test_wave_e_keeps_legacy_effect_semantics_when_tracks_are_absent(
     tmp_path: Path,
 ) -> None:
     project = _project()
@@ -65,28 +65,23 @@ def test_wave_d_keyframes_do_not_change_existing_ffmpeg_effect_semantics(
         exit_effect="Fade",
         intensity=1.25,
     )
-    track = AnimationKeyframeTrack(
-        property_name="scale",
-        keyframes=(
-            AnimationKeyframe(time=0.0, value=0.9, easing="ease_in"),
-            AnimationKeyframe(time=1.0, value=1.0, easing="ease_out"),
-        ),
-    )
-    with_keyframes = replace(legacy, keyframe_tracks=(track,))
+    same_legacy = replace(legacy, keyframe_tracks=())
 
     baseline = replace(project, animations=(legacy,))
-    v2_model = replace(project, animations=(with_keyframes,))
+    candidate = replace(project, animations=(same_legacy,))
 
     baseline_command = build_ffmpeg_command(
         build_render_plan(baseline, tmp_path / "baseline.mp4")
     )
-    keyframe_command = build_ffmpeg_command(
-        build_render_plan(v2_model, tmp_path / "keyframe.mp4")
+    candidate_command = build_ffmpeg_command(
+        build_render_plan(candidate, tmp_path / "candidate.mp4")
     )
 
     baseline_graph = baseline_command[baseline_command.index("-filter_complex") + 1]
-    keyframe_graph = keyframe_command[keyframe_command.index("-filter_complex") + 1]
-    assert keyframe_graph == baseline_graph
+    candidate_graph = candidate_command[candidate_command.index("-filter_complex") + 1]
+    assert candidate_graph == baseline_graph
+    assert "W*0.075000" in baseline_graph
+    assert "fade=t=out:st=2.750000:d=0.250000:alpha=1" in baseline_graph
 
     baseline_xy = compile_motion_overlay_position(
         base_x="(W-w)/2",
@@ -94,10 +89,10 @@ def test_wave_d_keyframes_do_not_change_existing_ffmpeg_effect_semantics(
         assignment=legacy,
         duration_seconds=3.0,
     )
-    keyframe_xy = compile_motion_overlay_position(
+    candidate_xy = compile_motion_overlay_position(
         base_x="(W-w)/2",
         base_y="(H-h)/2",
-        assignment=with_keyframes,
+        assignment=same_legacy,
         duration_seconds=3.0,
     )
-    assert keyframe_xy == baseline_xy
+    assert candidate_xy == baseline_xy

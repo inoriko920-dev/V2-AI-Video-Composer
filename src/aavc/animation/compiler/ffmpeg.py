@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+from aavc.animation.keyframes import (
+    KEYFRAME_PROPERTY_LIMITS,
+    find_keyframe_track,
+    is_supported_keyframe_track,
+)
+from aavc.domain.animation import AnimationKeyframeTrack
 from aavc.domain.project.models import AnimationAssignment
 
 _NATIVE_VISUAL_EFFECT_CAPABILITIES = (
@@ -60,14 +66,34 @@ def is_native_visual_effect(name: str) -> bool:
     return name in NATIVE_VISUAL_EFFECTS
 
 
+def _has_supported_keyframe(
+    assignment: AnimationAssignment | None,
+    *property_names: str,
+) -> bool:
+    if assignment is None:
+        return False
+    return any(
+        (
+            track := find_keyframe_track(assignment, property_name)
+        ) is not None
+        and is_supported_keyframe_track(track)
+        for property_name in property_names
+    )
+
+
 def assignment_has_native_motion(
     assignment: AnimationAssignment | None,
 ) -> bool:
-    if assignment is None or assignment.intensity <= 0:
+    if assignment is None:
         return False
-    return (
+    legacy = assignment.intensity > 0 and (
         is_native_visual_motion_effect(assignment.enter_effect)
         or is_native_visual_motion_effect(assignment.exit_effect)
+    )
+    return legacy or _has_supported_keyframe(
+        assignment,
+        "position_x",
+        "position_y",
     )
 
 
@@ -85,22 +111,27 @@ def assignment_has_native_alpha(
 def assignment_has_native_scale(
     assignment: AnimationAssignment | None,
 ) -> bool:
-    if assignment is None or assignment.intensity <= 0:
+    if assignment is None:
         return False
-    return (
+    legacy = assignment.intensity > 0 and (
         is_native_visual_scale_effect(assignment.enter_effect)
         or is_native_visual_scale_effect(assignment.exit_effect)
     )
+    return legacy or _has_supported_keyframe(assignment, "scale")
 
 
 def assignment_has_native_rotation(
     assignment: AnimationAssignment | None,
 ) -> bool:
-    if assignment is None or assignment.intensity <= 0:
+    if assignment is None:
         return False
-    return (
+    legacy = assignment.intensity > 0 and (
         is_native_visual_rotation_effect(assignment.enter_effect)
         or is_native_visual_rotation_effect(assignment.exit_effect)
+    )
+    return legacy or _has_supported_keyframe(
+        assignment,
+        "rotation_degrees",
     )
 
 
@@ -125,6 +156,97 @@ def compile_native_alpha_filters(
             f"fade=t=out:st={exit_start:.6f}:d={window:.6f}:alpha=1"
         )
     return tuple(filters)
+
+
+def _number(value: float) -> str:
+    return f"{float(value):.6f}"
+
+
+def _easing_expression(easing: str, fraction: str) -> str:
+    if easing == "ease_in":
+        return f"({fraction})*({fraction})"
+    if easing == "ease_out":
+        return f"1-(1-({fraction}))*(1-({fraction}))"
+    if easing == "ease_in_out":
+        return (
+            f"if(lt(({fraction}),0.5),"
+            f"2*({fraction})*({fraction}),"
+            f"1-pow(-2*({fraction})+2,2)/2)"
+        )
+    return fraction
+
+
+def _segment_expression(
+    start_value: float,
+    end_value: float,
+    *,
+    start_seconds: float,
+    end_seconds: float,
+    interpolation: str,
+    easing: str,
+) -> str:
+    if interpolation == "hold":
+        return _number(start_value)
+    span = max(0.000001, end_seconds - start_seconds)
+    fraction = f"(t-{_number(start_seconds)})/{_number(span)}"
+    eased = _easing_expression(easing, fraction)
+    delta = end_value - start_value
+    return f"{_number(start_value)}+({_number(delta)})*({eased})"
+
+
+def _compile_keyframe_track_expression(
+    track: AnimationKeyframeTrack,
+    *,
+    duration_seconds: float,
+) -> str | None:
+    if not is_supported_keyframe_track(track):
+        return None
+
+    duration = max(0.001, float(duration_seconds))
+    points = track.keyframes
+    expression = _number(points[-1].value)
+    for start, end in reversed(tuple(zip(points, points[1:], strict=False))):
+        segment = _segment_expression(
+            start.value,
+            end.value,
+            start_seconds=start.time * duration,
+            end_seconds=end.time * duration,
+            interpolation=start.interpolation,
+            easing=start.easing,
+        )
+        expression = (
+            f"if(lt(t,{_number(end.time * duration)}),"
+            f"{segment},{expression})"
+        )
+    if points[0].time > 0:
+        expression = (
+            f"if(lt(t,{_number(points[0].time * duration)}),"
+            f"{_number(points[0].value)},{expression})"
+        )
+
+    limits = KEYFRAME_PROPERTY_LIMITS.get(track.property_name)
+    if limits is None:
+        return expression
+    lower, upper = limits
+    return (
+        f"min({_number(upper)},max({_number(lower)},"
+        f"({expression})))"
+    )
+
+
+def compile_keyframe_value_expression(
+    assignment: AnimationAssignment | None,
+    property_name: str,
+    *,
+    duration_seconds: float,
+) -> str | None:
+    track = find_keyframe_track(assignment, property_name)
+    if track is None:
+        return None
+    return _compile_keyframe_track_expression(
+        track,
+        duration_seconds=duration_seconds,
+    )
 
 
 def _scale_floor(effect: str) -> float | None:
@@ -186,10 +308,25 @@ def compile_native_scale_filter(
     if not assignment_has_native_scale(assignment) or assignment is None:
         return None
 
-    factor = _native_scale_factor(
+    factors: list[str] = []
+    if assignment.intensity > 0 and (
+        is_native_visual_scale_effect(assignment.enter_effect)
+        or is_native_visual_scale_effect(assignment.exit_effect)
+    ):
+        factors.append(
+            _native_scale_factor(
+                assignment,
+                duration_seconds=duration_seconds,
+            )
+        )
+    keyframe_factor = compile_keyframe_value_expression(
         assignment,
+        "scale",
         duration_seconds=duration_seconds,
     )
+    if keyframe_factor is not None:
+        factors.append(keyframe_factor)
+    factor = "*".join(f"({item})" for item in factors) if factors else "1"
     width = f"max(2,trunc(iw*({factor})/2)*2)"
     return f"scale=w='{width}':h=-2:eval=frame"
 
@@ -229,19 +366,28 @@ def compile_native_rotation_filter(
     window = min(0.25, duration / 2.0)
     intensity = max(0.0, min(2.0, float(assignment.intensity)))
     terms: list[str] = []
-    for effect, entering in (
-        (assignment.enter_effect, True),
-        (assignment.exit_effect, False),
-    ):
-        term = _rotation_term(
-            effect,
-            entering=entering,
-            duration_seconds=duration,
-            window_seconds=window,
-            intensity=intensity,
-        )
-        if term is not None:
-            terms.append(term)
+    if assignment.intensity > 0:
+        for effect, entering in (
+            (assignment.enter_effect, True),
+            (assignment.exit_effect, False),
+        ):
+            term = _rotation_term(
+                effect,
+                entering=entering,
+                duration_seconds=duration,
+                window_seconds=window,
+                intensity=intensity,
+            )
+            if term is not None:
+                terms.append(term)
+
+    keyframe_degrees = compile_keyframe_value_expression(
+        assignment,
+        "rotation_degrees",
+        duration_seconds=duration,
+    )
+    if keyframe_degrees is not None:
+        terms.append(f"({keyframe_degrees})*0.017453293")
 
     if not terms:
         return None
@@ -323,23 +469,39 @@ def compile_motion_overlay_position(
     x_terms: list[str] = []
     y_terms: list[str] = []
 
-    for effect, entering in (
-        (assignment.enter_effect, True),
-        (assignment.exit_effect, False),
-    ):
-        compiled = _motion_term(
-            effect,
-            entering=entering,
-            duration_seconds=duration,
-            window_seconds=window,
-            intensity=intensity,
-        )
-        if compiled is None:
-            continue
-        axis, expression = compiled
-        if axis == "x":
-            x_terms.append(expression)
-        else:
-            y_terms.append(expression)
+    if assignment.intensity > 0:
+        for effect, entering in (
+            (assignment.enter_effect, True),
+            (assignment.exit_effect, False),
+        ):
+            compiled = _motion_term(
+                effect,
+                entering=entering,
+                duration_seconds=duration,
+                window_seconds=window,
+                intensity=intensity,
+            )
+            if compiled is None:
+                continue
+            axis, expression = compiled
+            if axis == "x":
+                x_terms.append(expression)
+            else:
+                y_terms.append(expression)
+
+    x_keyframe = compile_keyframe_value_expression(
+        assignment,
+        "position_x",
+        duration_seconds=duration,
+    )
+    y_keyframe = compile_keyframe_value_expression(
+        assignment,
+        "position_y",
+        duration_seconds=duration,
+    )
+    if x_keyframe is not None:
+        x_terms.append(f"W*({x_keyframe})")
+    if y_keyframe is not None:
+        y_terms.append(f"H*({y_keyframe})")
 
     return _combine(base_x, x_terms), _combine(base_y, y_terms)
