@@ -1,5 +1,5 @@
-from pathlib import Path
 import tomllib
+from pathlib import Path
 
 from aavc import __version__
 from aavc.application.services.project_session import ProjectSession
