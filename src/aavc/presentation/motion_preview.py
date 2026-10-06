@@ -95,7 +95,7 @@ def native_visual_preview_opacity(
 ) -> float:
     """Evaluate native alpha using the same timing window as FFmpeg."""
 
-    if assignment is None:
+    if assignment is None or assignment.intensity <= 0:
         return 1.0
 
     duration = max(0.001, float(duration_seconds))
@@ -127,7 +127,7 @@ def native_visual_preview_scale(
 ) -> float:
     """Evaluate native scale using the same timing window as FFmpeg."""
 
-    if assignment is None or assignment.intensity <= 0:
+    if assignment is None:
         return 1.0
 
     duration = max(0.001, float(duration_seconds))
