@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave G — ACTIVE: AI job orchestration + key-pool health/cancellation hardening**
+**Wave G — PASS / ready to merge: AI job orchestration + key-pool health/cancellation hardening**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -349,5 +349,19 @@ Forbidden in Wave G:
 ## Wave G rollback point
 `0018ac66ce60aeda5215ae449a911ee10ae62bcc`
 
+## Wave G evidence
+- Provider diagnostics/cancellation commit: `ddfc0eaf667aec70c1cc4a13b168f387ca359c07`.
+- Background Auto (AI) integration commit: `122dc4241aabde8d3832db6cb6d4d0c40c16c239`.
+- Secret redaction hardening commit: `9e802f6e0f17937b04b776741c118bd23d4d0283`.
+- Pull request: `#8`.
+- Windows CI run `37532793976`: **PASS**.
+- CodeQL run `37532794112`: **PASS**.
+- Compile, Ruff, strict mypy, 596 cheap tests, STEP09 screenshot capture/verification, and artifact upload: **PASS**.
+- One Gemini job can rotate through all configured slots up to 100, each slot at most once.
+- Cancellation stops failover before another key attempt.
+- Runtime diagnostics expose only secret-free key IDs/status/outcomes.
+- Active credential text is explicitly redacted from provider errors.
+- Existing strict AI response validation, locked-target protection, and stale-project rejection remain intact.
+
 ## Next exact action
-Run Wave G PR regression gates; merge only on PASS, then STOP before Wave H.
+Re-run CI/CodeQL on this evidence-only update, merge PR #8 only on PASS, then STOP before Wave H.

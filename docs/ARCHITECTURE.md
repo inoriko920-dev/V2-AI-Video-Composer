@@ -206,7 +206,7 @@ repair/navigation actions without changing the project schema or render backend.
 
 ## V2 Wave G — AI Job and Key-Pool Hardening
 
-Status: **IMPLEMENTATION IN PROGRESS**
+Status: **PASS — WAVE G IMPLEMENTED**
 
 Wave G keeps Gemini as the only configured AI provider and hardens the existing
 provider boundary rather than expanding product scope.
@@ -227,3 +227,12 @@ provider boundary rather than expanding product scope.
 
 No project schema, render path, timeline model, animation compiler, provider set, or
 credential storage mechanism changes in Wave G.
+
+
+### Wave G evidence
+
+PR #8 validation on implementation head `a1934c277736a90344eb77733d52a8ea2ba018e8`: Windows CI
+`37532793976` PASS and CodeQL `37532794112` PASS. 596 cheap tests passed
+with 1 deselected. Gemini Auto now uses cancellable background job orchestration,
+all configured slots can participate in bounded one-pass failover up to 100, and
+provider/key-pool diagnostics remain secret-free.
