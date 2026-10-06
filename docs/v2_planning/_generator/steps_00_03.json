@@ -1,0 +1,182 @@
+[
+  [
+    "00",
+    "Baseline Copy, Preservation, and Migration Verification",
+    {
+      "purpose": "Establish an immutable V2 starting point copied exactly from the original repository, while defining the rule that the original repository is read-only for the rest of the project.",
+      "evidence": [
+        "Original repository: inoriko920-dev/AI-Automatic-Video-Composer; source branch main.",
+        "V2 repository: inoriko920-dev/V2-AI-Video-Composer.",
+        "Source main commit inspected during migration: 7d77fc9f724d359c7da6c4796dffce5104740952.",
+        "Source root tree SHA: 7abd82b4a69428a0b1bd25a8d992f402cb0a2ff8.",
+        "V2 import commit created from an identical root tree SHA: 7abd82b4a69428a0b1bd25a8d992f402cb0a2ff8.",
+        "Source snapshot contains 351 blobs, 68 trees, 419 total tree entries, approximately 1.16 MB of tracked blob content."
+      ],
+      "decisions": [
+        "The original repository is now archival/reference-only. No feature, experiment, branch, refactor, dependency upgrade, or test-only change is allowed there.",
+        "All V2 work must occur only in V2-AI-Video-Composer.",
+        "The imported snapshot is the canonical V2 baseline. Any later V2 change must be traceable to a V2 STEP and commit.",
+        "Planning documentation must exist before major code changes begin."
+      ],
+      "tasks": [
+        "Record baseline commit, tree SHA, dependency pins, release state, CI state, and Windows packaging state.",
+        "Create a V2-only planning/documentation directory and a handoff index for future AI sessions.",
+        "Define a preservation check that can prove the old repository has not been used as a development target.",
+        "Define a reproducible diff command/process comparing V2 baseline against the original snapshot.",
+        "Freeze the initial V2 compatibility target: existing project files, current UI behavior, current render output semantics, and current user workflows must remain available unless a later approved plan explicitly changes them."
+      ],
+      "gate": [
+        "PASS only when V2 baseline root tree matches the original source root tree.",
+        "PASS only when the original repository receives no further V2 development writes.",
+        "PASS only when later AI sessions can identify the exact original baseline without guessing."
+      ],
+      "deliverables": [
+        "Exact V2 source snapshot",
+        "Baseline verification record",
+        "Read-only legacy rule",
+        "Planning index entry"
+      ],
+      "risks": [
+        "Accidental edits to the original repo",
+        "Losing provenance between V1 and V2",
+        "Starting implementation before planning is complete"
+      ]
+    }
+  ],
+  [
+    "01",
+    "Legacy Repository Forensic Audit and V2 Scope",
+    {
+      "purpose": "Understand what is already mature, what is fragile, and what should be preserved so V2 improves stability instead of re-implementing working features.",
+      "evidence": [
+        "Current stack: Python 3.12 x64, PySide6/Qt Widgets, FFmpeg/ffprobe CLI, ASS/libass subtitle pipeline, PyInstaller onedir, GitHub Actions.",
+        "Architecture already enforces presentation -> application -> domain with infrastructure adapters.",
+        "Project state is versioned JSON with atomic save and validation; schema version is currently 2.",
+        "Runtime already includes background JobManager, cancellation support, atomic render output, recovery snapshots, secure Gemini key storage, SRT hardening, and malformed input boundaries.",
+        "Current animation registry exposes 21 named effects, while the final FFmpeg-native compiler currently provides render-backed motion/alpha/scale/rotation support for a smaller subset.",
+        "Previous Windows verification reports hundreds of automated tests plus real FFmpeg and portable build validation."
+      ],
+      "decisions": [
+        "Treat existing V2 baseline as a mature product, not a prototype.",
+        "Prefer incremental replacement behind interfaces over whole-system rewrites.",
+        "Preserve ProjectState compatibility and current user workflows during early V2 waves.",
+        "Separate 'registry-visible effect' from 'fully render-backed effect' in planning so unsupported/partial behaviors are not marketed as mature."
+      ],
+      "tasks": [
+        "Inventory modules by responsibility: presentation, application/use-cases, domain, render planning, animation compilation, persistence, jobs, providers, paths/tools, packaging, tests.",
+        "Classify each area as KEEP, HARDEN, REPLACE-BEHIND-ADAPTER, OPTIONAL-SPIKE, or RETIRE.",
+        "Create a feature compatibility matrix for current release behavior versus proposed V2 behavior.",
+        "Identify hotspots: large presentation modules, preview/final-render parity boundaries, effect registry/compiler mismatch, media process orchestration, project migration, packaging dependencies.",
+        "Identify existing tests that become non-regression gates for V2.",
+        "List user-visible contracts that cannot regress: project open/save, scene import, asset binding/relink, subtitles, narration, animation assignments, Gemini Auto, render, portable operation."
+      ],
+      "gate": [
+        "PASS when every major subsystem has an explicit KEEP/HARDEN/REPLACE/SPIKE/RETIRE decision.",
+        "PASS when current user-visible contracts are listed and mapped to regression tests.",
+        "PASS when no major V2 redesign is proposed without naming the existing behavior it replaces."
+      ],
+      "deliverables": [
+        "Subsystem audit matrix",
+        "Compatibility matrix",
+        "Technical-debt register",
+        "V2 scope boundaries"
+      ],
+      "risks": [
+        "Rewriting stable code for novelty",
+        "Hidden coupling in presentation layer",
+        "Preview/render behavior divergence",
+        "Breaking existing .aavcproj files"
+      ]
+    }
+  ],
+  [
+    "02",
+    "Mature Foundation and Component Research",
+    {
+      "purpose": "Select mature external components only where they measurably improve stability, capability, or maintainability without forcing a license or packaging regression.",
+      "evidence": [
+        "OpenShot/libopenshot latest inspected release: v1.0.1 (2026-09-27), LGPLv3; mature timeline/effects/media library with recent stability and FFmpeg-related work.",
+        "MLT latest inspected release: v7.42.0 (2026-10-03), LGPLv2.1; mature multitrack multimedia framework used by video editors.",
+        "PyAV latest inspected release: v19.0.1 (2026-10-03), BSD-style license; Pythonic FFmpeg binding with Windows wheels and Python 3.12 support.",
+        "OpenTimelineIO is Apache-2.0 and describes itself as a mature editorial interchange framework; useful for timeline data/interchange, not a render engine.",
+        "OpenShot/openshot-qt is GPLv3; its application/UI source must not be copied into an MIT-style proprietary-compatible codebase without deliberately accepting GPL obligations."
+      ],
+      "decisions": [
+        "Keep FFmpeg CLI as the proven baseline/fallback render path during V2 migration.",
+        "Do not copy openshot-qt application code or UI code.",
+        "Evaluate libopenshot as an optional render/effects adapter via a contained spike, with legal/packaging review before distribution.",
+        "Evaluate MLT as a secondary alternative if libopenshot does not satisfy Windows packaging, deterministic output, or licensing requirements.",
+        "Evaluate PyAV for in-process probe/frame/metadata/preview tasks where CLI orchestration is cumbersome; do not assume it should replace FFmpeg CLI final rendering.",
+        "Use OpenTimelineIO only if V2's richer timeline/interchange requirements justify it; do not add it merely because it is mature."
+      ],
+      "tasks": [
+        "Create a decision matrix: stability, Windows support, Python integration, deterministic rendering, preview capability, effects, keyframes, multitrack, packaging weight, licensing, maintenance activity, testability.",
+        "Build isolated proof-of-concept spikes on V2 branches only; each spike must be removable without touching domain contracts.",
+        "Measure cold start, preview latency, 1080p render time, memory use, failure behavior, cancellation, and packaging size.",
+        "Review redistribution obligations for LGPL libraries and FFmpeg configurations before deciding final bundle policy.",
+        "Document reasons for rejection as well as acceptance, so later AI sessions do not repeatedly re-evaluate the same candidates."
+      ],
+      "gate": [
+        "PASS when one primary media strategy and one fallback strategy are selected with evidence.",
+        "PASS when no GPL application code has been copied into V2.",
+        "PASS when packaging/license obligations are documented before dependency adoption."
+      ],
+      "deliverables": [
+        "Mature component scorecard",
+        "Spike specification",
+        "License/packaging decision record",
+        "Selected backend strategy"
+      ],
+      "risks": [
+        "License contamination",
+        "Native DLL packaging failures",
+        "Larger portable distribution",
+        "Replacing deterministic CLI behavior with opaque library behavior"
+      ]
+    }
+  ],
+  [
+    "03",
+    "Target Architecture and Compatibility Boundary",
+    {
+      "purpose": "Evolve the existing modular monolith into a V2 architecture that can host multiple media backends while keeping domain and UI stable.",
+      "evidence": [
+        "Existing architecture already separates presentation, application, domain, and infrastructure.",
+        "Current RenderPlan concept is backend-neutral in design, while final compilation is FFmpeg-specific.",
+        "JobManager already provides a basic cooperative background execution boundary."
+      ],
+      "decisions": [
+        "Retain modular-monolith deployment for V2; do not introduce microservices or Electron solely for novelty.",
+        "Introduce explicit MediaBackend/RenderBackend capabilities instead of backend-specific conditionals spread across UI/application code.",
+        "Keep domain models free of Qt, subprocess, HTTP, external library objects, and provider SDK types.",
+        "Use capability negotiation so UI only exposes effects/features the selected backend can actually preview and render."
+      ],
+      "tasks": [
+        "Define ports for ProbeService, PreviewFrameSource, RenderBackend, EffectCompiler, AudioPipeline, SubtitlePipeline, TimelineAdapter, and ToolCapabilityService.",
+        "Define immutable backend-neutral render and preview contracts with versioned capability descriptors.",
+        "Define adapter boundaries for FFmpeg CLI, optional libopenshot/MLT/PyAV, Qt-native preview, and provider integrations.",
+        "Define composition-root wiring and dependency injection conventions.",
+        "Define error taxonomy: user input error, media capability error, dependency/tool error, transient provider error, render failure, cancellation, internal invariant violation.",
+        "Define observability: structured diagnostics, job lifecycle events, render command summaries without secret leakage."
+      ],
+      "gate": [
+        "PASS when the UI can conceptually switch backend capabilities without importing backend libraries.",
+        "PASS when final-render determinism and project persistence are independent of a specific optional backend.",
+        "PASS when every new dependency has a single adapter ownership point."
+      ],
+      "deliverables": [
+        "V2 architecture diagram",
+        "Port/interface specification",
+        "Error model",
+        "Capability model",
+        "Dependency rules"
+      ],
+      "risks": [
+        "Over-abstraction",
+        "Duplicate preview/render implementations",
+        "Capability drift",
+        "Adapter leaking external types into domain"
+      ]
+    }
+  ]
+]
