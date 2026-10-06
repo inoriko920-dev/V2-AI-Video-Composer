@@ -18,7 +18,7 @@ jobs:
       TARGET_SHA: ${{ github.sha }}
     steps:
       - name: Checkout full repository history
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           fetch-tags: true
@@ -201,7 +201,7 @@ jobs:
           unzip -t "$FINAL_ZIP" > "$OUT/final/ZIP_TEST.txt"
 
       - name: Upload verified backup artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: AI-Automatic-Video-Composer-backup
           path: ${{ runner.temp }}/backup-output/final/*
