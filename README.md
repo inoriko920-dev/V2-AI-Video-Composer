@@ -8,7 +8,8 @@ This repository is the **only writable development target for V2**.
 - V2 planning source of truth: `docs/v2_planning/`.
 - Current implementation status and exact next action: `V2_IMPLEMENTATION_STATUS.md`.
 - STEP 13 CODING GATE: **PASS** on 2026-10-07 after planning review and explicit user continuation.
-- Current implementation wave: **Wave A — source-of-truth lock + baseline CI only; no functional application changes**.
+- Wave A: **COMPLETE** — source-of-truth lock + baseline CI passed with no functional application changes.
+- Next explicit step: **Wave B — architecture interfaces/capability model with FFmpeg behavior unchanged**.
 
 The historical README copied from the legacy repository is preserved below as baseline documentation.
 

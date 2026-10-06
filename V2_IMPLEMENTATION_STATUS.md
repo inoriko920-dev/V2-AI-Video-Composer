@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave A — PASS / ready to merge**
+**Wave A — COMPLETE / MERGED TO MAIN**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -56,7 +56,15 @@ If Wave A documentation or CI setup causes an unintended issue, reset the V2 wor
 
 No rollback action may target the legacy repository.
 
-## Next exact action
-Merge PR #2 into `main` after the documentation-evidence update remains green.
+## Wave A closure
+- PR #2 merged to `main`.
+- Merge/squash commit: `1c32cc810cca433fd3238e0c8268b1f3e642a62b`.
+- No functional application code was changed in Wave A.
+- Legacy repository remained read-only.
 
-After merge, stop Wave A. The next project step is **Wave B — architecture interfaces/capability model with FFmpeg behavior unchanged**. Do not begin Wave B in the same wave/turn.
+## Next exact action
+**STOP after Wave A.**
+
+On the next explicit user instruction to continue, begin **Wave B — architecture interfaces/capability model with FFmpeg behavior unchanged**.
+
+Wave B must preserve FFmpeg behavior as the reference path and must not adopt/promote a new dependency until the STEP 13 DEPENDENCY GATE has evidence.
