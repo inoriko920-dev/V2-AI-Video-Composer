@@ -18,7 +18,7 @@ Read V2_MASTER_PLANNING_INDEX.docx, then STEP 00 through STEP 13 in order. STEP 
 
 **PASS — 2026-10-07.** All STEP 00–13 planning DOCX files and the master index are present and reviewed, and the user explicitly instructed the project to continue. Implementation must still follow STEP 13 one wave at a time.
 
-Wave A through Wave H are **COMPLETE** with Windows CI and CodeQL PASS. Wave H executed the approved frozen-reference UI/UX parity and professional interaction hardening with all 8 STEP09 screenshots passing. STEP13 originally named the mature-backend spike as Wave H and UI polish as Wave I; merged implementation history used Wave H for UI polish. To preserve history and still cover every planned workstream, the remaining optional mature-backend spike/dependency gate is assigned to **Wave I**. Wave J remains final regression, Windows packaging, user test, release candidate, and final release.
+Wave A through Wave I are **COMPLETE** with their required gates PASS. Wave H executed the approved frozen-reference UI/UX parity work, and Wave I completed the deferred mature-backend dependency gate through an isolated PyAV Windows spike while deliberately keeping application runtime dependencies unchanged. PyAV proved feasible but was not promoted; FFmpeg/ffprobe CLI remains the production reference/fallback. Wave J is the next and final implementation wave: full regression, Windows packaging, user test, release candidate, and final release.
 
 ## Mature-component direction
 

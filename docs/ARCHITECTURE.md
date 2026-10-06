@@ -325,3 +325,17 @@ Decision: technical feasibility is proven, but PyAV is **not promoted** into the
 application runtime because there is no measured product requirement that justifies
 the extra dependency/portable footprint yet. FFmpeg/ffprobe CLI remains the
 reference and fallback final-render path.
+
+
+### Wave I closure
+
+PR #10 was merged to `main` at `89467dbea58bc0b6392fb6da53af31570e31917b`. Final PR-head validation passed:
+Windows CI `37537445801`, CodeQL `37537445861`, and Optional Backend Spike
+`37537445804`.
+
+PyAV 19.0.1 passed the isolated Windows/Python 3.12 feasibility gate, but the
+dependency was deliberately not promoted into the application runtime. The measured
+spike showed ~0.727 s import latency, ~0.011 s synthetic encode/decode round trip,
+and 71,471,760 bytes installed footprint. FFmpeg/ffprobe CLI remains the production
+reference/fallback; libopenshot and MLT remain deferred, and OpenTimelineIO is not
+required by the current timeline model.

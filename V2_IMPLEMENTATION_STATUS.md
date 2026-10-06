@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave I — PASS / ready to merge: optional mature-backend spike and dependency gate**
+**Wave I — COMPLETE / MERGED TO MAIN: optional mature-backend spike and dependency gate**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -488,5 +488,20 @@ Forbidden in Wave I:
 - libopenshot 1.0.1 and MLT 7.42.0 remain deferred; OpenTimelineIO remains unnecessary for the current focused timeline.
 - FFmpeg/ffprobe CLI remains the production reference/fallback final-render strategy.
 
+## Wave I closure
+- PR #10 merged to `main`.
+- Merge/squash commit: `89467dbea58bc0b6392fb6da53af31570e31917b`.
+- Final PR-head Windows CI run: `37537445801` — **PASS**.
+- Final PR-head CodeQL run: `37537445861` — **PASS**.
+- Final PR-head Optional Backend Spike run: `37537445804` — **PASS**.
+- 605 cheap regression tests passed; 1 deselected.
+- PyAV 19.0.1 proved technically feasible on Windows/Python 3.12, but remains **not adopted** as an application runtime dependency.
+- FFmpeg/ffprobe CLI remains the production reference and fallback final-render path.
+- libopenshot 1.0.1 and MLT 7.42.0 remain deferred; OpenTimelineIO remains unnecessary for the current focused timeline.
+- Runtime dependency manifests, ProjectState/schema, UI, timeline, render behavior, and provider behavior remain unchanged.
+- Legacy repository remained read-only.
+
 ## Next exact action
-Re-run CI/CodeQL/Optional Backend Spike on this evidence-only update, merge PR #10 only on PASS, then STOP before Wave J.
+**STOP after Wave I.**
+
+On the next explicit user instruction to continue, begin **Wave J — full regression, Windows packaging, user-test build, release candidate, and final release gate**.
