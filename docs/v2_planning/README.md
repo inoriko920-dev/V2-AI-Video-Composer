@@ -1,6 +1,6 @@
 # V2 AI Video Composer — Planning Source of Truth
 
-Status: **PLANNING ONLY — APPLICATION IMPLEMENTATION NOT STARTED**
+Status: **PLANNING COMPLETE — CODING GATE PASS — WAVE A ACTIVE**
 
 ## Repository preservation rule
 
@@ -16,7 +16,9 @@ Read V2_MASTER_PLANNING_INDEX.docx, then STEP 00 through STEP 13 in order. STEP 
 
 ## Coding gate
 
-**Do not begin major application coding merely because the planning documents exist.** The STEP 13 CODING GATE also requires planning review/approval. Until that gate is explicitly PASS, changes in this directory are documentation/source-of-truth work only.
+**PASS — 2026-10-07.** All STEP 00–13 planning DOCX files and the master index are present and reviewed, and the user explicitly instructed the project to continue. Implementation must still follow STEP 13 one wave at a time.
+
+Current wave: **Wave A — documentation/source-of-truth lock and baseline CI re-run only.** No functional application change is permitted in Wave A.
 
 ## Mature-component direction
 
