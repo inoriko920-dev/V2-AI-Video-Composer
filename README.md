@@ -175,3 +175,10 @@ spike, but it was deliberately **not** added to the application runtime because 
 measured product need currently justifies the additional dependency/portable footprint.
 FFmpeg/ffprobe CLI remains the production reference/fallback. libopenshot/MLT remain
 deferred pending a concrete capability need and native packaging/license evidence.
+
+
+## Wave J release gate
+Wave J is **ACTIVE**. The current objective is a reproducible Windows 11 x64
+user-test package from an exact commit. Passing CI/package gates does not by itself
+authorize a final public release; explicit user acceptance of the portable build is
+required before promotion.

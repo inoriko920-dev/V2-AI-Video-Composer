@@ -339,3 +339,19 @@ spike showed ~0.727 s import latency, ~0.011 s synthetic encode/decode round tri
 and 71,471,760 bytes installed footprint. FFmpeg/ffprobe CLI remains the production
 reference/fallback; libopenshot and MLT remain deferred, and OpenTimelineIO is not
 required by the current timeline model.
+
+
+## V2 Wave J — Release/User-Acceptance Gate
+
+Wave J adds release infrastructure only. Application runtime behavior and dependency
+manifests are intentionally unchanged.
+
+The user-test gate runs the full Windows regression suite, frozen STEP09 screenshot
+verification, PyInstaller onedir packaging, packaged executable smoke, secret/runtime
+artifact checks, and external-FFmpeg policy verification. It produces a portable ZIP,
+an exact-source ZIP, BUILD_INFO, SHA256SUMS, user-test instructions, and screenshot
+evidence.
+
+A green automated gate is necessary but not sufficient for final promotion. The final
+V2 release remains blocked until the user explicitly accepts the Windows user-test
+build after hands-on testing.

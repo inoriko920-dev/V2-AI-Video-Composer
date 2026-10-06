@@ -1,0 +1,142 @@
+name: Wave J User-Test Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: wave-j-user-test-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  user-test:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12.10'
+          cache: 'pip'
+
+      - name: Reject committed secrets
+        run: python scripts/check_no_secrets.py
+
+      - name: Install pinned dependencies
+        run: |
+          python -m pip install "pip==26.2.1"
+          python -m pip install -r requirements.lock
+          python -m pip install -e .
+
+      - name: Verify dependency graph
+        run: python -m pip check
+
+      - name: Compile
+        run: python -m compileall -q src
+
+      - name: Ruff
+        run: python -m ruff check src tests
+
+      - name: Mypy
+        run: python -m mypy src/aavc
+
+      - name: Full regression
+        run: python -m pytest -q
+
+      - name: Capture STEP09 actual UI
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python scripts/capture_step09_ui.py
+
+      - name: Verify STEP09 screenshots
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem artifacts/step09_actual/*.png
+          if ($files.Count -ne 8) {
+            throw "Expected 8 STEP09 screenshots, found $($files.Count)"
+          }
+          $tooSmall = $files | Where-Object { $_.Length -lt 1000 }
+          if ($tooSmall) {
+            throw "One or more STEP09 screenshots are unexpectedly small"
+          }
+
+      - name: Build Windows onedir
+        shell: pwsh
+        run: ./scripts/package.ps1
+
+      - name: Verify portable artifact
+        shell: pwsh
+        run: ./scripts/verify_portable.ps1
+
+      - name: Verify external FFmpeg policy
+        shell: pwsh
+        run: |
+          $slot = "dist/AI Automatic Video Composer/tools/ffmpeg"
+          $bundledExecutables = Get-ChildItem $slot -Recurse -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.Extension -ieq ".exe" }
+          if ($bundledExecutables) {
+            throw "Wave J user-test must not silently bundle FFmpeg executables"
+          }
+
+      - name: Prepare Wave J user-test bundle
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $release = "release-wave-j"
+          New-Item -ItemType Directory -Force $release | Out-Null
+          $dist = "dist/AI Automatic Video Composer"
+          $commit = (git rev-parse HEAD).Trim()
+          $short = $commit.Substring(0, 12)
+          $portableName = "V2-AI-Video-Composer-Wave-J-User-Test-win64.zip"
+          $sourceName = "V2-AI-Video-Composer-Wave-J-Source-$short.zip"
+
+          @(
+            "channel=wave-j-user-test"
+            "source_commit=$commit"
+            "python=3.12.10"
+            "packaging=PyInstaller onedir -> portable ZIP"
+            "ffmpeg_policy=external app-local tools/ffmpeg or PATH"
+            "public_release=no"
+          ) | Set-Content "$dist/V2_BUILD_INFO.txt" -Encoding utf8
+          Copy-Item WAVE_J_USER_TEST.md "$dist/WAVE_J_USER_TEST.md" -Force
+
+          Compress-Archive -Path "$dist/*" -DestinationPath "$release/$portableName" -CompressionLevel Optimal
+          git archive --format=zip --output="$release/$sourceName" HEAD
+
+          Copy-Item WAVE_J_USER_TEST.md "$release/WAVE_J_USER_TEST.md" -Force
+          Copy-Item MAINTENANCE.md "$release/MAINTENANCE.md" -Force
+          Copy-Item BACKUP_AND_RECOVERY.md "$release/BACKUP_AND_RECOVERY.md" -Force
+
+          @(
+            "channel=wave-j-user-test"
+            "source_commit=$commit"
+            "source_short=$short"
+            "python=3.12.10"
+            "public_release=no"
+          ) | Set-Content "$release/BUILD_INFO.txt" -Encoding utf8
+
+          $sumLines = foreach ($file in @("$release/$portableName", "$release/$sourceName")) {
+            $hash = (Get-FileHash $file -Algorithm SHA256).Hash.ToLower()
+            "$hash  $([System.IO.Path]::GetFileName($file))"
+          }
+          $sumLines | Set-Content "$release/SHA256SUMS.txt" -Encoding utf8
+
+          Copy-Item artifacts/step09_actual "$release/step09-ui" -Recurse -Force
+          Get-ChildItem $release -Recurse | Select-Object FullName, Length
+
+      - name: Upload Wave J user-test bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: V2-AI-Video-Composer-Wave-J-User-Test
+          path: release-wave-j/*
+          if-no-files-found: error
+          retention-days: 30

@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave I — COMPLETE / MERGED TO MAIN: optional mature-backend spike and dependency gate**
+**Wave J — ACTIVE: full regression + Windows user-test packaging + acceptance gate**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -505,3 +505,40 @@ Forbidden in Wave I:
 **STOP after Wave I.**
 
 On the next explicit user instruction to continue, begin **Wave J — full regression, Windows packaging, user-test build, release candidate, and final release gate**.
+
+
+## Wave J scope
+Allowed:
+- run full Windows regression, not only the cheap-test subset;
+- capture and verify all 8 frozen STEP09 screenshots;
+- build PyInstaller onedir portable Windows artifact;
+- run packaged EXE foundation smoke;
+- verify no secrets/runtime user files or bundled FFmpeg executable leak into the package;
+- create a user-test portable ZIP, exact-source ZIP, BUILD_INFO, SHA256SUMS, and acceptance instructions;
+- upload the user-test bundle as a GitHub Actions artifact;
+- collect explicit user acceptance before final release promotion.
+
+Forbidden before user acceptance:
+- no public GitHub Release or final immutable tag;
+- no overwrite of published 0.1.1 artifacts;
+- no FFmpeg binary redistribution;
+- no dependency/schema/UI/render/provider feature changes hidden inside the release branch;
+- no final-release claim based only on CI.
+
+## Wave J acceptance criteria
+1. Secret scan, pip check, compile, Ruff, strict mypy, and full pytest PASS on Windows.
+2. All 8 representative STEP09 screenshots capture/verify successfully.
+3. PyInstaller onedir build and packaged EXE foundation smoke PASS.
+4. Portable artifact contains required schema/docs/tool slot and no forbidden runtime/user files.
+5. No FFmpeg executable is silently bundled.
+6. User-test portable ZIP + exact-source ZIP + SHA256SUMS + BUILD_INFO are generated and uploaded.
+7. Exact source commit is recorded.
+8. Final promotion remains blocked until explicit user acceptance after testing the Windows package.
+
+## Wave J rollback point
+`7e7eb21a77d68849990082fe4aca6219c23cd1bb`
+
+## Wave J current gate
+**USER-TEST BUILD PREPARATION — ACTIVE.**
+
+The next action is to run the Wave J pull-request gates, download the generated user-test artifact, and hand the Windows portable ZIP to the user. Final publication remains blocked pending explicit user acceptance.
