@@ -1,0 +1,177 @@
+[
+  [
+    "08",
+    "Project Data, Persistence, Recovery, and Migration Plan",
+    {
+      "purpose": "Ensure V2 can evolve its data model without losing projects or weakening the current strong persistence safeguards.",
+      "evidence": [
+        "Current serializer uses schema version 2, strict type checks, invariant validation, atomic writes, and future-schema rejection.",
+        "Current recovery and relink behavior intentionally allows missing media while rejecting structurally invalid projects."
+      ],
+      "decisions": [
+        "Project schema changes require explicit forward migration functions and regression fixtures.",
+        "Never silently discard unknown future data.",
+        "Animation/keyframe V2 data must be introduced with backward migration from current AnimationAssignment semantics.",
+        "Keep media paths relocatable and relink-friendly for portable workflows."
+      ],
+      "tasks": [
+        "Define schema version 3 only after final V2 model is approved.",
+        "Create migration pipeline v1 -> v2 -> v3 with idempotence and failure boundaries.",
+        "Add project backup before irreversible migration and a clear rollback message.",
+        "Define stable identifiers for scenes/assets/effects if richer editing requires moving/reordering scenes.",
+        "Define autosave/recovery cadence and crash-recovery selection logic.",
+        "Add corruption fixtures, truncated JSON, unexpected types, duplicate IDs, missing assets, unsupported future versions, and migration round-trip tests.",
+        "Define privacy boundaries for metadata and provider information."
+      ],
+      "gate": [
+        "PASS when all existing valid project fixtures open successfully in V2.",
+        "PASS when migrations are deterministic and tested both success/failure paths.",
+        "PASS when a migration failure cannot overwrite the original project.",
+        "PASS when future schemas are rejected safely rather than guessed."
+      ],
+      "deliverables": [
+        "Schema evolution plan",
+        "Migration matrix",
+        "Recovery policy",
+        "Fixture set specification",
+        "Path/relink rules"
+      ],
+      "risks": [
+        "Data loss",
+        "Schema drift",
+        "Scene reorder identity bugs",
+        "Recovery choosing stale data"
+      ]
+    }
+  ],
+  [
+    "09",
+    "UI/UX Parity and Professional Evolution Plan",
+    {
+      "purpose": "Keep the established white/blue professional UI and current feature placement recognizable while improving clarity, responsiveness, and mature editing feedback.",
+      "evidence": [
+        "Current product is based on 42 canonical UI references and a 1920x1080 reference viewport.",
+        "The user explicitly wants UI/features to remain the same conceptually; mature external repos are for stability/engine ideas, not for replacing the product identity."
+      ],
+      "decisions": [
+        "V2 begins from current UI parity; no wholesale redesign.",
+        "Any layout change must solve a documented usability or technical problem.",
+        "Backend capability changes must be reflected through disabled/hidden controls and explanations, not silent failure.",
+        "Prompt/image UI design work, if later required, becomes its own gated phase before UI implementation."
+      ],
+      "tasks": [
+        "Capture baseline screenshots of all major screens at reference resolution and representative smaller Windows scaling settings.",
+        "Create a UI inventory mapping controls to application commands and feature status.",
+        "Improve status/progress/error surfaces for render, AI jobs, missing tools, unsupported effects, and project migration.",
+        "Standardize spacing, typography, disabled state, hover/focus, keyboard navigation, and destructive action confirmation.",
+        "Define performance UX: skeleton/loading states, background job panel, non-blocking progress, cancel/retry buttons.",
+        "Plan accessibility checks: contrast, focus order, keyboard access, scalable text, screen-reader labels where practical.",
+        "Preserve existing white/blue visual identity and compact professional editor density."
+      ],
+      "gate": [
+        "PASS when current workflows remain recognizable and all major commands are mapped.",
+        "PASS when UI does not expose capabilities the active backend cannot deliver.",
+        "PASS when screenshot regression tests cover critical screens.",
+        "PASS when no generated UI reference is implemented without prior approval in the designated UI gate."
+      ],
+      "deliverables": [
+        "UI inventory",
+        "Parity screenshot pack plan",
+        "Interaction/state specification",
+        "Accessibility checklist",
+        "UI change approval matrix"
+      ],
+      "risks": [
+        "Feature loss during cleanup",
+        "Visual drift from established references",
+        "Too many controls",
+        "Blocking operations on UI thread"
+      ]
+    }
+  ],
+  [
+    "10",
+    "Performance, Cache, Preview, and Resource Management Plan",
+    {
+      "purpose": "Improve responsiveness for large projects without introducing unsafe caching or memory leaks.",
+      "evidence": [
+        "Current preview and render paths are deliberately separate and not claimed as frame-perfect WYSIWYG.",
+        "External mature libraries show that caching can help or hurt depending on workload; therefore V2 must benchmark rather than assume."
+      ],
+      "decisions": [
+        "Performance changes require measurements before/after.",
+        "Cache keys must be content/configuration derived and safely invalidated.",
+        "Preview can use reduced-resolution/proxy strategies as long as timing/geometry intent remains correct and final render is unaffected.",
+        "Resource limits must be explicit for concurrent jobs, decoded frames, thumbnails, and caches."
+      ],
+      "tasks": [
+        "Define benchmark projects at 10/100/500 scenes and representative 1080p/4K assets.",
+        "Measure startup, project load, thumbnail generation, seek latency, playback smoothness, memory peak, render throughput, cancellation latency, and package size.",
+        "Plan thumbnail/proxy generation with bounded LRU cache and background priority.",
+        "Define job concurrency policy by CPU/RAM and prevent render+AI+thumbnail work from starving UI.",
+        "Add leak/regression tests for repeated open/close, seek loops, re-render, and provider jobs.",
+        "Define diagnostic mode that records timing and backend information without user secrets."
+      ],
+      "gate": [
+        "PASS when V2 has baseline benchmark numbers before optimization.",
+        "PASS when each cache has ownership, size limit, key, invalidation, and cleanup policy.",
+        "PASS when large-project operations remain cancellable and UI-responsive."
+      ],
+      "deliverables": [
+        "Benchmark suite",
+        "Cache policy",
+        "Concurrency/resource policy",
+        "Performance acceptance thresholds"
+      ],
+      "risks": [
+        "Memory leaks",
+        "Stale cache frames",
+        "Over-parallelization",
+        "Optimizing synthetic cases instead of real workflows"
+      ]
+    }
+  ],
+  [
+    "11",
+    "Testing, QA, Security, and Regression Strategy",
+    {
+      "purpose": "Turn the old app's existing quality gates into stricter V2 acceptance gates that cover multiple backends, migration, UI, and Windows runtime behavior.",
+      "evidence": [
+        "Existing project already uses Ruff, strict mypy, pytest, CodeQL, screenshot checks, real Windows packaging, and real FFmpeg integration tests."
+      ],
+      "decisions": [
+        "Existing passing tests become a minimum regression floor, not a disposable suite.",
+        "Every V2 bug fix requires a regression test when technically feasible.",
+        "Backend parity requires integration/golden tests, not only unit tests.",
+        "Security checks include credentials, subprocess arguments, path handling, downloaded/native dependencies, and release provenance."
+      ],
+      "tasks": [
+        "Create test pyramid: pure domain/unit, application command, adapter integration, render golden, UI smoke/screenshot, packaging, end-to-end Windows.",
+        "Add adversarial fixtures for malformed DOCX/SRT/project JSON, Unicode/long paths, corrupt credentials, missing tools, interrupted renders, provider timeouts, invalid media, and low-disk scenarios where feasible.",
+        "Define golden-frame tolerances for animation effects and exact timing tolerances for audio/subtitles.",
+        "Add dependency/license/SBOM checks for newly bundled libraries.",
+        "Add performance regression thresholds to CI for selected deterministic microbenchmarks; keep heavy benchmarks scheduled/manual if needed.",
+        "Define release blocker severity levels and triage rules."
+      ],
+      "gate": [
+        "PASS when legacy regression suite remains green after each implementation wave.",
+        "PASS when every selected optional backend has Windows integration coverage before default activation.",
+        "PASS when secret scanning and credential tests prove raw keys are not persisted/logged.",
+        "PASS when final candidate passes portable smoke, real render, project migration, UI smoke, and rollback checks."
+      ],
+      "deliverables": [
+        "V2 test matrix",
+        "CI gate plan",
+        "Golden media fixtures",
+        "Security checklist",
+        "Release blocker policy"
+      ],
+      "risks": [
+        "Flaky visual/media tests",
+        "CI runtime explosion",
+        "Uncovered native dependency failures",
+        "False confidence from unit-only coverage"
+      ]
+    }
+  ]
+]
