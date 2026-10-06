@@ -11,7 +11,8 @@ This repository is the **only writable development target for V2**.
 - Wave A: **COMPLETE** — source-of-truth lock + baseline CI passed with no functional application changes.
 - Wave B: **COMPLETE** — backend capability contracts added; FFmpeg behavior/dependencies unchanged.
 - Wave C: **COMPLETE** — staged-output validation, render cancellation/progress, FFmpeg capability probe, and benchmark harness passed CI.
-- Next explicit step: **Wave D — animation/keyframe data model and migration with current effects preserved**.
+- Wave D: **ACTIVE** — schema v3 keyframe data model/migration under gate; existing effects remain canonical.
+- Next gate: Wave D Windows CI + CodeQL; Wave E must not start before PASS/merge.
 
 The historical README copied from the legacy repository is preserved below as baseline documentation.
 

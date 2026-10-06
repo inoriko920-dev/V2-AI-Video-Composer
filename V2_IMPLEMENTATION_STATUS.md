@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave C — COMPLETE / MERGED TO MAIN: render validation/progress/cancellation hardening + benchmark harness**
+**Wave D — ACTIVE: animation/keyframe data model + schema v3 migration; current effects preserved**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -141,7 +141,31 @@ Forbidden: new runtime dependencies, optional backend adoption, animation/keyfra
 - No runtime dependency or optional backend was added.
 - Legacy repository remained read-only.
 
-## Next exact action
-**STOP after Wave C.**
+## Wave D scope
+Allowed:
+- add backend-neutral normalized keyframe and transform-track domain data;
+- extend AnimationAssignment additively while preserving enter/exit/intensity/lock semantics;
+- introduce explicit project schema v3 migration v1 -> v2 -> v3;
+- preserve a pre-migration backup before first overwrite of a legacy schema file;
+- add migration/validation/render-parity regression tests.
 
-On the next explicit user instruction to continue, begin **Wave D — animation/keyframe data model and migration with current effects preserved**.
+Forbidden in Wave D:
+- no new visual effects;
+- no FFmpeg/preview consumption of keyframe tracks yet;
+- no animation UI changes;
+- no timeline redesign;
+- no runtime dependency or optional media backend.
+
+## Wave D acceptance criteria
+1. Existing v1/v2 projects open as schema v3 without losing current animation semantics.
+2. Schema v3 keyframe data round-trips with strict normalized-time/property/easing validation.
+3. Existing legacy effects compile to the same FFmpeg graph whether keyframe data is present or absent.
+4. First save over a legacy schema preserves a non-clobbering pre-v3 backup.
+5. Future schemas remain rejected.
+6. Windows CI, strict mypy, regression tests, screenshot gate, and CodeQL pass.
+
+## Wave D rollback point
+`5d7389596cd28d1fd3b59184f0dd2088e7a6d301`
+
+## Next exact action
+Run Wave D PR gates. Merge only on PASS, then STOP before Wave E.
