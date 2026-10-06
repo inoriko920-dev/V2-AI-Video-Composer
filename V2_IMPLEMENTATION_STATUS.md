@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave C — PASS / ready to merge: render validation/progress/cancellation hardening + benchmark harness**
+**Wave C — COMPLETE / MERGED TO MAIN: render validation/progress/cancellation hardening + benchmark harness**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -129,5 +129,19 @@ Forbidden: new runtime dependencies, optional backend adoption, animation/keyfra
 - Compile, Ruff, strict mypy, cheap pytest, STEP09 screenshot capture/verification, and artifact upload: **PASS**.
 - Dependency manifests unchanged; no optional backend adopted.
 
+## Wave C closure
+- PR #4 merged to `main`.
+- Merge/squash commit: `6c703538a16f7fe0ea56186a16d812f36a26ee7e`.
+- Final PR-head Windows CI run: `37520211708` — **PASS**.
+- Final PR-head CodeQL run: `37520211301` — **PASS**.
+- Staged render output is validated before atomic replacement.
+- Managed subprocess execution supports cancellation/progress while the legacy run path remains available.
+- FFmpeg availability/version probing is cached and refreshable.
+- Benchmark harness covers 10/100/500 scenes and stressed Windows-style Unicode/apostrophe/long paths.
+- No runtime dependency or optional backend was added.
+- Legacy repository remained read-only.
+
 ## Next exact action
-Re-run CI/CodeQL on this evidence-only update, merge PR #4 only on PASS, then STOP before Wave D.
+**STOP after Wave C.**
+
+On the next explicit user instruction to continue, begin **Wave D — animation/keyframe data model and migration with current effects preserved**.

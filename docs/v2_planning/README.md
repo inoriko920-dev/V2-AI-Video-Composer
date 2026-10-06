@@ -18,7 +18,7 @@ Read V2_MASTER_PLANNING_INDEX.docx, then STEP 00 through STEP 13 in order. STEP 
 
 **PASS — 2026-10-07.** All STEP 00–13 planning DOCX files and the master index are present and reviewed, and the user explicitly instructed the project to continue. Implementation must still follow STEP 13 one wave at a time.
 
-Wave A and Wave B are **COMPLETE** with Windows CI and CodeQL PASS. Wave B added backend-neutral capability contracts without changing the FFmpeg reference path or dependency manifests. The next explicit implementation step is **Wave C — render validation/progress/cancellation hardening and benchmark harness**.
+Wave A, Wave B, and Wave C are **COMPLETE** with Windows CI and CodeQL PASS. Wave C added staged-output verification, managed render cancellation/progress, cached FFmpeg probing, and benchmark coverage without adding a runtime dependency or alternate backend. The next explicit implementation step is **Wave D — animation/keyframe data model and migration with current effects preserved**.
 
 ## Mature-component direction
 

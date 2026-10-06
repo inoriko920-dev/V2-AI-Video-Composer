@@ -80,3 +80,11 @@ Wave C keeps FFmpeg/ffprobe as the reference toolchain. It adds ffprobe validati
 ### Wave C evidence
 
 PR #4 validation on implementation head `7d1307ee52a2fe8433c75b5f8ae2bcd191336f1d`: Windows CI `37519985006` PASS and CodeQL `37519985054` PASS. The dependency manifests remained unchanged and FFmpeg/ffprobe remain the reference media toolchain.
+
+
+### Wave C closure
+
+PR #4 was merged to `main` at `6c703538a16f7fe0ea56186a16d812f36a26ee7e`. Final PR-head validation:
+Windows CI `37520211708` PASS and CodeQL `37520211301` PASS. FFmpeg/ffprobe
+remain the reference toolchain, dependency manifests are unchanged, and no
+alternate backend was adopted.
