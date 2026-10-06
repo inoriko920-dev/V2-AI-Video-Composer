@@ -7,7 +7,7 @@ from pathlib import Path
 from aavc.domain.project.models import ProjectState
 from aavc.importing.assets import bind_assets
 from aavc.importing.docx_scene import parse_scene_docx
-from aavc.persistence.serializer import save_project
+from aavc.persistence.serializer import CURRENT_SCHEMA_VERSION, save_project
 from aavc.platform.tool_registry import resolve_ffmpeg
 from aavc.rendering import (
     build_ffmpeg_command,
@@ -33,7 +33,7 @@ def create_project_state(
     scenes = parse_scene_docx(scene_docx, default_duration_seconds=default_scene_duration)
     bindings = bind_assets(scenes, asset_directory)
     return ProjectState(
-        schema_version=2,
+        schema_version=CURRENT_SCHEMA_VERSION,
         title=title,
         source_docx=str(Path(scene_docx).resolve()),
         asset_directory=str(Path(asset_directory).resolve()),
