@@ -104,6 +104,7 @@ def test_render_project_uses_temporary_subtitle_ass_without_clobbering_sidecar(
         ExportOptions(output_path=str(output), burn_subtitles=True),
         ffmpeg="fake-ffmpeg",
         runner=runner,
+        verify_output=False,
     )
 
     filters = runner.filter_graphs[0]
@@ -130,6 +131,7 @@ def test_render_project_cleans_subtitle_staging_when_ffmpeg_fails(tmp_path: Path
             ExportOptions(output_path=str(output), burn_subtitles=True),
             ffmpeg="fake-ffmpeg",
             runner=FailingRunner(),
+            verify_output=False,
         )
 
     assert user_sidecar.read_text(encoding="utf-8") == "keep-me"
@@ -155,6 +157,7 @@ def test_selection_export_also_cleans_subtitle_staging(tmp_path: Path) -> None:
         end_seconds=1.0,
         ffmpeg="fake-ffmpeg",
         runner=runner,
+        verify_output=False,
     )
 
     filters = runner.filter_graphs[0]
@@ -171,3 +174,42 @@ def test_render_project_stops_on_preflight_error(tmp_path: Path) -> None:
         render_project(_project(), options, ffmpeg="fake-ffmpeg", runner=runner)
 
     assert runner.commands == []
+
+
+class FakeProbeRunner(ProcessRunner):
+    def __init__(self, payload: str) -> None:
+        self.payload = payload
+
+    def run(
+        self,
+        argv: Sequence[str],
+        *,
+        timeout_seconds: float | None = None,
+    ) -> ProcessResult:
+        del argv, timeout_seconds
+        return ProcessResult(0, self.payload, "")
+
+
+def test_render_project_validates_output_before_finalize(tmp_path: Path) -> None:
+    project = _project()
+    duration = sum(scene.duration_seconds for scene in project.scenes)
+    output = tmp_path / "verified.mp4"
+    runner = FakeRunner()
+    probe = FakeProbeRunner(
+        '{"streams":[{"codec_type":"video","width":1920,"height":1080,'
+        '"r_frame_rate":"30/1"}],"format":{"duration":"'
+        + f"{duration:.3f}"
+        + '"}}'
+    )
+
+    result = render_project(
+        project,
+        ExportOptions(output_path=str(output), burn_subtitles=False),
+        ffmpeg="fake-ffmpeg",
+        ffprobe="fake-ffprobe",
+        runner=runner,
+        probe_runner=probe,
+    )
+
+    assert result.output_path == str(output.resolve())
+    assert output.read_bytes() == b"fake-mp4"

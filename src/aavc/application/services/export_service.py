@@ -1,19 +1,23 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 from pathlib import Path
 from uuid import uuid4
 
 from aavc.domain.errors import RenderError
 from aavc.domain.project.models import ProjectState
+from aavc.jobs import CancellationToken
 from aavc.platform.process_runner import ProcessRunner
-from aavc.platform.tool_registry import resolve_ffmpeg
+from aavc.platform.tool_registry import resolve_ffmpeg, resolve_ffprobe
 from aavc.rendering import (
+    RenderManifest,
     RenderResult,
     build_ffmpeg_command,
     build_render_plan,
     execute_ffmpeg,
     validate_render_plan,
+    verify_render_output,
 )
 from aavc.subtitles import compile_srt_to_ass
 
@@ -43,7 +47,12 @@ def render_project(
     options: ExportOptions,
     *,
     ffmpeg: str | None = None,
+    ffprobe: str | None = None,
     runner: ProcessRunner | None = None,
+    probe_runner: ProcessRunner | None = None,
+    cancellation_token: CancellationToken | None = None,
+    progress_callback: Callable[[float], None] | None = None,
+    verify_output: bool = True,
 ) -> RenderResult:
     """Render one ProjectState using the canonical FFmpeg pipeline."""
 
@@ -92,7 +101,29 @@ def render_project(
 
         ffmpeg_path = ffmpeg or resolve_ffmpeg().path
         command = build_ffmpeg_command(plan, ffmpeg=ffmpeg_path)
-        return execute_ffmpeg(command, runner=runner)
+        manifest = RenderManifest.from_plan(plan)
+        validator = None
+        if verify_output:
+            ffprobe_path = ffprobe or resolve_ffprobe().path
+            validation_runner = probe_runner or ProcessRunner()
+            validator = lambda candidate: verify_render_output(
+                candidate,
+                manifest,
+                ffprobe=ffprobe_path,
+                runner=validation_runner,
+            )
+        return execute_ffmpeg(
+            command,
+            runner=runner,
+            validator=validator,
+            cancel_requested=(
+                (lambda: cancellation_token.is_cancelled)
+                if cancellation_token is not None
+                else None
+            ),
+            progress_callback=progress_callback,
+            expected_duration_seconds=manifest.expected_duration_seconds,
+        )
     finally:
         if subtitle_ass is not None:
             subtitle_ass.unlink(missing_ok=True)

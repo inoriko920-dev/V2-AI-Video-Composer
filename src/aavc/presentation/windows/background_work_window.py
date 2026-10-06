@@ -11,6 +11,7 @@ from aavc.application.services.ai_animation_service import (
 from aavc.application.services.export_service import ExportOptions, render_project
 from aavc.application.services.selection_export_service import render_project_selection
 from aavc.bootstrap.composition_root import FoundationServices
+from aavc.jobs import CancellationToken
 from aavc.jobs.background_call import BackgroundCall
 from aavc.presentation.dialogs.asset_motion import NATIVE_MOTION_CHOICES
 from aavc.presentation.windows.ai_menu_window import configured_gemini_slots
@@ -39,7 +40,11 @@ class BackgroundWorkMainWindow(AiNativeMotionMainWindow):
         self,
         *,
         name: str,
-        work: Callable[[], Any],
+        work: Callable[[], Any] | None = None,
+        cancellable_work: Callable[
+            [CancellationToken, Callable[[float], None]], Any
+        ]
+        | None = None,
         success: Callable[[Any], None],
         error_title: str,
     ) -> bool:
@@ -55,6 +60,7 @@ class BackgroundWorkMainWindow(AiNativeMotionMainWindow):
         call: BackgroundCall[Any] = BackgroundCall(
             self.services.jobs,
             work,
+            cancellable_work=cancellable_work,
             name=name,
         )
         timer = QTimer(self.window)
@@ -70,6 +76,18 @@ class BackgroundWorkMainWindow(AiNativeMotionMainWindow):
         call.start()
         timer.start()
         return True
+
+    def cancel_background_work(self) -> bool:
+        call = self._background_call
+        if call is None:
+            return False
+        cancelled = call.cancel()
+        if cancelled:
+            self.window.statusBar().showMessage(
+                f"Membatalkan {self._background_name}…",
+                5000,
+            )
+        return cancelled
 
     def _clear_background_work(self) -> None:
         timer = self._background_timer
@@ -88,6 +106,11 @@ class BackgroundWorkMainWindow(AiNativeMotionMainWindow):
             return
         snapshot = call.snapshot()
         if not snapshot.done:
+            if snapshot.progress is not None:
+                percent = round(snapshot.progress * 100)
+                self.window.statusBar().showMessage(
+                    f"{self._background_name}… {percent}%"
+                )
             return
 
         success = self._background_success
@@ -95,6 +118,9 @@ class BackgroundWorkMainWindow(AiNativeMotionMainWindow):
         name = self._background_name
         self._clear_background_work()
 
+        if snapshot.cancelled:
+            self.window.statusBar().showMessage(f"{name} dibatalkan.", 7000)
+            return
         if snapshot.error is not None:
             self._show_project_error(error_title, snapshot.error)
             self.window.statusBar().showMessage(f"{name} gagal.", 7000)
@@ -129,7 +155,12 @@ class BackgroundWorkMainWindow(AiNativeMotionMainWindow):
 
         return self._start_background_work(
             name="Render video",
-            work=lambda: render_project(project, options),
+            cancellable_work=lambda token, progress: render_project(
+                project,
+                options,
+                cancellation_token=token,
+                progress_callback=progress,
+            ),
             success=completed,
             error_title="Render gagal",
         )
@@ -162,11 +193,13 @@ class BackgroundWorkMainWindow(AiNativeMotionMainWindow):
 
         return self._start_background_work(
             name=f"Render Selection {start_seconds:.3f}–{end_seconds:.3f} detik",
-            work=lambda: render_project_selection(
+            cancellable_work=lambda token, progress: render_project_selection(
                 project,
                 options,
                 start_seconds=start_seconds,
                 end_seconds=end_seconds,
+                cancellation_token=token,
+                progress_callback=progress,
             ),
             success=completed,
             error_title="Render Selection gagal",
