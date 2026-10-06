@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
@@ -47,10 +48,40 @@ def _externalize_filter_graph(command: list[str], graph_path: Path) -> list[str]
     return transformed
 
 
+def _enable_progress_protocol(command: list[str]) -> list[str]:
+    if "-progress" in command:
+        return list(command)
+    return [command[0], "-progress", "pipe:1", "-nostats", *command[1:]]
+
+
+def _progress_observer(
+    *,
+    expected_duration_seconds: float,
+    callback: Callable[[float], None],
+) -> Callable[[str], None]:
+    total = max(0.001, expected_duration_seconds)
+
+    def observe(line: str) -> None:
+        if line.startswith("out_time_us="):
+            try:
+                elapsed = int(line.split("=", 1)[1]) / 1_000_000.0
+            except ValueError:
+                return
+            callback(max(0.0, min(0.999, elapsed / total)))
+        elif line == "progress=end":
+            callback(1.0)
+
+    return observe
+
+
 def execute_ffmpeg(
     command: list[str],
     *,
     runner: ProcessRunner | None = None,
+    validator: Callable[[Path], object] | None = None,
+    cancel_requested: Callable[[], bool] | None = None,
+    progress_callback: Callable[[float], None] | None = None,
+    expected_duration_seconds: float | None = None,
 ) -> RenderResult:
     if not command:
         raise RenderError("Perintah FFmpeg kosong")
@@ -63,6 +94,17 @@ def execute_ffmpeg(
 
     try:
         render_command = _externalize_filter_graph(render_command, graph_path)
+        stdout_observer: Callable[[str], None] | None = None
+        if progress_callback is not None:
+            if expected_duration_seconds is None or expected_duration_seconds <= 0:
+                raise RenderError("Durasi expected wajib tersedia untuk progress render")
+            progress_callback(0.0)
+            render_command = _enable_progress_protocol(render_command)
+            stdout_observer = _progress_observer(
+                expected_duration_seconds=expected_duration_seconds,
+                callback=progress_callback,
+            )
+
         if os.name == "nt":
             units = windows_command_units(render_command)
             if units > _WINDOWS_COMMAND_LIMIT:
@@ -72,7 +114,15 @@ def execute_ffmpeg(
                     "Pendekkan path input/output atau pecah project sebelum render."
                 )
 
-        completed = process_runner.run(render_command)
+        if cancel_requested is not None or stdout_observer is not None:
+            completed = process_runner.run_managed(
+                render_command,
+                cancel_requested=cancel_requested,
+                stdout_line_callback=stdout_observer,
+            )
+        else:
+            completed = process_runner.run(render_command)
+
         if (
             completed.returncode != 0
             or not temporary.exists()
@@ -82,6 +132,9 @@ def execute_ffmpeg(
                 completed.stderr[-4000:] or "FFmpeg gagal tanpa pesan error"
             )
 
+        if validator is not None:
+            validator(temporary)
+
         try:
             temporary.replace(output)
         except OSError as error:
@@ -89,6 +142,8 @@ def execute_ffmpeg(
                 f"Gagal menyelesaikan file output render: {error}"
             ) from error
 
+        if progress_callback is not None:
+            progress_callback(1.0)
         return RenderResult(
             str(output),
             completed.returncode,
