@@ -27,7 +27,7 @@ class SequenceProvider:
         self.seen.append(api_key)
         if self.calls <= self.failures_before_success:
             raise ProviderError(
-                "quota synthetic-secret-must-not-leak",
+                f"quota api_key={api_key}",
                 retryable=True,
                 quota_exhausted=True,
                 retry_after_seconds=30,
@@ -173,5 +173,6 @@ def test_exhausted_error_contains_health_but_never_secret() -> None:
     message = str(caught.value)
     assert "2 attempt" in message
     assert "cooldown" in message
-    assert "synthetic-secret-must-not-leak" not in message
     assert "secret-001" not in message
+    assert "secret-002" not in message
+    assert "[REDACTED]" in message

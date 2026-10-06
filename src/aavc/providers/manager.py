@@ -70,6 +70,7 @@ class ProviderManager:
         attempted: set[str] = set()
         attempts: list[ProviderAttempt] = []
         last_error: ProviderError | None = None
+        last_error_text: str | None = None
         last_credential_error: OSError | None = None
         attempt_limit = min(self._max_attempts, len(self._key_pool))
 
@@ -113,6 +114,9 @@ class ProviderManager:
                 response = self._provider.generate(request, api_key=secret)
             except ProviderError as exc:
                 last_error = exc
+                last_error_text = redact_sensitive_text(
+                    str(exc).replace(secret, "[REDACTED]")
+                )
                 cooldown = self._cooldown_for(exc, entry.consecutive_failures)
                 if exc.quota_exhausted:
                     failure_kind = "quota"
@@ -160,7 +164,7 @@ class ProviderManager:
             f"{health.disabled} disabled"
         )
         if last_error is not None:
-            safe_message = redact_sensitive_text(str(last_error))
+            safe_message = last_error_text or "provider request failed"
             raise ProviderExhaustedError(
                 f"{self._provider.name} provider exhausted after "
                 f"{len(attempted)} attempt(s); {health_text}: {safe_message}"
