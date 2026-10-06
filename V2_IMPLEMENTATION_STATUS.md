@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave B — ACTIVE: architecture interfaces/capability model; FFmpeg behavior unchanged**
+**Wave B — PASS / ready to merge: architecture interfaces/capability model; FFmpeg behavior unchanged**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -85,5 +85,14 @@ Forbidden in Wave B:
 ## Wave B rollback point
 `9ec2c1c61d0890464a70b71eb22738069255d852`
 
+## Wave B evidence
+- Implementation commit: `d51d0d36707720c93a3d0f6b9e27fc66618ea780`
+- Pull request: `#3`
+- Windows CI run: `37516960210` — **PASS**
+- CodeQL run: `37516960048` — **PASS**
+- Compile, Ruff, strict mypy, cheap pytest, STEP09 screenshot capture/verification, and artifact upload: **PASS**
+- Dependency manifests unchanged.
+- Existing `render_project()`, FFmpeg builder/executor, project schema, timeline behavior, animation behavior, and UI behavior unchanged.
+
 ## Next exact action
-Implement Wave B contracts on a dedicated V2 branch, run regression gates, merge only on PASS, then STOP before Wave C.
+Merge PR #3 after this evidence-only update remains green, then STOP before Wave C.
