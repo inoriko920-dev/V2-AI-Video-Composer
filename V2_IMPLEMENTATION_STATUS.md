@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave C — ACTIVE: render validation/progress/cancellation hardening + benchmark harness**
+**Wave C — PASS / ready to merge: render validation/progress/cancellation hardening + benchmark harness**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -119,5 +119,15 @@ Forbidden: new runtime dependencies, optional backend adoption, animation/keyfra
 ## Wave C rollback point
 `a2b69fb4a79c9e0216207463b48b88a741c8729e`
 
+## Wave C evidence
+- Core render safety commit: `42c95723f57a52ff46a20ac9469d8465e1be052f`.
+- Integration commit: `7863099ecfcf8d5d8e2cac6dbf784348ff783850`.
+- Final tested PR head before evidence update: `7d1307ee52a2fe8433c75b5f8ae2bcd191336f1d`.
+- Pull request: `#4`.
+- Windows CI run `37519985006`: **PASS**.
+- CodeQL run `37519985054`: **PASS**.
+- Compile, Ruff, strict mypy, cheap pytest, STEP09 screenshot capture/verification, and artifact upload: **PASS**.
+- Dependency manifests unchanged; no optional backend adopted.
+
 ## Next exact action
-Run Wave C PR regression gates; merge only on PASS, then STOP before Wave D.
+Re-run CI/CodeQL on this evidence-only update, merge PR #4 only on PASS, then STOP before Wave D.
