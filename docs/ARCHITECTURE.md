@@ -308,3 +308,20 @@ surface than the application presently needs.
 
 A passing spike is evidence of technical feasibility only. It does not add PyAV
 to application dependencies or authorize replacement of the FFmpeg reference path.
+
+
+### Wave I dependency-gate evidence
+
+PR #10 validation on implementation head `50921e920559dff80dabbe1ecc61b7ed2a6848e7` passed all three gates:
+Windows CI `37537178052`, CodeQL `37537178050`, and Optional Backend Spike
+`37537178273`.
+
+The isolated PyAV 19.0.1 Windows/Python 3.12 test imported in ~0.727 seconds,
+encoded/decoded a three-frame 64x64 MPEG-4 sample in ~0.011 seconds total, and
+measured an installed distribution footprint of 71,471,760 bytes. Package metadata
+reported BSD-3-Clause and linked FFmpeg library versions were visible.
+
+Decision: technical feasibility is proven, but PyAV is **not promoted** into the
+application runtime because there is no measured product requirement that justifies
+the extra dependency/portable footprint yet. FFmpeg/ffprobe CLI remains the
+reference and fallback final-render path.
