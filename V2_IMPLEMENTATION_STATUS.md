@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave A — COMPLETE / MERGED TO MAIN**
+**Wave B — ACTIVE: architecture interfaces/capability model; FFmpeg behavior unchanged**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -62,9 +62,28 @@ No rollback action may target the legacy repository.
 - No functional application code was changed in Wave A.
 - Legacy repository remained read-only.
 
+## Wave B scope
+Allowed:
+- add immutable/versioned backend capability descriptors;
+- add backend-neutral media protocol contracts;
+- add a static FFmpeg reference capability descriptor;
+- add contract/unit tests and architecture documentation.
+
+Forbidden in Wave B:
+- no new runtime dependency;
+- no libopenshot/MLT/PyAV adoption or packaging;
+- no change to `render_project()`, FFmpeg command construction, or output semantics;
+- no animation, timeline, project-schema, or UI behavior change.
+
+## Wave B acceptance criteria
+1. Ports exist for the planned media boundaries without leaking Qt/backend library types.
+2. FFmpeg reference capabilities map to the currently render-backed effect set.
+3. Existing FFmpeg export path is untouched.
+4. Ruff, strict mypy, cheap pytest, UI screenshot checks, and CodeQL pass.
+5. Diff remains reviewable and dependency manifests remain unchanged.
+
+## Wave B rollback point
+`9ec2c1c61d0890464a70b71eb22738069255d852`
+
 ## Next exact action
-**STOP after Wave A.**
-
-On the next explicit user instruction to continue, begin **Wave B — architecture interfaces/capability model with FFmpeg behavior unchanged**.
-
-Wave B must preserve FFmpeg behavior as the reference path and must not adopt/promote a new dependency until the STEP 13 DEPENDENCY GATE has evidence.
+Implement Wave B contracts on a dedicated V2 branch, run regression gates, merge only on PASS, then STOP before Wave C.

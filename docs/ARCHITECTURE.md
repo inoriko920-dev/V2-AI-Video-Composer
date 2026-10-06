@@ -31,3 +31,25 @@ A backend-neutral immutable RenderPlan is compiled from ProjectState. Runtime pr
 3. Re-check pinned Python/PySide6/provider compatibility before later release publication.
 
 These are maintenance watches, not blockers for the completed 0.2 source/test-build line.
+
+
+## V2 Wave B — Backend Capability Boundary
+
+Status: **IMPLEMENTATION IN PROGRESS**
+
+V2 keeps the existing modular monolith and the proven FFmpeg command path. Wave B
+adds an explicit, backend-neutral capability boundary without changing final-render
+behavior.
+
+- `aavc.media.capabilities` owns immutable/versioned backend capability data.
+- `aavc.media.ports` owns protocols for ProbeService, PreviewFrameSource,
+  RenderBackend, EffectCompiler, AudioPipeline, SubtitlePipeline, TimelineAdapter,
+  and ToolCapabilityService.
+- Contracts contain no Qt, subprocess, provider SDK, libopenshot, MLT, or PyAV
+  types.
+- `ffmpeg_reference_capabilities()` describes only capabilities already backed
+  by the current FFmpeg/ffprobe implementation.
+- FFmpeg remains the reference/default behavior. Wave B does not route exports
+  through a new backend implementation and does not add a runtime dependency.
+- Capability negotiation is additive architecture infrastructure for later waves;
+  UI exposure changes are outside Wave B and still require the UI gate.
