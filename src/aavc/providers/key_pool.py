@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from typing import Literal
+
+KeyHealthState = Literal["AVAILABLE", "COOLDOWN", "DISABLED"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -10,6 +13,24 @@ class KeyEntry:
     cooldown_until: float = 0.0
     consecutive_failures: int = 0
     disabled: bool = False
+    last_failure_kind: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class KeyHealth:
+    key_id: str
+    state: KeyHealthState
+    consecutive_failures: int
+    cooldown_remaining_seconds: float
+    last_failure_kind: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class KeyPoolHealthSummary:
+    total: int
+    available: int
+    cooldown: int
+    disabled: int
 
 
 class ApiKeyPool:
@@ -48,7 +69,10 @@ class ApiKeyPool:
     def mark_success(self, key_id: str) -> None:
         index = self._index_of(key_id)
         self._entries[index] = replace(
-            self._entries[index], cooldown_until=0.0, consecutive_failures=0
+            self._entries[index],
+            cooldown_until=0.0,
+            consecutive_failures=0,
+            last_failure_kind=None,
         )
 
     def mark_failure(
@@ -58,6 +82,7 @@ class ApiKeyPool:
         now: float,
         cooldown_seconds: float,
         disable: bool = False,
+        failure_kind: str = "provider-error",
     ) -> None:
         index = self._index_of(key_id)
         current = self._entries[index]
@@ -66,6 +91,36 @@ class ApiKeyPool:
             cooldown_until=max(current.cooldown_until, now + max(0.0, cooldown_seconds)),
             consecutive_failures=current.consecutive_failures + 1,
             disabled=current.disabled or disable,
+            last_failure_kind=failure_kind.strip() or "provider-error",
+        )
+
+    def health_snapshot(self, *, now: float) -> tuple[KeyHealth, ...]:
+        health: list[KeyHealth] = []
+        for entry in self._entries:
+            if entry.disabled:
+                state: KeyHealthState = "DISABLED"
+            elif entry.cooldown_until > now:
+                state = "COOLDOWN"
+            else:
+                state = "AVAILABLE"
+            health.append(
+                KeyHealth(
+                    key_id=entry.key_id,
+                    state=state,
+                    consecutive_failures=entry.consecutive_failures,
+                    cooldown_remaining_seconds=max(0.0, entry.cooldown_until - now),
+                    last_failure_kind=entry.last_failure_kind,
+                )
+            )
+        return tuple(health)
+
+    def health_summary(self, *, now: float) -> KeyPoolHealthSummary:
+        items = self.health_snapshot(now=now)
+        return KeyPoolHealthSummary(
+            total=len(items),
+            available=sum(item.state == "AVAILABLE" for item in items),
+            cooldown=sum(item.state == "COOLDOWN" for item in items),
+            disabled=sum(item.state == "DISABLED" for item in items),
         )
 
     def snapshot(self) -> tuple[KeyEntry, ...]:
