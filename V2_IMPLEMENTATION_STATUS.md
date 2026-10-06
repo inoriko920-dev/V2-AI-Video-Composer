@@ -21,7 +21,15 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave A — documentation/source-of-truth commit and baseline CI re-run**
+**Wave A — PASS / ready to merge**
+
+Baseline evidence:
+- Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
+- Pull request: `#2`
+- Windows CI run: `37515351345` — **PASS**
+- CodeQL run: `37515351222` — **PASS**
+- Secret scan, dependency graph, compile, Ruff, strict mypy, cheap pytest, STEP09 UI capture, screenshot verification, and artifact upload: **PASS**
+- Diff scope before the gate: documentation only; no `src/`, `tests/`, workflow, dependency-manifest, runtime, render, animation, timeline, UI implementation, or project-schema changes.
 
 Allowed:
 - clarify V2 repository identity and handoff rules;
@@ -49,7 +57,6 @@ If Wave A documentation or CI setup causes an unintended issue, reset the V2 wor
 No rollback action may target the legacy repository.
 
 ## Next exact action
-Create the Wave A documentation-only commit, open a PR to `main`, and evaluate its Windows CI.
+Merge PR #2 into `main` after the documentation-evidence update remains green.
 
-- If CI PASS: Wave A gate PASS; merge/close Wave A and proceed next turn to **Wave B — architecture interfaces/capability model with FFmpeg behavior unchanged**.
-- If CI FAIL: diagnose and repair only the V2 baseline/CI problem, then re-run before Wave B.
+After merge, stop Wave A. The next project step is **Wave B — architecture interfaces/capability model with FFmpeg behavior unchanged**. Do not begin Wave B in the same wave/turn.
