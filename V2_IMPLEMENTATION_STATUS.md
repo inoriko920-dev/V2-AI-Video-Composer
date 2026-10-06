@@ -518,3 +518,26 @@ Final publication remains blocked until the RC user-test has no blocker.
 Open the Wave J RC pull request, require CI + CodeQL + RC packaging gate PASS,
 then merge the RC source only if every automated gate passes. Do not publish v0.2.0
 until user-test acceptance.
+
+
+## Wave J RC evidence — automated gate 1
+- RC implementation head: `7b1d31f54d6f39051502954c3f21c1f61441e797`.
+- Pull request: `#12`.
+- Windows CI run `37540224041`: **PASS**.
+- CodeQL run `37540224055`: **PASS**.
+- Wave J RC package run `37540224017`: **PASS**.
+- 605 regression tests passed; 1 deselected.
+- STEP09 screenshot gate: **PASS**.
+- PyInstaller onedir build: **PASS**.
+- Portable foundation smoke/content/secret gate: **PASS**.
+- RC bundle/checksum preparation: **PASS**.
+- User-test workflow artifact ID: `11448397150`.
+- User-test workflow artifact digest: `sha256:a04f4052cb8182960b75b729acef2e3318c1e9baf55e06557ee3c733488f64b0`.
+- STEP09 evidence artifact ID: `11448272439`.
+- Final v0.2.0 publication remains **BLOCKED** pending RC user acceptance.
+
+## Next exact action
+Re-run CI, CodeQL, and the Wave J RC package workflow on this evidence commit. Merge
+the 0.2.0rc1 source to main only if all three gates remain PASS. Then provide the
+final RC artifact from the merged/evidence-equivalent source for user testing. Do not
+publish v0.2.0 yet.
