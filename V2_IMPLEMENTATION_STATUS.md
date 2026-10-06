@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave H — PASS / ready to merge: UI/UX parity and professional interaction hardening**
+**Wave H — COMPLETE / MERGED TO MAIN: UI/UX parity and professional interaction hardening**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -424,5 +424,27 @@ Forbidden in Wave H:
 - Focus/disabled QSS remains inside the existing frozen white/blue token system.
 - No new UI prompt/image package, layout redesign, schema change, runtime dependency, render/timeline/animation/provider behavior change was introduced.
 
+## Wave H closure
+- PR #9 merged to `main`.
+- Merge/squash commit: `07087c742557d7d461cacf69aa27ea6dbaca6351`.
+- Final PR-head Windows CI run: `37535631061` — **PASS**.
+- Final PR-head CodeQL run: `37535630968` — **PASS**.
+- 602 cheap regression tests passed; 1 deselected.
+- All 8 representative STEP09 1920x1080 Qt screenshots captured and verified.
+- Guarded runtime Edit menu retains Salin/Tempel Animasi Scene with truthful state.
+- Background cancel and animation-mode selector now reflect actual runtime availability.
+- Focus/disabled/selection/tooltip styling remains within the frozen white/blue design language.
+- No new UI prompt/image package, layout redesign, schema change, runtime dependency, or media/render behavior change was introduced.
+- Legacy repository remained read-only.
+
+## Wave numbering reconciliation
+STEP13 originally listed mature-backend spike(s) as Wave H and UI polish as Wave I. The
+executed repository history used Wave H for the approved UI polish/parity work. To avoid
+rewriting merged history while still completing every planned workstream, the remaining
+optional mature-backend dependency spike is assigned to **Wave I**. Wave J remains the
+full regression / Windows packaging / user test / release-candidate / final-release wave.
+
 ## Next exact action
-Re-run CI/CodeQL on this evidence-only update, merge PR #9 only on PASS, then STOP before Wave I.
+**STOP after Wave H.**
+
+On the next explicit user instruction to continue, begin **Wave I — optional mature-backend spike(s) and dependency gate**.

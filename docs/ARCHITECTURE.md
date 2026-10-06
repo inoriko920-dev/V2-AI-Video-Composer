@@ -278,3 +278,15 @@ tests passed (1 deselected), and all eight representative STEP09 1920x1080 Qt
 screenshots were captured and verified. The wave restored guarded-menu Scene
 animation copy/paste parity, made interaction availability truthful, and added
 restrained focus/disabled styling without introducing a new UI design.
+
+
+### Wave H closure and sequence reconciliation
+
+PR #9 merged to `main` at `07087c742557d7d461cacf69aa27ea6dbaca6351`.
+Final PR-head validation: Windows CI `37535631061` PASS, CodeQL
+`37535630968` PASS, 602 cheap tests PASS, and all eight STEP09 screenshots PASS.
+
+STEP13 originally ordered the optional mature-backend spike before UI polish. The
+executed history used Wave H for the approved UI polish. Merged history is not renamed;
+the still-unexecuted optional mature-backend/dependency spike is therefore assigned to
+Wave I, and Wave J remains the release/final-regression wave.

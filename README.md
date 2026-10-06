@@ -164,5 +164,5 @@ Third-party dependencies retain their own licenses. FFmpeg/ffprobe are external 
 ## V2 implementation wave status
 - Wave F: **COMPLETE** — transactional manual editing and validation UX passed CI.
 - Wave G: **COMPLETE** — Gemini background cancellation/progress and secret-free key-pool health diagnostics passed CI.
-- Wave H: **ACTIVE** — frozen-reference UI parity, truthful action state, and focus/disabled interaction polish under screenshot gate.
-- Next gate: Wave H Windows CI + CodeQL; Wave I must not start before PASS/merge.
+- Wave H: **COMPLETE** — frozen-reference UI parity, truthful action state, and focus/disabled interaction polish passed CI + screenshot gates.
+- Wave I: **NEXT** — deferred optional mature-backend spike(s) and dependency gate; promote nothing unless measured acceptance criteria pass.
