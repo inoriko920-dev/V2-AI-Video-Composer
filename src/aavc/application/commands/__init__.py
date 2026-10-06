@@ -15,7 +15,6 @@ from .project_commands import (
 )
 from .project_metadata import SetProjectTitle
 from .scene_editing import CopySceneAnimations, SetSceneDurationsBatch
-from .transaction import ProjectTransaction
 from .scene_order import (
     DeleteScene,
     DuplicateScene,
@@ -23,6 +22,7 @@ from .scene_order import (
     MoveSceneToIndex,
     SplitScene,
 )
+from .transaction import ProjectTransaction
 
 __all__ = [
     "CopySceneAnimations",
