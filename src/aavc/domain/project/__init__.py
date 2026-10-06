@@ -1,3 +1,5 @@
+from aavc.domain.animation import AnimationKeyframe, AnimationKeyframeTrack
+
 from .models import (
     AnimationAssignment,
     AssetBinding,
@@ -10,6 +12,8 @@ from .models import (
 
 __all__ = [
     "AnimationAssignment",
+    "AnimationKeyframe",
+    "AnimationKeyframeTrack",
     "AssetBinding",
     "ProjectState",
     "RenderQualitySettings",

@@ -4,6 +4,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
+from aavc.domain.animation import AnimationKeyframeTrack
+
 SceneMode = Literal["SINGLE", "DOUBLE"]
 AssetStatus = Literal["READY", "MISSING", "CORRUPT", "DUPLICATE"]
 
@@ -40,6 +42,14 @@ class AnimationAssignment:
     exit_effect: str = "Fade"
     intensity: float = 1.0
     locked: bool = False
+    keyframe_tracks: tuple[AnimationKeyframeTrack, ...] = ()
+
+    def __post_init__(self) -> None:
+        properties = [track.property_name for track in self.keyframe_tracks]
+        if len(properties) != len(set(properties)):
+            raise ValueError(
+                "Satu assignment tidak boleh memiliki track keyframe property duplikat"
+            )
 
 
 @dataclass(frozen=True, slots=True)
