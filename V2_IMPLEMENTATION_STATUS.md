@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave B — COMPLETE / MERGED TO MAIN: architecture interfaces/capability model; FFmpeg behavior unchanged**
+**Wave C — ACTIVE: render validation/progress/cancellation hardening + benchmark harness**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -103,9 +103,21 @@ Forbidden in Wave B:
 - FFmpeg export behavior remained unchanged.
 - Legacy repository remained read-only.
 
+## Wave C scope
+Allowed: staged-output ffprobe validation before atomic replace; cooperative FFmpeg cancellation/progress; cached FFmpeg availability/version probing; 10/100/500-scene benchmark harness; focused regression tests.
+
+Forbidden: new runtime dependencies, optional backend adoption, animation/keyframe schema changes, timeline redesign, or visual UI redesign.
+
+## Wave C acceptance criteria
+1. Invalid/truncated staged output cannot replace a valid destination.
+2. Managed external processes can be cancelled cooperatively.
+3. Render progress is observable while the legacy non-progress path remains available.
+4. FFmpeg availability/version probing is cached and refreshable.
+5. Benchmark harness covers 10/100/500 scenes and long Windows-style paths with spaces/apostrophe/Unicode.
+6. Windows CI and CodeQL pass; dependency manifests remain unchanged.
+
+## Wave C rollback point
+`a2b69fb4a79c9e0216207463b48b88a741c8729e`
+
 ## Next exact action
-**STOP after Wave B.**
-
-On the next explicit user instruction to continue, begin **Wave C — render validation/progress/cancellation hardening and benchmark harness**.
-
-Wave C must retain FFmpeg as the reference backend and must not adopt optional mature backends.
+Run Wave C PR regression gates; merge only on PASS, then STOP before Wave D.
