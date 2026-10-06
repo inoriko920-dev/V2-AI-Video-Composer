@@ -31,6 +31,12 @@ def auto_motion_all_enabled(*, has_project: bool) -> bool:
     return has_project
 
 
+def animation_mode_enabled(*, has_project: bool) -> bool:
+    """Return whether the toolbar animation-mode selector may be used."""
+
+    return has_project
+
+
 def animation_mode_action(mode: str) -> AnimationModeAction | None:
     """Map the existing toolbar mode labels to live runtime workflows."""
 
@@ -167,7 +173,9 @@ class AnimationMenuMainWindow(ProjectMenuMainWindow):
                 auto_motion_all_enabled(has_project=has_project)
             )
         if self._animation_mode_combo is not None:
-            self._animation_mode_combo.setEnabled(has_project)
+            self._animation_mode_combo.setEnabled(
+                animation_mode_enabled(has_project=has_project)
+            )
 
     def _remember_selected_scene(self, scene_number: int) -> None:
         super()._remember_selected_scene(scene_number)

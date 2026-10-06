@@ -87,3 +87,68 @@ def test_only_scene_cannot_be_moved_or_deleted_but_can_be_duplicated() -> None:
     assert state.move_down is False
     assert state.duplicate is True
     assert state.delete is False
+
+
+
+def test_copy_animation_requires_selected_scene_with_animation() -> None:
+    without_animation = edit_menu_action_state(
+        has_project=True,
+        has_selected_scene=True,
+        can_undo=False,
+        can_redo=False,
+        selected_index=0,
+        scene_count=2,
+        selected_scene_number=1,
+        selected_has_animation=False,
+    )
+    with_animation = edit_menu_action_state(
+        has_project=True,
+        has_selected_scene=True,
+        can_undo=False,
+        can_redo=False,
+        selected_index=0,
+        scene_count=2,
+        selected_scene_number=1,
+        selected_has_animation=True,
+    )
+
+    assert without_animation.copy_animation is False
+    assert with_animation.copy_animation is True
+
+
+def test_paste_animation_requires_live_copy_source_and_different_target() -> None:
+    no_copy = edit_menu_action_state(
+        has_project=True,
+        has_selected_scene=True,
+        can_undo=False,
+        can_redo=False,
+        selected_index=1,
+        scene_count=3,
+        selected_scene_number=2,
+    )
+    same_scene = edit_menu_action_state(
+        has_project=True,
+        has_selected_scene=True,
+        can_undo=False,
+        can_redo=False,
+        selected_index=0,
+        scene_count=3,
+        selected_scene_number=1,
+        animation_copy_source_scene_number=1,
+        animation_copy_source_exists=True,
+    )
+    valid_target = edit_menu_action_state(
+        has_project=True,
+        has_selected_scene=True,
+        can_undo=False,
+        can_redo=False,
+        selected_index=1,
+        scene_count=3,
+        selected_scene_number=2,
+        animation_copy_source_scene_number=1,
+        animation_copy_source_exists=True,
+    )
+
+    assert no_copy.paste_animation is False
+    assert same_scene.paste_animation is False
+    assert valid_target.paste_animation is True

@@ -20,6 +20,12 @@ from aavc.presentation.windows.ai_menu_window import configured_gemini_slots
 from aavc.presentation.windows.ai_native_motion_window import AiNativeMotionMainWindow
 
 
+def background_cancel_action_enabled(*, background_busy: bool) -> bool:
+    """Return whether the shared cancel action should be actionable."""
+
+    return background_busy
+
+
 class BackgroundWorkMainWindow(AiNativeMotionMainWindow):
     """Keep blocking provider/render work outside the Qt GUI thread."""
 
@@ -48,7 +54,11 @@ class BackgroundWorkMainWindow(AiNativeMotionMainWindow):
     def _refresh_background_action_state(self) -> None:
         action = self._cancel_background_action
         if action is not None:
-            action.setEnabled(self._background_busy())
+            action.setEnabled(
+                background_cancel_action_enabled(
+                    background_busy=self._background_busy()
+                )
+            )
 
     def _cancel_background_from_menu(self) -> None:
         if self.cancel_background_work():
