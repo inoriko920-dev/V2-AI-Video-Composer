@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import subprocess
 import time
-from contextlib import suppress
 from collections.abc import Callable, Sequence
+from contextlib import suppress
 from dataclasses import dataclass
 from threading import Thread
 from typing import TextIO
