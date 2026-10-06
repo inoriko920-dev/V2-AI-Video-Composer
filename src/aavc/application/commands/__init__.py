@@ -14,6 +14,7 @@ from .project_commands import (
     SetSubtitleStyle,
 )
 from .project_metadata import SetProjectTitle
+from .scene_editing import CopySceneAnimations, SetSceneDurationsBatch
 from .scene_order import (
     DeleteScene,
     DuplicateScene,
@@ -21,13 +22,16 @@ from .scene_order import (
     MoveSceneToIndex,
     SplitScene,
 )
+from .transaction import ProjectTransaction
 
 __all__ = [
+    "CopySceneAnimations",
     "DeleteScene",
     "DuplicateScene",
     "MoveScene",
     "MoveSceneToIndex",
     "ProjectCommand",
+    "ProjectTransaction",
     "RandomizeAnimationAssignments",
     "RelinkAsset",
     "RemoveAnimationAssignment",
@@ -36,6 +40,7 @@ __all__ = [
     "SetNarrationAudio",
     "SetProjectTitle",
     "SetSceneDuration",
+    "SetSceneDurationsBatch",
     "SetSubtitleAnimation",
     "SetSubtitleSource",
     "SetSubtitleStyle",

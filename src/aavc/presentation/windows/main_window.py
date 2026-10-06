@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from aavc.application.commands import (
+    CopySceneAnimations,
     RelinkAsset,
     SetNarrationAudio,
     SetSceneDuration,
@@ -64,6 +65,7 @@ class MainWindow:
         self._toolbar: Any | None = None
         self._validation_button: Any | None = None
         self._selected_scene_number: int | None = None
+        self._animation_copy_source_scene_number: int | None = None
         self._build_menu(QAction)
         self._build_toolbar(QToolBar, QAction)
         self._build_pages()
@@ -287,6 +289,61 @@ class MainWindow:
             if project is not None and project.subtitle_source:
                 self.open_subtitle_editor()
         self.window.statusBar().showMessage("Redo berhasil", 3000)
+
+    def copy_selected_scene_animation(self) -> None:
+        project = self.services.project_session.current
+        scene_number = self._selected_scene_number
+        if project is None or scene_number is None:
+            self._show_project_notice(
+                "Salin animasi tidak tersedia",
+                "Pilih Scene terlebih dahulu.",
+            )
+            return
+        if not any(
+            assignment.scene_number == scene_number
+            for assignment in project.animations
+        ):
+            self._show_project_notice(
+                "Animasi belum ada",
+                f"Scene {scene_number:02d} belum memiliki assignment animasi.",
+            )
+            return
+        self._animation_copy_source_scene_number = scene_number
+        self.window.statusBar().showMessage(
+            f"Animasi Scene {scene_number:02d} disalin.",
+            4000,
+        )
+
+    def paste_animation_to_selected_scene(self) -> None:
+        source = self._animation_copy_source_scene_number
+        target = self._selected_scene_number
+        if source is None:
+            self._show_project_notice(
+                "Tempel animasi tidak tersedia",
+                "Salin animasi dari Scene sumber terlebih dahulu.",
+            )
+            return
+        if target is None:
+            self._show_project_notice(
+                "Tempel animasi tidak tersedia",
+                "Pilih Scene target terlebih dahulu.",
+            )
+            return
+        try:
+            self.services.project_session.execute(
+                CopySceneAnimations(source, (target,))
+            )
+        except (AAVCError, ValueError) as error:
+            self._show_project_error("Gagal menempel animasi Scene", error)
+            return
+        self._refresh_window_title()
+        self._refresh_validation_badge()
+        self.refresh_editor_overview()
+        self.window.statusBar().showMessage(
+            f"Animasi Scene {source:02d} ditempel ke Scene {target:02d}. "
+            "Klik Simpan untuk menyimpan perubahan.",
+            7000,
+        )
 
     def set_scene_duration(self, scene_number: int, duration_seconds: float) -> None:
         try:
@@ -514,6 +571,20 @@ class MainWindow:
                 exit_action = action_type("Keluar", self.window)
                 exit_action.triggered.connect(self.window.close)
                 menu.addAction(exit_action)
+            elif name == "Edit":
+                undo_action = action_type("Undo", self.window)
+                undo_action.triggered.connect(self.undo_project)
+                menu.addAction(undo_action)
+                redo_action = action_type("Redo", self.window)
+                redo_action.triggered.connect(self.redo_project)
+                menu.addAction(redo_action)
+                menu.addSeparator()
+                copy_animation = action_type("Salin Animasi Scene", self.window)
+                copy_animation.triggered.connect(self.copy_selected_scene_animation)
+                menu.addAction(copy_animation)
+                paste_animation = action_type("Tempel Animasi Scene", self.window)
+                paste_animation.triggered.connect(self.paste_animation_to_selected_scene)
+                menu.addAction(paste_animation)
             elif name == "Ekspor":
                 export_action = action_type("Ekspor Video", self.window)
                 export_action.triggered.connect(self.open_export)
@@ -649,6 +720,24 @@ class MainWindow:
         dialog.show()
         self._active_dialog = dialog
 
+    def open_scene_from_validation(self, scene_number: int) -> None:
+        project = self.services.project_session.current
+        if project is None or not any(
+            scene.scene_number == scene_number for scene in project.scenes
+        ):
+            self._show_project_notice(
+                "Scene tidak tersedia",
+                f"Scene {scene_number:02d} tidak ditemukan pada project aktif.",
+            )
+            return
+        self._selected_scene_number = scene_number
+        self.refresh_editor_overview()
+        self.show_route(UiRoute.EDITOR)
+        self.window.statusBar().showMessage(
+            f"Scene {scene_number:02d} dipilih dari Pusat Validasi.",
+            5000,
+        )
+
     def open_validation(self) -> None:
         from aavc.presentation.dialogs.validation_center import create_validation_dialog
 
@@ -662,6 +751,8 @@ class MainWindow:
                 issues=issues,
                 on_revalidate=self.open_validation,
                 on_relink=self.relink_asset_from_validation,
+                on_open_scene=self.open_scene_from_validation,
+                on_import_media=self.import_media,
             )
         dialog.setModal(False)
         dialog.show()

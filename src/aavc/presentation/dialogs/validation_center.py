@@ -30,11 +30,11 @@ def summarize_validation_issues(issues: tuple[ValidationIssue, ...]) -> Validati
 
 
 def validation_category(issue: ValidationIssue) -> str:
-    if issue.code == "ASSET_NOT_READY":
+    if issue.code in {"ASSET_NOT_READY", "NARRATION_NOT_FOUND", "SUBTITLE_NOT_FOUND"}:
         return "Media"
     if issue.code == "SCENE_DURATION_SHORT":
         return "Scene"
-    if issue.code == "VISUAL_EFFECT_FALLBACK":
+    if issue.code in {"VISUAL_EFFECT_FALLBACK", "KEYFRAME_TRACK_FALLBACK"}:
         return "Render"
     return "Project"
 
@@ -42,6 +42,18 @@ def validation_category(issue: ValidationIssue) -> str:
 def validation_issue_action(issue: ValidationIssue) -> tuple[str, str] | None:
     if issue.code == "ASSET_NOT_READY" and issue.asset_id:
         return ("Relink", issue.asset_id)
+    if issue.code in {"NARRATION_NOT_FOUND", "SUBTITLE_NOT_FOUND"}:
+        return ("Impor Media", "")
+    if (
+        issue.scene_number is not None
+        and issue.code
+        in {
+            "SCENE_DURATION_SHORT",
+            "VISUAL_EFFECT_FALLBACK",
+            "KEYFRAME_TRACK_FALLBACK",
+        }
+    ):
+        return ("Buka Scene", str(issue.scene_number))
     return None
 
 
@@ -211,6 +223,8 @@ def _create_live_validation_dialog(
     issues: tuple[ValidationIssue, ...],
     on_revalidate: Callable[[], None] | None,
     on_relink: Callable[[str], None] | None,
+    on_open_scene: Callable[[int], None] | None,
+    on_import_media: Callable[[], None] | None,
 ) -> Any:
     from PySide6.QtCore import Qt
     from PySide6.QtWidgets import (
@@ -355,21 +369,26 @@ def _create_live_validation_dialog(
 
                 action = validation_issue_action(issue)
                 if action is not None:
-                    label, asset_id = action
+                    label, target = action
                     action_button = QPushButton(label)
                     action_button.setStyleSheet(
                         "color:#1D4ED8; border:none; font-weight:650; background:transparent;"
                     )
 
-                    def run_relink(
+                    def run_action(
                         _checked: bool = False,
-                        target_asset_id: str = asset_id,
+                        action_label: str = label,
+                        action_target: str = target,
                     ) -> None:
                         dialog.close()
-                        if on_relink is not None:
-                            on_relink(target_asset_id)
+                        if action_label == "Relink" and on_relink is not None:
+                            on_relink(action_target)
+                        elif action_label == "Buka Scene" and on_open_scene is not None:
+                            on_open_scene(int(action_target))
+                        elif action_label == "Impor Media" and on_import_media is not None:
+                            on_import_media()
 
-                    action_button.clicked.connect(run_relink)
+                    action_button.clicked.connect(run_action)
                     row.addWidget(action_button)
 
                 page_layout.addWidget(row_frame)
@@ -387,7 +406,16 @@ def create_validation_dialog(
     issues: tuple[ValidationIssue, ...] | None = None,
     on_revalidate: Callable[[], None] | None = None,
     on_relink: Callable[[str], None] | None = None,
+    on_open_scene: Callable[[int], None] | None = None,
+    on_import_media: Callable[[], None] | None = None,
 ) -> Any:
     if issues is None:
         return _create_reference_validation_dialog(parent)
-    return _create_live_validation_dialog(parent, issues, on_revalidate, on_relink)
+    return _create_live_validation_dialog(
+        parent,
+        issues,
+        on_revalidate,
+        on_relink,
+        on_open_scene,
+        on_import_media,
+    )

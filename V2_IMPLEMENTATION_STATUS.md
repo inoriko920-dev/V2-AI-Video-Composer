@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave E — COMPLETE / MERGED TO MAIN: foundational keyframe motion with preview/final parity**
+**Wave F — PASS / ready to merge: transactional manual editing + validation UX hardening**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -253,7 +253,51 @@ Forbidden in Wave E:
 - Project schema remains v3; dependency manifests, timeline behavior, and UI layout remain unchanged.
 - Legacy repository remained read-only.
 
-## Next exact action
-**STOP after Wave E.**
+## Wave F scope
+Allowed:
+- atomic multi-command project transactions as one undo/redo step;
+- batch Scene duration editing with validation-before-mutation;
+- copy/paste Scene animation assignments by stable asset slot;
+- preserve keyframe tracks and existing assignment semantics during copy/paste;
+- Validation Center detection for missing configured narration/subtitle and missing READY files;
+- Validation Center surfacing for unsupported keyframe tracks;
+- direct Validation Center actions: Relink, Buka Scene, Impor Media;
+- connect Edit menu Undo/Redo + Salin/Tempel Animasi Scene without redesigning layout.
 
-On the next explicit user instruction to continue, begin **Wave F — timeline/manual-editing improvements and validation UX**.
+Forbidden in Wave F:
+- no project schema change;
+- no render/animation compiler redesign;
+- no unrestricted multitrack NLE;
+- no new runtime dependency/backend;
+- no AI/provider/job-pool changes;
+- no broad UI redesign.
+
+## Wave F acceptance criteria
+1. Multi-command edits are atomic and create exactly one undo/redo entry.
+2. Failed batch edits leave ProjectState/history untouched.
+3. Copy/paste animation maps by asset slot, preserves keyframes, and never overwrites a conflicting locked assignment.
+4. Validation detects configured-but-missing narration/subtitle and READY bindings whose file disappeared.
+5. Unsupported keyframe tracks appear in live validation with a direct Scene navigation action.
+6. Existing relink and validation flows remain compatible.
+7. Windows CI, strict mypy, full cheap regression tests, screenshot gate, and CodeQL pass.
+
+## Wave F rollback point
+`8b38e2896f537f187ca745d54b347bf2c018f15b`
+
+## Wave F evidence
+- Core implementation commit: `27dffd785b6f8ac308903c94f7dce780065f7a41`.
+- Test integration commit: `f6610706533558774c7202a1a4bc495baf11df63`.
+- Final tested implementation head: `44356c6b06830c9657f08571f64040d48cb82ef4`.
+- Pull request: `#7`.
+- Windows CI run `37530396553`: **PASS**.
+- CodeQL run `37530396523`: **PASS**.
+- Compile, Ruff, strict mypy, 589 cheap tests, STEP09 screenshot capture/verification, and artifact upload: **PASS**.
+- Multi-command transactions are atomic and one-step undo/redo.
+- Batch duration edits validate before mutation.
+- Scene animation copy/paste preserves keyframes, maps by asset slot, and protects locked targets.
+- Live validation detects missing configured media and unsupported keyframe tracks.
+- Validation Center routes to Relink / Buka Scene / Impor Media without redesigning the frozen reference layout.
+- Project schema, render compiler, runtime dependencies, and backend selection remain unchanged.
+
+## Next exact action
+Re-run CI/CodeQL on this evidence-only update, merge PR #7 only on PASS, then STOP before Wave G.
