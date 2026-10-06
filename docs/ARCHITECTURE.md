@@ -68,3 +68,15 @@ behavior.
 PR #3 was merged to `main` at `79a688194b2c38ec4eb74ca6b4818bdb7938eb7f`. Final PR-head validation:
 Windows CI `37517200788` PASS and CodeQL `37517200581` PASS. The FFmpeg
 reference export implementation and dependency manifests remained unchanged.
+
+
+## V2 Wave C — Render Hardening
+
+Status: **PASS — WAVE C IMPLEMENTED**
+
+Wave C keeps FFmpeg/ffprobe as the reference toolchain. It adds ffprobe validation of staged output before atomic finalization, managed subprocess cancellation/progress, cached FFmpeg version availability probing, and a standard 10/100/500-scene benchmark harness. No alternate backend or new runtime dependency is introduced.
+
+
+### Wave C evidence
+
+PR #4 validation on implementation head `7d1307ee52a2fe8433c75b5f8ae2bcd191336f1d`: Windows CI `37519985006` PASS and CodeQL `37519985054` PASS. The dependency manifests remained unchanged and FFmpeg/ffprobe remain the reference media toolchain.

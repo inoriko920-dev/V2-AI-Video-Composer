@@ -95,3 +95,40 @@ def test_finished_unpolled_call_still_occupies_window_slot() -> None:
         assert window._background_busy() is False
     finally:
         jobs.shutdown()
+
+
+
+def test_background_call_reports_progress_and_cancellation() -> None:
+    jobs = JobManager(max_workers=1)
+    reached = False
+
+    def work(token, progress):
+        nonlocal reached
+        progress(0.25)
+        reached = True
+        while True:
+            token.raise_if_cancelled()
+            time.sleep(0.01)
+
+    try:
+        call = BackgroundCall(
+            jobs,
+            cancellable_work=work,
+            name="cancellable-render",
+        )
+        call.start()
+        deadline = time.monotonic() + 2.0
+        while time.monotonic() < deadline and not reached:
+            time.sleep(0.01)
+
+        assert reached is True
+        assert call.snapshot().progress == 0.25
+        assert call.cancel() is True
+        _wait(call)
+
+        snapshot = call.snapshot()
+        assert snapshot.done is True
+        assert snapshot.cancelled is True
+        assert snapshot.error is None
+    finally:
+        jobs.shutdown()
