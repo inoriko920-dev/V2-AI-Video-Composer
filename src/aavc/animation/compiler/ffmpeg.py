@@ -205,7 +205,7 @@ def _compile_keyframe_track_expression(
     duration = max(0.001, float(duration_seconds))
     points = track.keyframes
     expression = _number(points[-1].value)
-    for start, end in reversed(tuple(zip(points, points[1:], strict=True))):
+    for start, end in reversed(tuple(zip(points, points[1:]))):
         segment = _segment_expression(
             start.value,
             end.value,
