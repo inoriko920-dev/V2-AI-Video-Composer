@@ -86,7 +86,7 @@ def evaluate_keyframe_track(
     if len(points) == 1 or current <= points[0].time:
         return clamp_keyframe_value(track.property_name, points[0].value)
 
-    for start, end in zip(points, points[1:]):
+    for start, end in zip(points, points[1:], strict=False):
         if current > end.time:
             continue
         if start.interpolation == "hold":
