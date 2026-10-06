@@ -29,6 +29,8 @@ def background_cancel_action_enabled(*, background_busy: bool) -> bool:
 class BackgroundWorkMainWindow(AiNativeMotionMainWindow):
     """Keep blocking provider/render work outside the Qt GUI thread."""
 
+    _cancel_background_action: Any | None
+
     def _build_menu(self, action_type: Any) -> None:
         super()._build_menu(action_type)
         ai_menu: Any | None = None
@@ -78,7 +80,7 @@ class BackgroundWorkMainWindow(AiNativeMotionMainWindow):
         self._background_success: Callable[[Any], None] | None = None
         self._background_error_title = "Pekerjaan gagal"
         self._background_name = ""
-        self._cancel_background_action: Any | None = None
+        self._cancel_background_action = None
         super().__init__(services, initial_state=initial_state)
 
     def _background_busy(self) -> bool:
