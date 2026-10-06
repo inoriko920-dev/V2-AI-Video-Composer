@@ -290,3 +290,21 @@ STEP13 originally ordered the optional mature-backend spike before UI polish. Th
 executed history used Wave H for the approved UI polish. Merged history is not renamed;
 the still-unexecuted optional mature-backend/dependency spike is therefore assigned to
 Wave I, and Wave J remains the release/final-regression wave.
+
+
+## V2 Wave I — Optional Mature Backend Dependency Gate
+
+Status: **IMPLEMENTATION IN PROGRESS**
+
+Wave I does not change the production backend. FFmpeg/ffprobe CLI remains the
+reference and fallback final-render path.
+
+PyAV 19.0.1 is the only candidate selected for an isolated Windows/Python 3.12
+spike because a binary Windows x64 wheel exists and the package license is
+BSD-3-Clause. The spike lives outside `src/` and is installed only by a dedicated
+CI workflow. libopenshot 1.0.1 and MLT 7.42.0 remain deferred because their
+current release packaging presents a larger native-library and redistribution
+surface than the application presently needs.
+
+A passing spike is evidence of technical feasibility only. It does not add PyAV
+to application dependencies or authorize replacement of the FFmpeg reference path.

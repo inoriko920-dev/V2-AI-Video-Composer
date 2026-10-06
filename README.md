@@ -166,3 +166,10 @@ Third-party dependencies retain their own licenses. FFmpeg/ffprobe are external 
 - Wave G: **COMPLETE** — Gemini background cancellation/progress and secret-free key-pool health diagnostics passed CI.
 - Wave H: **COMPLETE** — frozen-reference UI parity, truthful action state, and focus/disabled interaction polish passed CI + screenshot gates.
 - Wave I: **NEXT** — deferred optional mature-backend spike(s) and dependency gate; promote nothing unless measured acceptance criteria pass.
+
+
+## Wave I dependency gate
+Wave I is evaluating optional mature media components without changing the runtime
+dependency set. FFmpeg/ffprobe CLI remains the production reference/fallback.
+PyAV 19.0.1 is tested only in an isolated Windows CI spike; libopenshot/MLT remain
+deferred pending a concrete capability need and native packaging/license evidence.
