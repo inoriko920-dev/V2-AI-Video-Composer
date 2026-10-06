@@ -192,3 +192,13 @@ PR #7 validation on implementation head `44356c6b06830c9657f08571f64040d48cb82ef
 tests passed (1 deselected). Transactional manual edits are one-step undoable,
 Scene animation copy/paste preserves keyframe assignments while respecting locked
 targets, and live validation can navigate directly to Scene/media repair actions.
+
+
+### Wave F closure
+
+PR #7 was merged to `main` at `fe9a70656232e3dc2f3231b1b3d1c06c0e5ee2c5`. Final PR-head validation:
+Windows CI `37530741442` PASS and CodeQL `37530741447` PASS, with 589
+cheap regression tests passing. Manual multi-command changes now have atomic
+single-step history semantics, Scene animation copy/paste preserves keyframe
+assignments and lock protection, and Validation Center routes users directly to
+repair/navigation actions without changing the project schema or render backend.

@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave F — PASS / ready to merge: transactional manual editing + validation UX hardening**
+**Wave F — COMPLETE / MERGED TO MAIN: transactional manual editing + validation UX hardening**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -299,5 +299,23 @@ Forbidden in Wave F:
 - Validation Center routes to Relink / Buka Scene / Impor Media without redesigning the frozen reference layout.
 - Project schema, render compiler, runtime dependencies, and backend selection remain unchanged.
 
+## Wave F closure
+- PR #7 merged to `main`.
+- Merge/squash commit: `fe9a70656232e3dc2f3231b1b3d1c06c0e5ee2c5`.
+- Final PR-head Windows CI run: `37530741442` — **PASS**.
+- Final PR-head CodeQL run: `37530741447` — **PASS**.
+- 589 cheap regression tests passed; 1 deselected.
+- Multi-command edits are atomic and one-step undo/redo.
+- Batch Scene-duration updates validate all targets before mutation.
+- Scene animation copy/paste maps by asset slot, preserves keyframes, and respects locked targets.
+- Validation detects configured-but-missing narration/subtitle and READY media whose file disappeared.
+- Unsupported keyframe tracks surface in live validation with direct Scene navigation.
+- Validation Center repair actions include Relink / Buka Scene / Impor Media.
+- Edit menu now exposes Undo/Redo and Salin/Tempel Animasi Scene without broad UI redesign.
+- Project schema, render compiler, backend selection, and runtime dependency manifests remain unchanged.
+- Legacy repository remained read-only.
+
 ## Next exact action
-Re-run CI/CodeQL on this evidence-only update, merge PR #7 only on PASS, then STOP before Wave G.
+**STOP after Wave F.**
+
+On the next explicit user instruction to continue, begin **Wave G — AI/job/key-pool UX hardening**.
