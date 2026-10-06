@@ -67,9 +67,10 @@ class AnimationKeyframe:
             raise ValueError(f"Easing keyframe tidak didukung: {self.easing}")
         if self.velocity is not None and not math.isfinite(self.velocity):
             raise ValueError("Velocity keyframe harus finite")
-        if self.overshoot is not None:
-            if not math.isfinite(self.overshoot) or self.overshoot < 0:
-                raise ValueError("Overshoot keyframe harus finite dan tidak negatif")
+        if self.overshoot is not None and (
+            not math.isfinite(self.overshoot) or self.overshoot < 0
+        ):
+            raise ValueError("Overshoot keyframe harus finite dan tidak negatif")
 
 
 @dataclass(frozen=True, slots=True)
