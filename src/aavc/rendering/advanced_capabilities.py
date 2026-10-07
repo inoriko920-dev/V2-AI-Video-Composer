@@ -89,38 +89,44 @@ class AdvancedFFmpegCapabilityProbe:
         fingerprint = self._fingerprint(tool, first_line)
         features: set[AdvancedFFmpegFeature] = set()
         diagnostics: list[str] = []
-        opacity_probe = self._runner.run(
-            [
-                tool.path,
-                "-hide_banner",
-                "-loglevel",
-                "error",
-                "-f",
-                "lavfi",
-                "-i",
-                "color=c=red:s=16x16:r=4:d=0.25",
-                "-vf",
-                (
-                    "format=rgba,"
-                    "sendcmd=c='0-1 [expr] "
-                    "colorchannelmixer@k1_opacity aa 0.5',"
-                    "colorchannelmixer@k1_opacity=aa=1"
-                ),
-                "-frames:v",
-                "1",
-                "-f",
-                "null",
-                "-",
-            ],
-            timeout_seconds=10.0,
-        )
-        if opacity_probe.returncode == 0:
-            features.add(AdvancedFFmpegFeature.OPACITY_RUNTIME_ALPHA)
-        else:
-            diagnostics.append(
-                "K1 opacity runtime-alpha probe gagal: "
-                + (opacity_probe.stderr[-1000:] or "unknown FFmpeg error")
+        try:
+            opacity_probe = self._runner.run(
+                [
+                    tool.path,
+                    "-hide_banner",
+                    "-loglevel",
+                    "error",
+                    "-f",
+                    "lavfi",
+                    "-i",
+                    "color=c=red:s=16x16:r=4:d=0.25",
+                    "-vf",
+                    (
+                        "format=rgba,"
+                        "sendcmd=c='0-1 [expr] "
+                        "colorchannelmixer@k1_opacity aa 0.5',"
+                        "colorchannelmixer@k1_opacity=aa=1"
+                    ),
+                    "-frames:v",
+                    "1",
+                    "-f",
+                    "null",
+                    "-",
+                ],
+                timeout_seconds=10.0,
             )
+        except (OSError, RuntimeError) as error:
+            diagnostics.append(
+                "K1 opacity runtime-alpha probe gagal: " + str(error)
+            )
+        else:
+            if opacity_probe.returncode == 0:
+                features.add(AdvancedFFmpegFeature.OPACITY_RUNTIME_ALPHA)
+            else:
+                diagnostics.append(
+                    "K1 opacity runtime-alpha probe gagal: "
+                    + (opacity_probe.stderr[-1000:] or "unknown FFmpeg error")
+                )
 
         self._cached = AdvancedFFmpegCapabilities(
             available=True,
