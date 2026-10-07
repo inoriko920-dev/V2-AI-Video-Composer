@@ -20,7 +20,8 @@ Read in this order:
 - STEP 03: PASS
 - STEP 04: PASS
 - STEP 05: PASS
-- STEP 06 / W06-A: NEXT / NOT STARTED
+- STEP 06 / W06-A: PASS / COMPLETE
+- STEP 06 / W06-B: NEXT / AUTHORIZED
 - application coding: AUTHORIZED ONLY FOR STEP 06 WAVES
 - UI redesign: BLOCKED / not planned
 - schema change: BLOCKED
@@ -30,6 +31,16 @@ Read in this order:
 ## Handoff
 Another AI must not infer v0.2.2 scope from old Wave J or v0.2.1 implementation branches.
 Read STEP 00–05 in order. The canonical base is current post-release `main`.
-Start implementation only with W06-A. Complete one W06 wave per user turn.
+Start the next implementation turn only with W06-B. W06-A is complete. Complete one W06 wave per user turn.
 Do not implement deferred GAP-03A runtime autosave/recovery UI integration.
 No new UI-image prompt step is required unless implementation unexpectedly changes the visual design.
+
+
+## W06-A result
+- source: `docs/v2_0_2_2_planning/W06_A_IMPLEMENTATION_RESULT.md`
+- workflow-security failing-before: run `37675337655`
+- verified V2 backup: run `37675793133`, artifact `11507436281`
+- final CI: `37675988574` PASS
+- final CodeQL: `37675988445` PASS
+- final Windows acceptance: `37675988582` PASS
+- stale PR #1/#11/#17: CLOSED / NOT MERGED
