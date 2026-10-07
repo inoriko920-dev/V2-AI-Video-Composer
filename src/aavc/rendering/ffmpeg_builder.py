@@ -9,8 +9,18 @@ from aavc.animation.compiler import (
     compile_native_rotation_filter,
     compile_native_scale_filter,
 )
+from aavc.animation.contract import ResolvedAnimationKeyframeContract
 from aavc.domain.project.models import AnimationAssignment
 
+from .advanced_filters import (
+    assignment_has_k4_glow,
+    assignment_has_k4_shadow,
+    compile_k1_opacity_filters,
+    compile_k2_crop_filters,
+    compile_k3_blur_filters,
+    compile_k4_shadow_glow_clauses,
+    compile_k5_mask_filters,
+)
 from .render_plan import RenderPlan, SceneRenderPlan
 
 
@@ -50,31 +60,111 @@ def _scaled_asset_clause(
     scale_flags: str,
     assignment: AnimationAssignment | None,
     duration_seconds: float,
+    fps: int,
+    canvas_width: int,
+    canvas_height: int,
+    animation_keyframe_contract: ResolvedAnimationKeyframeContract,
+    opacity_instance_id: str,
 ) -> str:
     base = (
         f"[{input_index}:v]scale=w={max_width}:h={max_height}:"
         f"force_original_aspect_ratio=decrease:flags={scale_flags},"
         "setpts=PTS-STARTPTS"
     )
+    clauses: list[str] = []
+    crop_filters: tuple[str, ...] = ()
+    if animation_keyframe_contract == "advanced-v1":
+        crop_filters = compile_k2_crop_filters(
+            assignment,
+            duration_seconds=duration_seconds,
+            instance_id=f"crop_{opacity_instance_id}",
+        )
+        if crop_filters:
+            base += "," + ",".join(crop_filters)
+
+        blur_filters = compile_k3_blur_filters(
+            assignment,
+            duration_seconds=duration_seconds,
+            fps=fps,
+            canvas_width=canvas_width,
+            canvas_height=canvas_height,
+            instance_id=f"blur_{opacity_instance_id}",
+        )
+        if blur_filters:
+            base += "," + ",".join(blur_filters)
+            if crop_filters:
+                post_crop_filters = compile_k2_crop_filters(
+                    assignment,
+                    duration_seconds=duration_seconds,
+                    instance_id=f"crop_post_{opacity_instance_id}",
+                )
+                base += "," + ",".join(post_crop_filters)
+
+    advanced_semantics = animation_keyframe_contract == "advanced-v1"
     scale_filter = compile_native_scale_filter(
         assignment,
         duration_seconds=duration_seconds,
+        advanced_semantics=advanced_semantics,
     )
     if scale_filter is not None:
         base += "," + scale_filter
     rotation_filter = compile_native_rotation_filter(
         assignment,
         duration_seconds=duration_seconds,
+        advanced_semantics=advanced_semantics,
     )
     if rotation_filter is not None:
         base += "," + rotation_filter
+
+    if animation_keyframe_contract == "advanced-v1":
+        mask_filters = compile_k5_mask_filters(
+            assignment,
+            duration_seconds=duration_seconds,
+            instance_id=f"mask_{opacity_instance_id}",
+        )
+        if mask_filters:
+            base += "," + ",".join(mask_filters)
+
+    if (
+        animation_keyframe_contract == "advanced-v1"
+        and (
+            assignment_has_k4_shadow(assignment)
+            or assignment_has_k4_glow(assignment)
+        )
+    ):
+        pre_k4 = f"{output_name}_pre_k4"
+        post_k4 = f"{output_name}_post_k4"
+        clauses.append(f"{base},format=rgba[{pre_k4}]")
+        clauses.extend(
+            compile_k4_shadow_glow_clauses(
+                pre_k4,
+                post_k4,
+                assignment,
+                duration_seconds=duration_seconds,
+                fps=fps,
+                canvas_width=canvas_width,
+                canvas_height=canvas_height,
+                instance_id=f"k4_{opacity_instance_id}",
+            )
+        )
+        base = f"[{post_k4}]null"
+
     alpha_filters = compile_native_alpha_filters(
         assignment,
         duration_seconds=duration_seconds,
     )
     if alpha_filters:
         base += "," + ",".join(alpha_filters)
-    return f"{base}[{output_name}]"
+    if animation_keyframe_contract == "advanced-v1":
+        opacity_filters = compile_k1_opacity_filters(
+            assignment,
+            duration_seconds=duration_seconds,
+            instance_id=opacity_instance_id,
+        )
+        if opacity_filters:
+            base += "," + ",".join(opacity_filters)
+    clauses.append(f"{base}[{output_name}]")
+    return ";".join(clauses)
 
 
 def _overlay_clause(
@@ -83,14 +173,20 @@ def _overlay_clause(
     base_y: str,
     assignment: AnimationAssignment | None,
     duration_seconds: float,
+    animation_keyframe_contract: ResolvedAnimationKeyframeContract,
 ) -> str:
-    if not assignment_has_native_motion(assignment):
+    advanced_semantics = animation_keyframe_contract == "advanced-v1"
+    if not assignment_has_native_motion(
+        assignment,
+        advanced_semantics=advanced_semantics,
+    ):
         return f"overlay=x={base_x}:y={base_y}:shortest=1"
     x_expr, y_expr = compile_motion_overlay_position(
         base_x=base_x,
         base_y=base_y,
         assignment=assignment,
         duration_seconds=duration_seconds,
+        advanced_semantics=advanced_semantics,
     )
     return f"overlay=x='{x_expr}':y='{y_expr}':shortest=1"
 
@@ -138,6 +234,11 @@ def build_ffmpeg_command(plan: RenderPlan, ffmpeg: str = "ffmpeg") -> list[str]:
                     scale_flags=scale_flags,
                     assignment=assignment,
                     duration_seconds=duration,
+                    fps=plan.fps,
+                    canvas_width=plan.width,
+                    canvas_height=plan.height,
+                    animation_keyframe_contract=plan.animation_keyframe_contract,
+                    opacity_instance_id=f"opacity_{sidx}_0",
                 )
             )
             out = f"scene{sidx}"
@@ -147,6 +248,7 @@ def build_ffmpeg_command(plan: RenderPlan, ffmpeg: str = "ffmpeg") -> list[str]:
                 base_y="(H-h)/2",
                 assignment=assignment,
                 duration_seconds=duration,
+                animation_keyframe_contract=plan.animation_keyframe_contract,
             )
             filters.append(
                 f"[{bg}][{scaled}]{overlay},"
@@ -168,6 +270,11 @@ def build_ffmpeg_command(plan: RenderPlan, ffmpeg: str = "ffmpeg") -> list[str]:
                         scale_flags=scale_flags,
                         assignment=_animation_at(scene, aidx),
                         duration_seconds=duration,
+                        fps=plan.fps,
+                        canvas_width=plan.width,
+                        canvas_height=plan.height,
+                        animation_keyframe_contract=plan.animation_keyframe_contract,
+                        opacity_instance_id=f"opacity_{sidx}_{aidx}",
                     )
                 )
             tmp = f"tmp{sidx}"
@@ -177,6 +284,7 @@ def build_ffmpeg_command(plan: RenderPlan, ffmpeg: str = "ffmpeg") -> list[str]:
                 base_y="(H-h)/2",
                 assignment=_animation_at(scene, 0),
                 duration_seconds=duration,
+                animation_keyframe_contract=plan.animation_keyframe_contract,
             )
             filters.append(
                 f"[{bg}][{scaled_names[0]}]{first_overlay}[{tmp}]"
@@ -187,6 +295,7 @@ def build_ffmpeg_command(plan: RenderPlan, ffmpeg: str = "ffmpeg") -> list[str]:
                 base_y="(H-h)/2",
                 assignment=_animation_at(scene, 1),
                 duration_seconds=duration,
+                animation_keyframe_contract=plan.animation_keyframe_contract,
             )
             filters.append(
                 f"[{tmp}][{scaled_names[1]}]{second_overlay},"

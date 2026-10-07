@@ -1,0 +1,75 @@
+name: Historical Verification — V2 0.2.1rc1
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: historical-v2-0.2.1rc1-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify-rc:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout canonical RC source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: 603039156a46d34935f5092b477b58eb74042e28
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12.10'
+          cache: 'pip'
+
+      - name: Verify frozen RC identity
+        shell: pwsh
+        run: |
+          $commit = (git rev-parse HEAD).Trim()
+          if ($commit -ne "603039156a46d34935f5092b477b58eb74042e28") {
+            throw "Unexpected RC source $commit"
+          }
+
+      - name: Reject committed secrets
+        run: python scripts/check_no_secrets.py
+
+      - name: Install pinned dependencies
+        run: |
+          python -m pip install "pip==26.2.1"
+          python -m pip install -r requirements.lock
+          python -m pip install -e .
+
+      - name: Verify dependency graph
+        run: python -m pip check
+
+      - name: Verify RC version
+        shell: pwsh
+        run: |
+          $runtime = (python -c "from aavc import __version__; print(__version__)").Trim()
+          if ($runtime -ne "0.2.1rc1") { throw "Expected runtime 0.2.1rc1, got $runtime" }
+          $metadata = (python -c "from importlib.metadata import version; print(version('ai-automatic-video-composer'))").Trim()
+          if ($metadata -ne "0.2.1rc1") { throw "Expected metadata 0.2.1rc1, got $metadata" }
+
+      - name: Compile
+        run: python -m compileall -q src
+
+      - name: Ruff
+        run: python -m ruff check src tests
+
+      - name: Strict mypy
+        run: python -m mypy src/aavc
+
+      - name: Full technical RC suite
+        run: python -m pytest -m "not visual" -q
+
+      - name: Historical verification notice
+        shell: pwsh
+        run: |
+          Write-Host "0.2.1rc1 is frozen historical RC evidence."
+          Write-Host "Canonical RC workflow run: 37640176055"
+          Write-Host "This verifier has read-only repository permission and cannot publish."

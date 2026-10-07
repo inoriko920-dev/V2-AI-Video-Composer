@@ -21,7 +21,12 @@ class RecoveryManager:
 
     def write_snapshot(self, project: ProjectState, project_path: str | Path) -> RecoverySnapshot:
         target = self.recovery_path_for(project_path)
-        save_project(project, target)
+        save_project(
+            project,
+            target,
+            create_schema_backup=False,
+            allow_schema_downgrade=True,
+        )
         return RecoverySnapshot(Path(project_path), target)
 
     def has_snapshot(self, project_path: str | Path) -> bool:

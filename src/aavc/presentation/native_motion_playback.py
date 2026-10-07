@@ -4,12 +4,21 @@ import time
 from pathlib import Path
 from typing import Any
 
+from aavc.animation.contract import (
+    ResolvedAnimationKeyframeContract,
+    validate_project_animation_contract,
+)
 from aavc.domain.project.models import AnimationAssignment, ProjectState
 from aavc.presentation.motion_preview import (
     native_motion_preview_offset,
+    native_visual_preview_blur_sigma,
+    native_visual_preview_crop,
+    native_visual_preview_glow,
+    native_visual_preview_mask_progress,
     native_visual_preview_opacity,
     native_visual_preview_rotation,
     native_visual_preview_scale,
+    native_visual_preview_shadow,
     preview_narration_seconds,
     preview_neighbor_scene_index,
     preview_scrub_seconds,
@@ -61,6 +70,129 @@ def _rotate_pixmap_same_size(pixmap: Any, angle_degrees: float) -> Any:
     return rotated
 
 
+def _clip_pixmap_visibility(pixmap: Any, crop: Any) -> Any:
+    from PySide6.QtCore import QRectF, Qt
+    from PySide6.QtGui import QPainter, QPixmap
+
+    if (
+        crop.left <= 0.0
+        and crop.top <= 0.0
+        and crop.right <= 0.0
+        and crop.bottom <= 0.0
+    ):
+        return pixmap
+
+    clipped = QPixmap(pixmap.size())
+    clipped.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(clipped)
+    width = pixmap.width()
+    height = pixmap.height()
+    left = width * crop.left
+    top = height * crop.top
+    visible_width = max(0.0, width * crop.visible_width)
+    visible_height = max(0.0, height * crop.visible_height)
+    painter.setClipRect(QRectF(left, top, visible_width, visible_height))
+    painter.drawPixmap(0, 0, pixmap)
+    painter.end()
+    return clipped
+
+
+def _mask_pixmap_progress(pixmap: Any, progress: float) -> Any:
+    from PySide6.QtCore import QRectF, Qt
+    from PySide6.QtGui import QPainter, QPixmap
+
+    value = max(0.0, min(1.0, float(progress)))
+    if value >= 0.999999:
+        return pixmap
+
+    masked = QPixmap(pixmap.size())
+    masked.fill(Qt.GlobalColor.transparent)
+    if value <= 0.000001:
+        return masked
+
+    painter = QPainter(masked)
+    painter.setClipRect(
+        QRectF(
+            0.0,
+            0.0,
+            float(pixmap.width()) * value,
+            float(pixmap.height()),
+        )
+    )
+    painter.drawPixmap(0, 0, pixmap)
+    painter.end()
+    return masked
+
+
+def _blur_pixmap_approx(pixmap: Any, sigma: float) -> Any:
+    from PySide6.QtCore import QRectF, Qt
+    from PySide6.QtGui import QPainter, QPixmap
+    from PySide6.QtWidgets import (
+        QGraphicsBlurEffect,
+        QGraphicsPixmapItem,
+        QGraphicsScene,
+    )
+
+    if sigma <= 0.01:
+        return pixmap
+
+    output = QPixmap(pixmap.size())
+    output.fill(Qt.GlobalColor.transparent)
+    scene = QGraphicsScene()
+    source_rect = QRectF(0.0, 0.0, float(pixmap.width()), float(pixmap.height()))
+    scene.setSceneRect(source_rect)
+    item = QGraphicsPixmapItem(pixmap)
+    effect = QGraphicsBlurEffect()
+    effect.setBlurRadius(max(0.5, float(sigma) * 2.0))
+    item.setGraphicsEffect(effect)
+    scene.addItem(item)
+
+    painter = QPainter(output)
+    scene.render(painter, source_rect, source_rect)
+    painter.end()
+    return output
+
+
+def _drop_shadow_pixmap_approx(
+    pixmap: Any,
+    *,
+    color: str,
+    alpha: float,
+    blur_radius: float,
+    offset: float,
+) -> Any:
+    from PySide6.QtCore import QPointF, QRectF, Qt
+    from PySide6.QtGui import QColor, QPainter, QPixmap
+    from PySide6.QtWidgets import (
+        QGraphicsDropShadowEffect,
+        QGraphicsPixmapItem,
+        QGraphicsScene,
+    )
+
+    if alpha <= 0.001:
+        return pixmap
+
+    output = QPixmap(pixmap.size())
+    output.fill(Qt.GlobalColor.transparent)
+    scene = QGraphicsScene()
+    source_rect = QRectF(0.0, 0.0, float(pixmap.width()), float(pixmap.height()))
+    scene.setSceneRect(source_rect)
+    item = QGraphicsPixmapItem(pixmap)
+    effect = QGraphicsDropShadowEffect()
+    effect_color = QColor(color)
+    effect_color.setAlphaF(max(0.0, min(1.0, float(alpha))))
+    effect.setColor(effect_color)
+    effect.setBlurRadius(max(0.5, float(blur_radius) * 2.0))
+    effect.setOffset(QPointF(float(offset), float(offset)))
+    item.setGraphicsEffect(effect)
+    scene.addItem(item)
+
+    painter = QPainter(output)
+    scene.render(painter, source_rect, source_rect)
+    painter.end()
+    return output
+
+
 def render_native_motion_pixmap(
     plan: ScenePreviewPlan,
     assignments: tuple[AnimationAssignment, ...],
@@ -68,6 +200,7 @@ def render_native_motion_pixmap(
     time_seconds: float | None,
     width: int = 1280,
     height: int = 720,
+    animation_keyframe_contract: ResolvedAnimationKeyframeContract = "legacy-v3",
 ) -> Any:
     """Render one preview frame; None time renders the canonical static layout."""
 
@@ -110,16 +243,35 @@ def render_native_motion_pixmap(
                 assignment,
                 time_seconds=time_seconds,
                 duration_seconds=plan.duration_seconds,
+                animation_keyframe_contract=animation_keyframe_contract,
             )
+            crop = native_visual_preview_crop(
+                assignment,
+                time_seconds=time_seconds,
+                duration_seconds=plan.duration_seconds,
+                animation_keyframe_contract=animation_keyframe_contract,
+            )
+            scaled = _clip_pixmap_visibility(scaled, crop)
+            blur_sigma = native_visual_preview_blur_sigma(
+                assignment,
+                time_seconds=time_seconds,
+                duration_seconds=plan.duration_seconds,
+                canvas_width=width,
+                canvas_height=height,
+                animation_keyframe_contract=animation_keyframe_contract,
+            )
+            scaled = _blur_pixmap_approx(scaled, blur_sigma)
             opacity = native_visual_preview_opacity(
                 assignment,
                 time_seconds=time_seconds,
                 duration_seconds=plan.duration_seconds,
+                animation_keyframe_contract=animation_keyframe_contract,
             )
             scale_factor = native_visual_preview_scale(
                 assignment,
                 time_seconds=time_seconds,
                 duration_seconds=plan.duration_seconds,
+                animation_keyframe_contract=animation_keyframe_contract,
             )
             if scale_factor != 1.0:
                 scaled = scaled.scaled(
@@ -132,8 +284,48 @@ def render_native_motion_pixmap(
                 assignment,
                 time_seconds=time_seconds,
                 duration_seconds=plan.duration_seconds,
+                animation_keyframe_contract=animation_keyframe_contract,
             )
             scaled = _rotate_pixmap_same_size(scaled, rotation_degrees)
+            mask_progress = native_visual_preview_mask_progress(
+                assignment,
+                time_seconds=time_seconds,
+                duration_seconds=plan.duration_seconds,
+                animation_keyframe_contract=animation_keyframe_contract,
+            )
+            scaled = _mask_pixmap_progress(scaled, mask_progress)
+
+            glow = native_visual_preview_glow(
+                assignment,
+                time_seconds=time_seconds,
+                duration_seconds=plan.duration_seconds,
+                canvas_width=width,
+                canvas_height=height,
+                animation_keyframe_contract=animation_keyframe_contract,
+            )
+            scaled = _drop_shadow_pixmap_approx(
+                scaled,
+                color="#FFFFFF",
+                alpha=glow.alpha,
+                blur_radius=glow.sigma,
+                offset=0.0,
+            )
+            shadow = native_visual_preview_shadow(
+                assignment,
+                time_seconds=time_seconds,
+                duration_seconds=plan.duration_seconds,
+                canvas_width=width,
+                canvas_height=height,
+                animation_keyframe_contract=animation_keyframe_contract,
+            )
+            scaled = _drop_shadow_pixmap_approx(
+                scaled,
+                color="#000000",
+                alpha=shadow.alpha,
+                blur_radius=shadow.sigma,
+                offset=shadow.offset,
+            )
+
             offset_x = width * offset.x
             offset_y = height * offset.y
 
@@ -252,6 +444,7 @@ def install_native_motion_preview(root: Any, project: ProjectState) -> bool:
         return False
 
     subtitle_cues = _load_preview_subtitles(project)
+    animation_keyframe_contract = validate_project_animation_contract(project)
     previous_button.setToolTip("Pilih Scene sebelumnya pada preview.")
     next_button.setToolTip("Pilih Scene berikutnya pada preview.")
     play_button.setToolTip(
@@ -371,6 +564,7 @@ def install_native_motion_preview(root: Any, project: ProjectState) -> bool:
             plan,
             project.animations,
             time_seconds=time_seconds,
+            animation_keyframe_contract=animation_keyframe_contract,
         )
         cue = active_subtitle_cue(subtitle_cues, global_seconds)
         pixmap = overlay_subtitle_pixmap(

@@ -59,7 +59,7 @@ def test_validation_surfaces_wave_e_keyframe_fallback() -> None:
 
     issues = validate_project(project)
     fallback = next(
-        issue for issue in issues if issue.code == "KEYFRAME_TRACK_FALLBACK"
+        issue for issue in issues if issue.code == "ADVANCED_TRACK_DORMANT"
     )
 
     assert fallback.scene_number == scene.scene_number

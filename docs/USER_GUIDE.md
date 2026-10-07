@@ -2,7 +2,7 @@
 
 Panduan ini menjelaskan cara memakai AI Automatic Video Composer (AAVC) berdasarkan kemampuan yang dapat dibuktikan pada source `main` saat ini.
 
-> **Batas versi:** panduan ini disiapkan untuk rilis stabil V2 `v0.2.0`. Rilis historis `v0.1.0` dan `v0.1.1` tetap frozen dan tidak diganti. Kemampuan yang dijelaskan di bawah telah masuk ke source final 0.2.0 dan melewati automated Windows user acceptance.
+> **Batas versi:** panduan ini disiapkan untuk rilis stabil V2 `v0.2.1`. Rilis `v0.2.0`, `v0.1.1`, dan `v0.1.0` tetap frozen dan tidak diganti. Kemampuan yang dijelaskan di bawah telah masuk ke source final 0.2.1 dan melewati automated Windows acceptance serta final release gate.
 
 ## 1. Menjalankan versi portable Windows
 
@@ -96,7 +96,7 @@ Request Gemini berjalan melalui job background agar GUI tetap responsif. Bila pr
 
 Jika secure credential store tidak tersedia, aplikasi menolak memakai fallback plaintext.
 
-Semua kemampuan pada paragraf ini merupakan bagian dari source final V2 `0.2.0`; binary historis `v0.1.1` tetap tidak berubah.
+Semua kemampuan pada paragraf ini tetap tersedia pada source final V2 `0.2.1`; binary historis `v0.2.0`, `v0.1.1`, dan `v0.1.0` tetap tidak berubah.
 
 ## 6. Kontrol project utama
 
@@ -132,6 +132,43 @@ Editor project aktif tidak memakai daftar Scene/Aset demo sebagai data project. 
 Memilih Scene memperbarui preview dari aset project sebenarnya. Layout preview memakai solver canonical yang sama untuk SINGLE/DOUBLE sehingga posisi dasar konsisten dengan model render. Aset missing/corrupt ditampilkan sebagai placeholder yang jelas, bukan thumbnail demo.
 
 Preview yang tersedia pada maintenance `main` juga sudah terhubung dengan playhead/timeline untuk interaksi seek dan playback yang didukung. Ini belum berarti AAVC sudah menjadi NLE audio/video penuh: waveform audio multi-track dan monitoring semua layer secara real-time masih bukan kontrak yang diklaim panduan ini.
+
+## 7A. Advanced Animation v0.2.1
+
+AAVC 0.2.1 menambahkan editor Keyframe pada modal **Animasi Aset** yang sudah ada. Tab
+**Preset** tetap menjadi jalur default; tab **Keyframe** dipakai untuk editing advanced.
+
+Property yang dapat diedit:
+- Position X / Position Y;
+- Scale / Rotation;
+- Opacity;
+- Crop Left / Top / Right / Bottom;
+- Mask Progress;
+- Blur / Shadow / Glow.
+
+Segment keyframe mendukung Hold, Linear, dan Bezier. Pada Bezier, editor juga mendukung
+easing, velocity 0–4, dan overshoot 0–50% sesuai batas yang divalidasi aplikasi.
+
+### Schema v3 vs v4
+
+Project lama tetap berada pada schema v3 selama pengguna belum menerapkan edit advanced.
+Membuka tab Keyframe, memilih property, preview, render, Auto/AI, Copy Scene Animations,
+atau normal Save **tidak** mempromosikan project secara otomatis.
+
+Saat edit advanced pertama benar-benar diterapkan, aplikasi meminta konfirmasi. Jika
+disetujui, schema v4 + marker `animation_keyframe_contract=advanced-v1` + perubahan aset
+diterapkan sebagai satu transaksi Undo/Redo. Bila project mempunyai advanced track dormant
+lain, aplikasi meminta acknowledgement sebelum aktivasi.
+
+Pada overwrite v3→v4 pertama, AAVC membuat backup `.pre-schema-v4.bak` tanpa menimpa
+backup yang sudah ada. Project yang sudah disimpan sebagai schema v4 tidak dapat dibuka
+oleh AAVC v0.2.0.
+
+### Preview dan hasil final
+
+Property ringan memakai evaluator canonical untuk preview interaktif. Blur, Shadow, dan
+Glow dapat ditandai **Approx** pada interaksi agar UI tetap responsif. Hasil FFmpeg adalah
+sumber kebenaran final.
 
 ## 8. Timeline live pada source `main`
 
@@ -369,4 +406,4 @@ STEP09 tetap frozen sebagai kontrak visual regression. Fixture no-session yang d
 
 Panduan ini mendokumentasikan kemampuan yang dapat dibuktikan dari source dan test repo, bukan janji bahwa semua konsep editor sudah setara dengan NLE komersial.
 
-Untuk status rilis lihat `README.md` dan `RELEASE_NOTES_0.2.0.md`. Untuk kebijakan maintenance lihat `MAINTENANCE.md`. Untuk detail arsitektur dan factory evidence, lihat dokumen lain di `docs/` dan file STEP status di root repo.
+Untuk status rilis lihat `README.md` dan `RELEASE_NOTES_0.2.1.md`. Untuk kebijakan maintenance lihat `MAINTENANCE.md`. Untuk detail arsitektur dan factory evidence, lihat dokumen lain di `docs/` dan file STEP status di root repo.

@@ -34,7 +34,15 @@ def validation_category(issue: ValidationIssue) -> str:
         return "Media"
     if issue.code == "SCENE_DURATION_SHORT":
         return "Scene"
-    if issue.code in {"VISUAL_EFFECT_FALLBACK", "KEYFRAME_TRACK_FALLBACK"}:
+    if issue.code in {
+        "VISUAL_EFFECT_FALLBACK",
+        "KEYFRAME_TRACK_FALLBACK",
+        "ADVANCED_TRACK_DORMANT",
+        "ADVANCED_BACKEND_UNAVAILABLE",
+        "ADVANCED_PARAMETER_MISMATCH",
+        "ADVANCED_CROP_NORMALIZED",
+        "ADVANCED_VALUE_CLAMPED",
+    }:
         return "Render"
     return "Project"
 
@@ -51,6 +59,11 @@ def validation_issue_action(issue: ValidationIssue) -> tuple[str, str] | None:
             "SCENE_DURATION_SHORT",
             "VISUAL_EFFECT_FALLBACK",
             "KEYFRAME_TRACK_FALLBACK",
+            "ADVANCED_TRACK_DORMANT",
+            "ADVANCED_BACKEND_UNAVAILABLE",
+            "ADVANCED_PARAMETER_MISMATCH",
+            "ADVANCED_CROP_NORMALIZED",
+            "ADVANCED_VALUE_CLAMPED",
         }
     ):
         return ("Buka Scene", str(issue.scene_number))

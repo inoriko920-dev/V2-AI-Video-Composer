@@ -6,6 +6,10 @@ from aavc.media import BackendAvailability, BackendCapabilities
 from aavc.platform.process_runner import ProcessRunner
 from aavc.platform.tool_registry import ToolResolution, resolve_ffmpeg
 
+from .advanced_capabilities import (
+    AdvancedFFmpegCapabilities,
+    AdvancedFFmpegCapabilityProbe,
+)
 from .ffmpeg_capabilities import ffmpeg_reference_capabilities
 
 
@@ -21,6 +25,10 @@ class FFmpegToolCapabilityService:
         self._runner = runner or ProcessRunner()
         self._resolver = resolver
         self._cached: BackendAvailability | None = None
+        self._advanced_probe = AdvancedFFmpegCapabilityProbe(
+            runner=self._runner,
+            resolver=self._resolver,
+        )
 
     def describe_capabilities(self) -> BackendCapabilities:
         return ffmpeg_reference_capabilities()
@@ -48,6 +56,10 @@ class FFmpegToolCapabilityService:
         self._cached = BackendAvailability(available=True, version=version)
         return self._cached
 
+    def advanced_capabilities(self) -> AdvancedFFmpegCapabilities:
+        return self._advanced_probe.probe()
+
     def refresh(self) -> BackendAvailability:
         self._cached = None
+        self._advanced_probe.invalidate()
         return self.availability()

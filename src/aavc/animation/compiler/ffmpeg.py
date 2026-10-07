@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from aavc.animation.keyframes import (
     KEYFRAME_PROPERTY_LIMITS,
+    clamp_keyframe_overshoot,
+    clamp_keyframe_velocity,
     find_keyframe_track,
+    is_supported_advanced_keyframe_track,
     is_supported_keyframe_track,
 )
 from aavc.domain.animation import AnimationKeyframeTrack
@@ -81,6 +84,7 @@ def is_native_visual_effect(name: str) -> bool:
 def _has_supported_keyframe(
     assignment: AnimationAssignment | None,
     *property_names: str,
+    advanced_semantics: bool = False,
 ) -> bool:
     if assignment is None:
         return False
@@ -88,13 +92,19 @@ def _has_supported_keyframe(
         (
             track := find_keyframe_track(assignment, property_name)
         ) is not None
-        and is_supported_keyframe_track(track)
+        and (
+            is_supported_advanced_keyframe_track(track)
+            if advanced_semantics
+            else is_supported_keyframe_track(track)
+        )
         for property_name in property_names
     )
 
 
 def assignment_has_native_motion(
     assignment: AnimationAssignment | None,
+    *,
+    advanced_semantics: bool = False,
 ) -> bool:
     if assignment is None:
         return False
@@ -106,6 +116,7 @@ def assignment_has_native_motion(
         assignment,
         "position_x",
         "position_y",
+        advanced_semantics=advanced_semantics,
     )
 
 
@@ -122,6 +133,8 @@ def assignment_has_native_alpha(
 
 def assignment_has_native_scale(
     assignment: AnimationAssignment | None,
+    *,
+    advanced_semantics: bool = False,
 ) -> bool:
     if assignment is None:
         return False
@@ -129,11 +142,17 @@ def assignment_has_native_scale(
         is_native_visual_scale_effect(assignment.enter_effect)
         or is_native_visual_scale_effect(assignment.exit_effect)
     )
-    return legacy or _has_supported_keyframe(assignment, "scale")
+    return legacy or _has_supported_keyframe(
+        assignment,
+        "scale",
+        advanced_semantics=advanced_semantics,
+    )
 
 
 def assignment_has_native_rotation(
     assignment: AnimationAssignment | None,
+    *,
+    advanced_semantics: bool = False,
 ) -> bool:
     if assignment is None:
         return False
@@ -144,6 +163,7 @@ def assignment_has_native_rotation(
     return legacy or _has_supported_keyframe(
         assignment,
         "rotation_degrees",
+        advanced_semantics=advanced_semantics,
     )
 
 
@@ -188,6 +208,38 @@ def _easing_expression(easing: str, fraction: str) -> str:
     return fraction
 
 
+def _bezier_expression(
+    start_value: float,
+    end_value: float,
+    *,
+    eased: str,
+    start_velocity: float | None,
+    end_velocity: float | None,
+    overshoot: float | None,
+) -> str:
+    delta = end_value - start_value
+    velocity0 = clamp_keyframe_velocity(start_velocity)
+    velocity1 = clamp_keyframe_velocity(end_velocity)
+    p0 = start_value
+    p1 = start_value + (velocity0 * delta) / 3.0
+    p2 = end_value - (velocity1 * delta) / 3.0
+    p3 = end_value
+    one_minus = f"(1-({eased}))"
+    cubic = (
+        f"pow({one_minus},3)*{_number(p0)}"
+        f"+3*pow({one_minus},2)*({eased})*{_number(p1)}"
+        f"+3*({one_minus})*pow(({eased}),2)*{_number(p2)}"
+        f"+pow(({eased}),3)*{_number(p3)}"
+    )
+    amount = clamp_keyframe_overshoot(overshoot)
+    if amount <= 0.0 or delta == 0.0:
+        return cubic
+    return (
+        f"({cubic})+({_number(delta * amount)})*"
+        f"sin(3.141592654*({eased}))*({eased})"
+    )
+
+
 def _segment_expression(
     start_value: float,
     end_value: float,
@@ -196,12 +248,24 @@ def _segment_expression(
     end_seconds: float,
     interpolation: str,
     easing: str,
+    start_velocity: float | None = None,
+    end_velocity: float | None = None,
+    overshoot: float | None = None,
 ) -> str:
     if interpolation == "hold":
         return _number(start_value)
     span = max(0.000001, end_seconds - start_seconds)
     fraction = f"(t-{_number(start_seconds)})/{_number(span)}"
     eased = _easing_expression(easing, fraction)
+    if interpolation == "bezier":
+        return _bezier_expression(
+            start_value,
+            end_value,
+            eased=eased,
+            start_velocity=start_velocity,
+            end_velocity=end_velocity,
+            overshoot=overshoot,
+        )
     delta = end_value - start_value
     return f"{_number(start_value)}+({_number(delta)})*({eased})"
 
@@ -210,8 +274,14 @@ def _compile_keyframe_track_expression(
     track: AnimationKeyframeTrack,
     *,
     duration_seconds: float,
+    advanced_semantics: bool = False,
 ) -> str | None:
-    if not is_supported_keyframe_track(track):
+    supported = (
+        is_supported_advanced_keyframe_track(track)
+        if advanced_semantics
+        else is_supported_keyframe_track(track)
+    )
+    if not supported:
         return None
 
     duration = max(0.001, float(duration_seconds))
@@ -225,6 +295,9 @@ def _compile_keyframe_track_expression(
             end_seconds=end.time * duration,
             interpolation=start.interpolation,
             easing=start.easing,
+            start_velocity=start.velocity,
+            end_velocity=end.velocity,
+            overshoot=start.overshoot,
         )
         expression = (
             f"if(lt(t,{_number(end.time * duration)}),"
@@ -251,6 +324,7 @@ def compile_keyframe_value_expression(
     property_name: str,
     *,
     duration_seconds: float,
+    advanced_semantics: bool = False,
 ) -> str | None:
     track = find_keyframe_track(assignment, property_name)
     if track is None:
@@ -258,6 +332,7 @@ def compile_keyframe_value_expression(
     return _compile_keyframe_track_expression(
         track,
         duration_seconds=duration_seconds,
+        advanced_semantics=advanced_semantics,
     )
 
 
@@ -320,10 +395,17 @@ def compile_native_scale_filter(
     assignment: AnimationAssignment | None,
     *,
     duration_seconds: float,
+    advanced_semantics: bool = False,
 ) -> str | None:
     """Compile frame-evaluated per-asset scale for native scale effects."""
 
-    if not assignment_has_native_scale(assignment) or assignment is None:
+    if (
+        not assignment_has_native_scale(
+            assignment,
+            advanced_semantics=advanced_semantics,
+        )
+        or assignment is None
+    ):
         return None
 
     factors: list[str] = []
@@ -341,6 +423,7 @@ def compile_native_scale_filter(
         assignment,
         "scale",
         duration_seconds=duration_seconds,
+        advanced_semantics=advanced_semantics,
     )
     if keyframe_factor is not None:
         factors.append(keyframe_factor)
@@ -379,10 +462,17 @@ def compile_native_rotation_filter(
     assignment: AnimationAssignment | None,
     *,
     duration_seconds: float,
+    advanced_semantics: bool = False,
 ) -> str | None:
     """Compile frame-evaluated native rotation without changing base layout size."""
 
-    if not assignment_has_native_rotation(assignment) or assignment is None:
+    if (
+        not assignment_has_native_rotation(
+            assignment,
+            advanced_semantics=advanced_semantics,
+        )
+        or assignment is None
+    ):
         return None
 
     duration = max(0.001, float(duration_seconds))
@@ -408,6 +498,7 @@ def compile_native_rotation_filter(
         assignment,
         "rotation_degrees",
         duration_seconds=duration,
+        advanced_semantics=advanced_semantics,
     )
     if keyframe_degrees is not None:
         terms.append(f"({keyframe_degrees})*0.017453293")
@@ -494,10 +585,17 @@ def compile_motion_overlay_position(
     base_y: str,
     assignment: AnimationAssignment | None,
     duration_seconds: float,
+    advanced_semantics: bool = False,
 ) -> tuple[str, str]:
     """Compile render-safe per-asset motion into overlay x/y expressions."""
 
-    if not assignment_has_native_motion(assignment) or assignment is None:
+    if (
+        not assignment_has_native_motion(
+            assignment,
+            advanced_semantics=advanced_semantics,
+        )
+        or assignment is None
+    ):
         return base_x, base_y
 
     duration = max(0.001, duration_seconds)
@@ -530,11 +628,13 @@ def compile_motion_overlay_position(
         assignment,
         "position_x",
         duration_seconds=duration,
+        advanced_semantics=advanced_semantics,
     )
     y_keyframe = compile_keyframe_value_expression(
         assignment,
         "position_y",
         duration_seconds=duration,
+        advanced_semantics=advanced_semantics,
     )
     if x_keyframe is not None:
         x_terms.append(f"W*({x_keyframe})")

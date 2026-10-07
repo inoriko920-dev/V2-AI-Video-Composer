@@ -4,8 +4,19 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from aavc.animation import keyframe_track_support_reason
+from aavc.animation import (
+    crop_assignment_has_clamped_keyframes,
+    crop_assignment_has_pair_normalization,
+    is_supported_advanced_keyframe_track,
+    keyframe_parameter_clamps,
+    keyframe_parameter_mismatches,
+    keyframe_track_support_reason,
+)
 from aavc.animation.compiler import is_native_visual_effect
+from aavc.animation.contract import (
+    track_requires_advanced,
+    validate_project_animation_contract,
+)
 from aavc.domain.project.models import ProjectState
 
 Severity = Literal["ERROR", "WARNING"]
@@ -28,6 +39,7 @@ def _path_is_file(value: str | None) -> bool:
 
 def validate_project(project: ProjectState) -> tuple[ValidationIssue, ...]:
     issues: list[ValidationIssue] = []
+    contract = validate_project_animation_contract(project)
     by_asset = {binding.asset_id: binding for binding in project.bindings}
 
     if project.narration_audio and not _path_is_file(project.narration_audio):
@@ -100,7 +112,100 @@ def validate_project(project: ProjectState) -> tuple[ValidationIssue, ...]:
                     )
                 )
 
+        if contract == "advanced-v1" and crop_assignment_has_clamped_keyframes(
+            assignment
+        ):
+            issues.append(
+                ValidationIssue(
+                    code="ADVANCED_VALUE_CLAMPED",
+                    severity="WARNING",
+                    message=(
+                        f"Nilai crop pada {assignment.asset_id} melewati batas "
+                        "0–0,45 dan akan di-clamp"
+                    ),
+                    scene_number=assignment.scene_number,
+                    asset_id=assignment.asset_id,
+                )
+            )
+        if contract == "advanced-v1" and crop_assignment_has_pair_normalization(
+            assignment
+        ):
+            issues.append(
+                ValidationIssue(
+                    code="ADVANCED_CROP_NORMALIZED",
+                    severity="WARNING",
+                    message=(
+                        f"Crop pada {assignment.asset_id} dinormalisasi agar "
+                        "minimal 10% area tetap terlihat"
+                    ),
+                    scene_number=assignment.scene_number,
+                    asset_id=assignment.asset_id,
+                )
+            )
+
+        if contract == "advanced-v1":
+            for track in assignment.keyframe_tracks:
+                for detail in keyframe_parameter_mismatches(track):
+                    issues.append(
+                        ValidationIssue(
+                            code="ADVANCED_PARAMETER_MISMATCH",
+                            severity="WARNING",
+                            message=(
+                                f"{track.property_name} pada "
+                                f"{assignment.asset_id}: {detail}"
+                            ),
+                            scene_number=assignment.scene_number,
+                            asset_id=assignment.asset_id,
+                        )
+                    )
+                for detail in keyframe_parameter_clamps(track):
+                    issues.append(
+                        ValidationIssue(
+                            code="ADVANCED_VALUE_CLAMPED",
+                            severity="WARNING",
+                            message=(
+                                f"{track.property_name} pada "
+                                f"{assignment.asset_id}: {detail}"
+                            ),
+                            scene_number=assignment.scene_number,
+                            asset_id=assignment.asset_id,
+                        )
+                    )
+
         for track in assignment.keyframe_tracks:
+            if track_requires_advanced(track):
+                if contract == "legacy-v3":
+                    issues.append(
+                        ValidationIssue(
+                            code="ADVANCED_TRACK_DORMANT",
+                            severity="WARNING",
+                            message=(
+                                f"Track advanced {track.property_name} pada "
+                                f"{assignment.asset_id} tersimpan tetapi belum aktif "
+                                "pada schema v3"
+                            ),
+                            scene_number=assignment.scene_number,
+                            asset_id=assignment.asset_id,
+                        )
+                    )
+                elif is_supported_advanced_keyframe_track(track):
+                    continue
+                else:
+                    issues.append(
+                        ValidationIssue(
+                            code="ADVANCED_BACKEND_UNAVAILABLE",
+                            severity="ERROR",
+                            message=(
+                                f"Track advanced {track.property_name} pada "
+                                f"{assignment.asset_id} belum memiliki backend aktif "
+                                "pada wave saat ini"
+                            ),
+                            scene_number=assignment.scene_number,
+                            asset_id=assignment.asset_id,
+                        )
+                    )
+                continue
+
             reason = keyframe_track_support_reason(track)
             if reason is None:
                 continue

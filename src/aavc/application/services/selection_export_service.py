@@ -4,7 +4,11 @@ from collections.abc import Callable
 from dataclasses import replace
 from pathlib import Path
 
-from aavc.application.services.export_service import ExportOptions, subtitle_staging_path
+from aavc.application.services.export_service import (
+    ExportOptions,
+    ensure_advanced_render_capabilities,
+    subtitle_staging_path,
+)
 from aavc.domain.errors import RenderError
 from aavc.domain.project.models import ProjectState
 from aavc.jobs import CancellationToken
@@ -36,6 +40,7 @@ def render_project_selection(
     ffprobe: str | None = None,
     runner: ProcessRunner | None = None,
     probe_runner: ProcessRunner | None = None,
+    capability_runner: ProcessRunner | None = None,
     cancellation_token: CancellationToken | None = None,
     progress_callback: Callable[[float], None] | None = None,
     verify_output: bool = True,
@@ -95,6 +100,11 @@ def render_project_selection(
             raise RenderError(f"Range In/Out render tidak valid: {error}") from error
 
         ffmpeg_path = ffmpeg or resolve_ffmpeg().path
+        ensure_advanced_render_capabilities(
+            plan,
+            ffmpeg_path=ffmpeg_path,
+            runner=capability_runner,
+        )
         command = build_ffmpeg_selection_command(plan, selection, ffmpeg=ffmpeg_path)
         manifest = RenderManifest.from_plan(
             plan,

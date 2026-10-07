@@ -147,7 +147,7 @@ def test_ffmpeg_compiler_activates_foundational_keyframes(tmp_path: Path) -> Non
 
     report = validate_render_plan(build_render_plan(project, tmp_path / "out.mp4"))
     assert not any(
-        issue.code == "KEYFRAME_TRACK_FALLBACK" for issue in report.issues
+        issue.code == "ADVANCED_TRACK_DORMANT" for issue in report.issues
     )
 
 
@@ -201,7 +201,7 @@ def test_unsupported_keyframe_property_warns_and_is_ignored(tmp_path: Path) -> N
     reasons = [
         issue.message
         for issue in validate_render_plan(candidate_plan).issues
-        if issue.code == "KEYFRAME_TRACK_FALLBACK"
+        if issue.code == "ADVANCED_TRACK_DORMANT"
     ]
     assert any("opacity" in message and "belum aktif" in message for message in reasons)
 
@@ -238,4 +238,4 @@ def test_bezier_velocity_overshoot_remain_fail_soft_in_wave_e(tmp_path: Path) ->
         duration_seconds=scene.duration_seconds,
     ) is None
     report = validate_render_plan(plan)
-    assert any(issue.code == "KEYFRAME_TRACK_FALLBACK" for issue in report.issues)
+    assert any(issue.code == "ADVANCED_TRACK_DORMANT" for issue in report.issues)

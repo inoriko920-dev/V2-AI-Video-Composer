@@ -4,8 +4,16 @@ from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 
-from aavc.animation import keyframe_track_support_reason
+from aavc.animation import (
+    crop_assignment_has_clamped_keyframes,
+    crop_assignment_has_pair_normalization,
+    is_supported_advanced_keyframe_track,
+    keyframe_parameter_clamps,
+    keyframe_parameter_mismatches,
+    keyframe_track_support_reason,
+)
 from aavc.animation.compiler import is_native_visual_effect
+from aavc.animation.contract import track_requires_advanced
 
 from .render_plan import RenderPlan
 
@@ -104,7 +112,83 @@ def validate_render_plan(plan: RenderPlan) -> PreflightReport:
                 for effect in {assignment.enter_effect, assignment.exit_effect}:
                     if not is_native_visual_effect(effect):
                         fallback_effects.add(effect)
+            if (
+                plan.animation_keyframe_contract == "advanced-v1"
+                and crop_assignment_has_clamped_keyframes(assignment)
+            ):
+                issues.append(
+                    PreflightIssue(
+                        "ADVANCED_VALUE_CLAMPED",
+                        PreflightSeverity.WARNING,
+                        "Nilai crop pada "
+                        f"Scene {scene.scene_number}/{assignment.asset_id} "
+                        "melewati batas 0–0,45 dan akan di-clamp",
+                    )
+                )
+            if (
+                plan.animation_keyframe_contract == "advanced-v1"
+                and crop_assignment_has_pair_normalization(assignment)
+            ):
+                issues.append(
+                    PreflightIssue(
+                        "ADVANCED_CROP_NORMALIZED",
+                        PreflightSeverity.WARNING,
+                        "Crop pada "
+                        f"Scene {scene.scene_number}/{assignment.asset_id} "
+                        "dinormalisasi agar minimal 10% area tetap terlihat",
+                    )
+                )
+
+            if plan.animation_keyframe_contract == "advanced-v1":
+                for track in assignment.keyframe_tracks:
+                    for detail in keyframe_parameter_mismatches(track):
+                        issues.append(
+                            PreflightIssue(
+                                "ADVANCED_PARAMETER_MISMATCH",
+                                PreflightSeverity.WARNING,
+                                f"{track.property_name} pada "
+                                f"Scene {scene.scene_number}/"
+                                f"{assignment.asset_id}: {detail}",
+                            )
+                        )
+                    for detail in keyframe_parameter_clamps(track):
+                        issues.append(
+                            PreflightIssue(
+                                "ADVANCED_VALUE_CLAMPED",
+                                PreflightSeverity.WARNING,
+                                f"{track.property_name} pada "
+                                f"Scene {scene.scene_number}/"
+                                f"{assignment.asset_id}: {detail}",
+                            )
+                        )
+
             for track in assignment.keyframe_tracks:
+                if track_requires_advanced(track):
+                    if plan.animation_keyframe_contract == "legacy-v3":
+                        issues.append(
+                            PreflightIssue(
+                                "ADVANCED_TRACK_DORMANT",
+                                PreflightSeverity.WARNING,
+                                "Track keyframe "
+                                f"{track.property_name} pada Scene {scene.scene_number}/"
+                                f"{assignment.asset_id} tersimpan tetapi belum aktif (dormant) pada schema v3",
+                            )
+                        )
+                    elif is_supported_advanced_keyframe_track(track):
+                        continue
+                    else:
+                        issues.append(
+                            PreflightIssue(
+                                "ADVANCED_BACKEND_UNAVAILABLE",
+                                PreflightSeverity.ERROR,
+                                "Track advanced "
+                                f"{track.property_name} pada Scene {scene.scene_number}/"
+                                f"{assignment.asset_id} belum memiliki backend aktif "
+                                "pada wave saat ini",
+                            )
+                        )
+                    continue
+
                 reason = keyframe_track_support_reason(track)
                 if reason is not None:
                     issues.append(
