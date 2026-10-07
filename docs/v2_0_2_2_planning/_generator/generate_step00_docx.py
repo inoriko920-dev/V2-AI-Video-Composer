@@ -58,10 +58,13 @@ for row, pair in zip(meta.rows, meta_data):
 lines = SOURCE.read_text(encoding="utf-8").splitlines()
 paragraph = []
 
+def clean_inline(text):
+    return text.replace("`", "").replace("**", "")
+
 def flush():
     global paragraph
     if paragraph:
-        doc.add_paragraph(" ".join(x.strip() for x in paragraph).strip())
+        doc.add_paragraph(clean_inline(" ".join(x.strip() for x in paragraph).strip()))
         paragraph = []
 
 for raw in lines:
@@ -72,17 +75,17 @@ for raw in lines:
     if line.startswith("# "):
         continue
     if line.startswith("### "):
-        flush(); doc.add_heading(line[4:], level=3); continue
+        flush(); doc.add_heading(clean_inline(line[4:]), level=3); continue
     if line.startswith("## "):
-        flush(); doc.add_heading(line[3:], level=1); continue
+        flush(); doc.add_heading(clean_inline(line[3:]), level=1); continue
     if re.match(r"^\d+\.\s+", line):
         flush(); doc.add_paragraph(re.sub(r"^\d+\.\s+", "", line), style="List Number"); continue
     if line.startswith("- "):
-        flush(); doc.add_paragraph(line[2:], style="List Bullet"); continue
+        flush(); doc.add_paragraph(clean_inline(line[2:]), style="List Bullet"); continue
     if line.startswith("**") and line.endswith("**"):
         flush()
         p = doc.add_paragraph()
-        r = p.add_run(line.strip("*"))
+        r = p.add_run(clean_inline(line.strip("*")))
         r.bold = True
         continue
     paragraph.append(line)
