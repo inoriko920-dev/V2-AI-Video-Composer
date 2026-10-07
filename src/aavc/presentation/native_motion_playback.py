@@ -243,6 +243,7 @@ def render_native_motion_pixmap(
                 assignment,
                 time_seconds=time_seconds,
                 duration_seconds=plan.duration_seconds,
+                animation_keyframe_contract=animation_keyframe_contract,
             )
             crop = native_visual_preview_crop(
                 assignment,
@@ -270,6 +271,7 @@ def render_native_motion_pixmap(
                 assignment,
                 time_seconds=time_seconds,
                 duration_seconds=plan.duration_seconds,
+                animation_keyframe_contract=animation_keyframe_contract,
             )
             if scale_factor != 1.0:
                 scaled = scaled.scaled(
@@ -282,6 +284,7 @@ def render_native_motion_pixmap(
                 assignment,
                 time_seconds=time_seconds,
                 duration_seconds=plan.duration_seconds,
+                animation_keyframe_contract=animation_keyframe_contract,
             )
             scaled = _rotate_pixmap_same_size(scaled, rotation_degrees)
             mask_progress = native_visual_preview_mask_progress(
