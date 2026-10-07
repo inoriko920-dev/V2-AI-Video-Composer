@@ -61,5 +61,5 @@ class FFmpegToolCapabilityService:
 
     def refresh(self) -> BackendAvailability:
         self._cached = None
-        self._advanced_probe.refresh()
+        self._advanced_probe.invalidate()
         return self.availability()
