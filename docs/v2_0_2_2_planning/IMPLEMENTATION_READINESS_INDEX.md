@@ -21,7 +21,8 @@ Read in this order:
 - STEP 04: PASS
 - STEP 05: PASS
 - STEP 06 / W06-A: PASS / COMPLETE
-- STEP 06 / W06-B: NEXT / AUTHORIZED
+- STEP 06 / W06-B: PASS / COMPLETE
+- STEP 06 / W06-C: NEXT / AUTHORIZED
 - application coding: AUTHORIZED ONLY FOR STEP 06 WAVES
 - UI redesign: BLOCKED / not planned
 - schema change: BLOCKED
@@ -31,7 +32,7 @@ Read in this order:
 ## Handoff
 Another AI must not infer v0.2.2 scope from old Wave J or v0.2.1 implementation branches.
 Read STEP 00–05 in order. The canonical base is current post-release `main`.
-Start the next implementation turn only with W06-B. W06-A is complete. Complete one W06 wave per user turn.
+Start the next implementation turn only with W06-C. W06-A and W06-B are complete. Complete one W06 wave per user turn.
 Do not implement deferred GAP-03A runtime autosave/recovery UI integration.
 No new UI-image prompt step is required unless implementation unexpectedly changes the visual design.
 
@@ -44,3 +45,13 @@ No new UI-image prompt step is required unless implementation unexpectedly chang
 - final CodeQL: `37675988445` PASS
 - final Windows acceptance: `37675988582` PASS
 - stale PR #1/#11/#17: CLOSED / NOT MERGED
+
+
+## W06-B result
+- source: `docs/v2_0_2_2_planning/W06_B_IMPLEMENTATION_RESULT.md`
+- controller failing-before: run `37677626046`
+- final CI: `37677943203` PASS — 724 passed, 45 deselected
+- final CodeQL: `37677943401` PASS
+- final Windows acceptance: `37677943275` PASS
+- runtime file changed: `src/aavc/presentation/windows/animation_menu_window.py`
+- no UI redesign / schema change / persistence change / dependency change
