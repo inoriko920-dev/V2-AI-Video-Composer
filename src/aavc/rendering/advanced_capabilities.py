@@ -140,19 +140,20 @@ class AdvancedFFmpegCapabilityProbe:
                     "lavfi",
                     "-i",
                     "color=c=red:s=16x16:r=4:d=0.5",
-                    "-filter_complex",
+                    "-vf",
                     (
-                        "[0:v]format=rgba,split=2[k2base][k2alpha];"
-                        "[k2alpha]alphaextract,"
-                        "geq=lum='p(X,Y)*"
-                        "gte(X,W*(0.10+0.10*T))*"
-                        "lt(X,W*(0.90-0.10*T))*"
-                        "gte(Y,H*0.10)*"
-                        "lt(Y,H*0.90)'[k2mask];"
-                        "[k2base][k2mask]alphamerge[k2out]"
+                        "format=rgba,"
+                        "sendcmd=c='"
+                        "0-0.5 [expr] drawbox@k2_left w W*(0.10+0.10*TI);"
+                        "0-0.5 [expr] drawbox@k2_right x "
+                        "W*(1-(0.10+0.10*TI))',"
+                        "drawbox@k2_left="
+                        "x=0:y=0:w=iw*0.10:h=ih:"
+                        "color=black@0:t=fill:replace=1,"
+                        "drawbox@k2_right="
+                        "x=iw*0.90:y=0:w=iw:h=ih:"
+                        "color=black@0:t=fill:replace=1"
                     ),
-                    "-map",
-                    "[k2out]",
                     "-frames:v",
                     "2",
                     "-f",
