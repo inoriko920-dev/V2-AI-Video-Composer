@@ -2,7 +2,7 @@
 
 Panduan ini menjelaskan cara memakai AI Automatic Video Composer (AAVC) berdasarkan kemampuan yang dapat dibuktikan pada source `main` saat ini.
 
-> **Batas versi:** build publik stabil yang saat ini tercatat tetap `v0.1.1`. Artefak `v0.1.1` bersifat frozen. Branch `main` sudah memuat maintenance dan penyempurnaan editor setelah rilis tersebut; perubahan di `main` baru masuk ke binary pengguna setelah dibuat build/release baru.
+> **Batas versi:** panduan ini disiapkan untuk rilis stabil V2 `v0.2.0`. Rilis historis `v0.1.0` dan `v0.1.1` tetap frozen dan tidak diganti. Kemampuan yang dijelaskan di bawah telah masuk ke source final 0.2.0 dan melewati automated Windows user acceptance.
 
 ## 1. Menjalankan versi portable Windows
 
@@ -96,7 +96,7 @@ Request Gemini berjalan melalui job background agar GUI tetap responsif. Bila pr
 
 Jika secure credential store tidak tersedia, aplikasi menolak memakai fallback plaintext.
 
-Semua kemampuan pada paragraf ini berada di source `main` pasca-rilis dan **belum menjadi bagian dari binary frozen `v0.1.1`**.
+Semua kemampuan pada paragraf ini merupakan bagian dari source final V2 `0.2.0`; binary historis `v0.1.1` tetap tidak berubah.
 
 ## 6. Kontrol project utama
 
@@ -369,4 +369,4 @@ STEP09 tetap frozen sebagai kontrak visual regression. Fixture no-session yang d
 
 Panduan ini mendokumentasikan kemampuan yang dapat dibuktikan dari source dan test repo, bukan janji bahwa semua konsep editor sudah setara dengan NLE komersial.
 
-Untuk status rilis lihat `README.md` dan `RELEASE_NOTES_0.1.1.md`. Untuk kebijakan maintenance lihat `MAINTENANCE.md`. Untuk detail arsitektur dan factory evidence, lihat dokumen lain di `docs/` dan file STEP status di root repo.
+Untuk status rilis lihat `README.md` dan `RELEASE_NOTES_0.2.0.md`. Untuk kebijakan maintenance lihat `MAINTENANCE.md`. Untuk detail arsitektur dan factory evidence, lihat dokumen lain di `docs/` dan file STEP status di root repo.

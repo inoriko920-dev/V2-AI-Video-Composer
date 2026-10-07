@@ -14,7 +14,7 @@ This repository is the **only writable development target for V2**.
 - Wave D: **COMPLETE** — schema v3 keyframe data model and backward migration passed CI; existing effects remain canonical.
 - Wave E: **COMPLETE** — foundational X/Y position, scale, and rotation keyframes passed preview/final parity gates.
 - Wave F: **COMPLETE** — transactional manual editing, Scene animation copy/paste, and validation repair actions passed CI.
-- Next explicit step: **Wave G — AI/job/key-pool UX hardening**.
+- Wave J final gate: **IN PROGRESS** — automated Windows user acceptance is PASS; final `v0.2.0` publication is the active step.
 
 The historical README copied from the legacy repository is preserved below as baseline documentation.
 
@@ -37,7 +37,7 @@ Windows desktop application for composing narrative/infographic videos from scen
 - STEP 14: **PASS / Release Candidate Ready**
 - STEP 15: **PASS / Final Release Ready**
 
-Current published maintenance release: **0.1.1**.
+Current published historical maintenance release: **0.1.1**. V2 **0.2.0** is in its guarded final publication gate.
 
 Latest completed post-release source line: **0.2 stability-hardened test build verified** (not yet a published GitHub Release).
 
@@ -166,7 +166,7 @@ Third-party dependencies retain their own licenses. FFmpeg/ffprobe are external 
 - Wave G: **COMPLETE** — Gemini background cancellation/progress and secret-free key-pool health diagnostics passed CI.
 - Wave H: **COMPLETE** — frozen-reference UI parity, truthful action state, and focus/disabled interaction polish passed CI + screenshot gates.
 - Wave I: **COMPLETE** — PyAV Windows feasibility spike passed; no optional backend was promoted into runtime.
-- Wave J: **ACTIVE / REFRESHED RC USER TEST PENDING** — all 21 canonical animation effects now have native preview/FFmpeg capability coverage; final v0.2.0 remains blocked on user acceptance.
+- Wave J: **FINAL GATE IN PROGRESS** — 21/21 effects are native, automated Windows user acceptance passed, and `v0.2.0` is being prepared for guarded publication.
 
 
 ## Wave I dependency gate
@@ -205,3 +205,11 @@ onedir packaging, portable smoke/content/secret verification, and RC artifact up
 Use refreshed user-test artifact ID `11459479975`; the earlier RC artifact is superseded
 for animation testing. Advanced opacity/crop/blur/shadow/glow/mask keyframe tracks and
 bezier/velocity/overshoot remain explicitly outside the production-ready keyframe set.
+
+
+### V2 0.2.0 final gate
+The delegated Windows user-acceptance gate passed with 630 technical tests, real
+FFmpeg rendering for all 21 canonical effects, real Selection In/Out rendering,
+portable verification, and packaged-EXE UI launch. Final publication uses the guarded
+`.github/workflows/v2-final-0.2.0.yml` workflow and will not overwrite any existing
+release/tag.
