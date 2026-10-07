@@ -15,9 +15,9 @@ from aavc.presentation.motion_preview import (
     native_visual_preview_crop,
     native_visual_preview_glow,
     native_visual_preview_opacity,
-    native_visual_preview_shadow,
     native_visual_preview_rotation,
     native_visual_preview_scale,
+    native_visual_preview_shadow,
     preview_narration_seconds,
     preview_neighbor_scene_index,
     preview_scrub_seconds,
@@ -133,7 +133,7 @@ def _drop_shadow_pixmap_approx(
     blur_radius: float,
     offset: float,
 ) -> Any:
-    from PySide6.QtCore import QRectF, QPointF, Qt
+    from PySide6.QtCore import QPointF, QRectF, Qt
     from PySide6.QtGui import QColor, QPainter, QPixmap
     from PySide6.QtWidgets import (
         QGraphicsDropShadowEffect,
