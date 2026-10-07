@@ -22,10 +22,13 @@ Planning branch:
 | 05C | `docs/v2_0_2_1_planning/docx/05C_V2_0.2.1_UI_SOURCE_OF_TRUTH_CORRECTION_AND_GATE_RESET.docx` | `7766cbab77bbe3725b5e160e99e4f7a7bcf866c3b34f9f0b555e0f843e7cc3f5` |
 | 06 | `docs/v2_0_2_1_planning/docx/06_V2_0.2.1_IMPLEMENTATION_MODULE_AND_CHANGE_MAP.docx` | `3fe6b705b8e3772cf56c963bd1a34101796e30622dc285743e94ac999a4a496f` |
 | 07 | `docs/v2_0_2_1_planning/docx/07_V2_0.2.1_VERIFICATION_REGRESSION_AND_RELEASE_GATE_PLAN.docx` | `89d6371d5583cf4f9e3ed6a363aca3af265020dc1b3c97b90a8187d89e832bc4` |
-| 08 | `docs/v2_0_2_1_planning/docx/08_V2_0.2.1_SOURCE_OF_TRUTH_SYNC_AND_IMPLEMENTATION_AUTHORIZATION.docx` | `59d790b384fef2b2f3b910ee1083fafbd436c127a1e077ec1b67cbe9b4b0eb39` |
+| 08 | `docs/v2_0_2_1_planning/docx/08_V2_0.2.1_SOURCE_OF_TRUTH_SYNC_AND_IMPLEMENTATION_AUTHORIZATION.docx` | `d807af60f5aa46c5796eed7a3282f60ffb45833b9ac38689c48fddad779ee8af` |
 
-Binary DOCX sync commit:
+Initial authoritative DOCX sync commit:
 `ef82d55cf6a03e20606b0cddc71f504b4c715e11`
+
+Final STEP 08 DOCX replacement commit:
+`8fd302905bddda8be3b633e0d2d0c0a1e8250fbe`
 
 ## Authoritative text chain
 - `00_SCOPE_AND_GAP_AUDIT.md`
