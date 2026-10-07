@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from aavc.animation.keyframes import (
     clamp_keyframe_value,
     find_keyframe_track,
     is_supported_advanced_keyframe_track,
 )
 from aavc.domain.project.models import AnimationAssignment
+
+if TYPE_CHECKING:
+    from .render_plan import RenderPlan
 
 
 K1_ACTIVE_RENDER_PROPERTIES = frozenset({"opacity"})
@@ -116,4 +121,15 @@ def compile_k1_opacity_filters(
         "format=rgba",
         "sendcmd=c='" + command_text + "'",
         f"{target}=aa={_number(initial)}",
+    )
+
+
+
+def render_plan_requires_k1_opacity(plan: RenderPlan) -> bool:
+    if plan.animation_keyframe_contract != "advanced-v1":
+        return False
+    return any(
+        assignment is not None and assignment_has_k1_opacity(assignment)
+        for scene in plan.scenes
+        for assignment in scene.animations
     )
