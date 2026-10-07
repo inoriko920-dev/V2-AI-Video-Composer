@@ -11,6 +11,7 @@ from aavc.platform.tool_registry import ToolResolution, resolve_ffmpeg
 
 
 class AdvancedFFmpegFeature(StrEnum):
+    OPACITY_RUNTIME_ALPHA = "opacity_runtime_alpha"
     DYNAMIC_SPATIAL_ALPHA = "dynamic_spatial_alpha"
     NAMED_GBLUR = "named_gblur"
     SENDCMD_RUNTIME_SIGMA = "sendcmd_runtime_sigma"
@@ -39,10 +40,10 @@ class AdvancedFFmpegCapabilities:
 
 
 class AdvancedFFmpegCapabilityProbe:
-    """K0 scaffold for feature-based FFmpeg capability detection.
+    """Feature-based FFmpeg capability detection for advanced animation waves.
 
-    K0 intentionally claims no advanced render features. Later waves add real
-    micro-render probes and only then populate the feature set.
+    K1 promotes only runtime opacity after a real micro-render probe. Later
+    waves add independent probes without inheriting capability by version.
     """
 
     def __init__(
@@ -86,16 +87,48 @@ class AdvancedFFmpegCapabilityProbe:
         first_line = lines[0] if lines else ""
         version = first_line.removeprefix("ffmpeg version ").split(" ", 1)[0] or None
         fingerprint = self._fingerprint(tool, first_line)
+        features: set[AdvancedFFmpegFeature] = set()
+        diagnostics: list[str] = []
+        opacity_probe = self._runner.run(
+            [
+                tool.path,
+                "-hide_banner",
+                "-loglevel",
+                "error",
+                "-f",
+                "lavfi",
+                "-i",
+                "color=c=red:s=16x16:r=4:d=0.25",
+                "-vf",
+                (
+                    "format=rgba,"
+                    "sendcmd=c='0-1 [expr] "
+                    "colorchannelmixer@k1_opacity aa 0.5',"
+                    "colorchannelmixer@k1_opacity=aa=1"
+                ),
+                "-frames:v",
+                "1",
+                "-f",
+                "null",
+                "-",
+            ],
+            timeout_seconds=10.0,
+        )
+        if opacity_probe.returncode == 0:
+            features.add(AdvancedFFmpegFeature.OPACITY_RUNTIME_ALPHA)
+        else:
+            diagnostics.append(
+                "K1 opacity runtime-alpha probe gagal: "
+                + (opacity_probe.stderr[-1000:] or "unknown FFmpeg error")
+            )
+
         self._cached = AdvancedFFmpegCapabilities(
             available=True,
             executable_path=tool.path,
             version=version,
             fingerprint=fingerprint,
-            features=frozenset(),
-            diagnostics=(
-                "K0 capability scaffold aktif; advanced feature micro-probes belum "
-                "dipromosikan.",
-            ),
+            features=frozenset(features),
+            diagnostics=tuple(diagnostics),
         )
         return self._cached
 
