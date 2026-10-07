@@ -1,13 +1,10 @@
-name: V2 Wave J RC 0.2.0
+name: Historical Verification — V2 0.2.0rc1
 
 on:
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 concurrency:
-  group: wave-j-rc-${{ github.workflow }}-${{ github.ref }}
+  group: historical-v2-0.2.0rc1-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -22,6 +19,7 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+          ref: 54d6cb49ceca001bb68e5f29a88869d3972a4861
 
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
@@ -124,18 +122,18 @@ jobs:
 
           Get-ChildItem release | Select-Object Name, Length
 
-      - name: Upload RC user-test bundle
+      - name: Upload historical RC verification bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: AAVC-0.2.0-rc1-user-test
+          name: AAVC-0.2.0-rc1-historical-verification
           path: release/*
           if-no-files-found: error
           retention-days: 30
 
-      - name: Upload STEP09 UI evidence
+      - name: Upload historical STEP09 UI evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: AAVC-0.2.0-rc1-step09-ui
+          name: AAVC-0.2.0-rc1-historical-step09-ui
           path: artifacts/step09_actual/*.png
           if-no-files-found: error
           retention-days: 30
