@@ -5,7 +5,6 @@ from enum import StrEnum
 from pathlib import Path
 
 from aavc.animation import (
-    CROP_PROPERTIES,
     crop_assignment_has_clamped_keyframes,
     crop_assignment_has_pair_normalization,
     is_supported_advanced_keyframe_track,
