@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from pathlib import Path
-from typing import Sequence
+from collections.abc import Sequence
 
 import pytest
 
@@ -145,7 +145,11 @@ def test_k2_crop_precedes_scale_and_rotation_in_final_graph(tmp_path: Path) -> N
             _track("rotation_degrees", 0.0, 10.0),
         )
     )
-    graph = _filter_graph(build_ffmpeg_command(build_render_plan(project, tmp_path / "out.mp4")))
+    graph = _filter_graph(
+        build_ffmpeg_command(
+            build_render_plan(project, tmp_path / "out.mp4")
+        )
+    )
 
     crop_index = graph.index("geq=")
     scale_index = graph.index("scale=w='", crop_index)
