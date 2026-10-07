@@ -3,6 +3,7 @@ from .crop import (
     CropVisibility,
     assignment_has_supported_crop,
     crop_assignment_has_clamped_keyframes,
+    crop_assignment_has_pair_normalization,
     evaluate_assignment_crop_visibility,
     normalize_crop_visibility,
 )
