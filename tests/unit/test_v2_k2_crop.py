@@ -24,7 +24,7 @@ from aavc.domain.project.models import AnimationAssignment
 from aavc.platform.process_runner import ProcessResult, ProcessRunner
 from aavc.presentation.motion_preview import native_visual_preview_crop
 from aavc.rendering import build_ffmpeg_command, build_render_plan, validate_render_plan
-from aavc.rendering.advanced_filters import compile_k2_crop_mask_filter
+from aavc.rendering.advanced_filters import compile_k2_crop_filters
 
 FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "step10"
 
@@ -125,16 +125,20 @@ def test_k2_crop_preview_is_contract_aware() -> None:
 def test_k2_compiler_uses_fixed_canvas_dynamic_spatial_alpha() -> None:
     assignment = _advanced_project().animations[0]
 
-    mask_filter = compile_k2_crop_mask_filter(
+    filters = compile_k2_crop_filters(
         assignment,
         duration_seconds=2.0,
+        instance_id="unit_crop",
     )
+    joined = ",".join(filters)
 
-    assert mask_filter is not None
-    assert "geq=lum='p(X,Y)*" in mask_filter
-    assert "gte(X,W*" in mask_filter
-    assert "lt(X,W*(1-" in mask_filter
-    assert "T" in mask_filter
+    assert filters[0] == "format=rgba"
+    assert "sendcmd=c='" in joined
+    assert "drawbox@unit_crop_left" in joined
+    assert "drawbox@unit_crop_right" in joined
+    assert "replace=1" in joined
+    assert "color=black@0" in joined
+    assert "TI" in joined
 
 
 def test_k2_crop_precedes_scale_and_rotation_in_final_graph(tmp_path: Path) -> None:
@@ -225,7 +229,7 @@ def test_k2_bezier_crop_remains_blocked_until_k6(tmp_path: Path) -> None:
     graph = _filter_graph(build_ffmpeg_command(plan))
     report = validate_render_plan(plan)
 
-    assert "geq=" not in graph
+    assert "drawbox@crop_opacity_0_0_left" not in graph
     assert any(
         issue.code == "ADVANCED_BACKEND_UNAVAILABLE"
         for issue in report.issues
@@ -247,7 +251,7 @@ class _CropCapabilityRunner(ProcessRunner):
         if "-version" in argv:
             return ProcessResult(0, "ffmpeg version 9.0 Copyright", "")
         joined = " ".join(argv)
-        if "geq=" in joined and not self.crop_ok:
+        if "drawbox@k2_left" in joined and not self.crop_ok:
             return ProcessResult(1, "", "dynamic spatial alpha unavailable")
         return ProcessResult(0, "", "")
 
