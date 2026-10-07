@@ -10,11 +10,14 @@ from aavc.animation.crop import (
 )
 from aavc.animation.keyframes import (
     KEYFRAME_PROPERTY_LIMITS,
+    clamp_keyframe_overshoot,
     clamp_keyframe_value,
+    clamp_keyframe_velocity,
     evaluate_advanced_keyframe_track,
     find_keyframe_track,
     is_supported_advanced_keyframe_track,
 )
+from aavc.domain.animation import AnimationKeyframe
 from aavc.domain.project.models import AnimationAssignment
 
 if TYPE_CHECKING:
@@ -45,6 +48,58 @@ def _easing_expression(easing: str, fraction: str) -> str:
     return fraction
 
 
+def _bezier_value_expression(
+    start: AnimationKeyframe,
+    end: AnimationKeyframe,
+    *,
+    eased: str,
+) -> str:
+    delta = end.value - start.value
+    velocity0 = clamp_keyframe_velocity(start.velocity)
+    velocity1 = clamp_keyframe_velocity(end.velocity)
+    p0 = start.value
+    p1 = start.value + (velocity0 * delta) / 3.0
+    p2 = end.value - (velocity1 * delta) / 3.0
+    p3 = end.value
+    one_minus = f"(1-({eased}))"
+    cubic = (
+        f"pow({one_minus},3)*{_number(p0)}"
+        f"+3*pow({one_minus},2)*({eased})*{_number(p1)}"
+        f"+3*({one_minus})*pow(({eased}),2)*{_number(p2)}"
+        f"+pow(({eased}),3)*{_number(p3)}"
+    )
+    amount = clamp_keyframe_overshoot(start.overshoot)
+    if amount <= 0.0 or delta == 0.0:
+        return cubic
+    return (
+        f"({cubic})+({_number(delta * amount)})*"
+        f"sin(3.141592654*({eased}))*({eased})"
+    )
+
+
+def _segment_value_expression(
+    start: AnimationKeyframe,
+    end: AnimationKeyframe,
+    *,
+    eased: str,
+) -> str:
+    if start.interpolation == "hold":
+        return _number(start.value)
+    if start.interpolation == "bezier":
+        return _bezier_value_expression(start, end, eased=eased)
+    delta = end.value - start.value
+    return f"{_number(start.value)}+({_number(delta)})*({eased})"
+
+
+def _clamp_without_commas(expression: str, lower: float, upper: float) -> str:
+    lo = _number(lower)
+    hi = _number(upper)
+    return (
+        f"(abs(({expression})-({lo}))-"
+        f"abs(({expression})-({hi}))+({lo})+({hi}))/2"
+    )
+
+
 def _advanced_time_expression(
     assignment: AnimationAssignment | None,
     property_name: str,
@@ -71,8 +126,7 @@ def _advanced_time_expression(
                 f"{_number(span)}"
             )
             eased = _easing_expression(start.easing, fraction)
-            delta = end.value - start.value
-            segment = f"{_number(start.value)}+({_number(delta)})*({eased})"
+            segment = _segment_value_expression(start, end, eased=eased)
         expression = (
             f"if(lt({time_variable},{_number(end.time * duration)}),"
             f"{segment},{expression})"
@@ -115,18 +169,11 @@ def _crop_easing_expression(easing: str) -> str:
 
 
 def _crop_segment_expression(
-    start_value: float,
-    end_value: float,
-    *,
-    interpolation: str,
-    easing: str,
+    start: AnimationKeyframe,
+    end: AnimationKeyframe,
 ) -> str:
-    if interpolation == "hold":
-        raw = _number(start_value)
-    else:
-        eased = _crop_easing_expression(easing)
-        delta = end_value - start_value
-        raw = f"{_number(start_value)}+({_number(delta)})*({eased})"
+    eased = _crop_easing_expression(start.easing)
+    raw = _segment_value_expression(start, end, eased=eased)
     return _crop_clamp_expression(raw)
 
 
@@ -172,12 +219,7 @@ def _crop_track_command_intervals(
                 (
                     start.time * duration,
                     end.time * duration,
-                    _crop_segment_expression(
-                        start.value,
-                        end.value,
-                        interpolation=start.interpolation,
-                        easing=start.easing,
-                    ),
+                    _crop_segment_expression(start, end),
                 )
             )
         last_seconds = points[-1].time * duration
@@ -419,18 +461,11 @@ def _unit_clamp_expression(expression: str) -> str:
 
 
 def _mask_segment_expression(
-    start_value: float,
-    end_value: float,
-    *,
-    interpolation: str,
-    easing: str,
+    start: AnimationKeyframe,
+    end: AnimationKeyframe,
 ) -> str:
-    if interpolation == "hold":
-        raw = _number(start_value)
-    else:
-        eased = _crop_easing_expression(easing)
-        delta = end_value - start_value
-        raw = f"{_number(start_value)}+({_number(delta)})*({eased})"
+    eased = _crop_easing_expression(start.easing)
+    raw = _segment_value_expression(start, end, eased=eased)
     return _unit_clamp_expression(raw)
 
 
@@ -461,12 +496,7 @@ def _mask_track_command_intervals(
                 (
                     start.time * duration,
                     end.time * duration,
-                    _mask_segment_expression(
-                        start.value,
-                        end.value,
-                        interpolation=start.interpolation,
-                        easing=start.easing,
-                    ),
+                    _mask_segment_expression(start, end),
                 )
             )
         last_seconds = points[-1].time * duration
@@ -787,19 +817,12 @@ def _eased_ti_expression(easing: str) -> str:
 
 
 def _segment_gain_expression(
-    start_value: float,
-    end_value: float,
-    *,
-    interpolation: str,
-    easing: str,
+    start: AnimationKeyframe,
+    end: AnimationKeyframe,
 ) -> str:
-    start = clamp_keyframe_value("opacity", start_value)
-    end = clamp_keyframe_value("opacity", end_value)
-    if interpolation == "hold":
-        return _number(start)
-    eased = _eased_ti_expression(easing)
-    delta = end - start
-    return f"{_number(start)}+({_number(delta)})*({eased})"
+    eased = _eased_ti_expression(start.easing)
+    raw = _segment_value_expression(start, end, eased=eased)
+    return _clamp_without_commas(raw, 0.0, 1.0)
 
 
 def compile_k1_opacity_filters(
@@ -833,12 +856,7 @@ def compile_k1_opacity_filters(
     for start, end in zip(points, points[1:], strict=False):
         start_seconds = start.time * duration
         end_seconds = end.time * duration
-        expression = _segment_gain_expression(
-            start.value,
-            end.value,
-            interpolation=start.interpolation,
-            easing=start.easing,
-        )
+        expression = _segment_gain_expression(start, end)
         commands.append(
             f"{_number(start_seconds)}-{_number(end_seconds)} "
             f"[expr] {target} aa {expression}"
