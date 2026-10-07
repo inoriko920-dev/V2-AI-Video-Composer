@@ -134,7 +134,7 @@ def _scaled_asset_clause(
                 instance_id=f"k4_{opacity_instance_id}",
             )
         )
-        base = f"[{post_k4}]"
+        base = f"[{post_k4}]null"
 
     alpha_filters = compile_native_alpha_filters(
         assignment,
