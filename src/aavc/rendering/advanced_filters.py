@@ -383,15 +383,22 @@ def compile_k3_blur_filters(
     target = f"gblur@{instance_id}"
     initial_sigma = samples[0][1]
     commands = [
-        f"{_number(seconds)} {target} sigma {sigma:.2f}"
+        command
         for seconds, sigma in samples[1:]
+        for command in (
+            f"{_number(seconds)} {target} sigma {sigma:.2f}",
+            f"{_number(seconds)} {target} sigmaV {sigma:.2f}",
+        )
     ]
     filters: list[str] = ["format=rgba", "premultiply=inplace=1"]
     if commands:
         filters.append("sendcmd=c='" + ";".join(commands) + "'")
     filters.extend(
         (
-            f"{target}=sigma={initial_sigma:.2f}:steps=2",
+            (
+                f"{target}=sigma={initial_sigma:.2f}:"
+                f"sigmaV={initial_sigma:.2f}:steps=2"
+            ),
             "unpremultiply=inplace=1",
         )
     )
