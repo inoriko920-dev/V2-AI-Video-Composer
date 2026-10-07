@@ -3,9 +3,10 @@ from __future__ import annotations
 from typing import Any, Literal
 
 from aavc.application.commands import (
+    AdvancedAnimationActivationRequired,
+    ApplyAnimationKeyframeEdit,
     RandomizeAnimationAssignments,
     RemoveAnimationAssignment,
-    SetAnimationAssignment,
 )
 from aavc.bootstrap.composition_root import FoundationServices
 from aavc.presentation.dialogs.asset_motion import (
@@ -274,7 +275,12 @@ class AnimationMenuMainWindow(ProjectMenuMainWindow):
             )
             return
 
-        result = show_asset_motion_dialog(self.window, scene, project.animations)
+        result = show_asset_motion_dialog(
+            self.window,
+            scene,
+            project.animations,
+            project_schema_version=project.schema_version,
+        )
         if result is None:
             return
 
@@ -282,7 +288,55 @@ class AnimationMenuMainWindow(ProjectMenuMainWindow):
             if result.action == "apply":
                 if result.assignment is None:
                     raise ValueError("Assignment animasi tidak tersedia")
-                updated = session.execute(SetAnimationAssignment(result.assignment))
+                try:
+                    updated = session.execute(
+                        ApplyAnimationKeyframeEdit(result.assignment)
+                    )
+                except AdvancedAnimationActivationRequired as activation:
+                    from PySide6.QtWidgets import QMessageBox
+
+                    changed = ", ".join(activation.changed_properties)
+                    details = [
+                        "Edit ini memerlukan Advanced Animation (schema v4).",
+                        f"Property advanced yang diubah: {changed}.",
+                        "Aktivasi berlaku untuk proyek ini dan dapat dibatalkan dengan Undo.",
+                    ]
+                    if activation.requires_dormant_acknowledgement:
+                        dormant = "\n".join(
+                            (
+                                f"- Scene {scene_no}: {asset_id} / {property_name}"
+                                for scene_no, asset_id, property_name
+                                in activation.dormant_locations
+                            )
+                        )
+                        details.extend(
+                            (
+                                "",
+                                "Track advanced dormant berikut juga akan menjadi aktif:",
+                                dormant,
+                                "",
+                                "Dengan memilih Ya, Anda juga mengakui aktivasi track dormant tersebut.",
+                            )
+                        )
+                    answer = QMessageBox.question(
+                        self.window,
+                        "Aktifkan Advanced Animation?",
+                        "\n".join(details),
+                        QMessageBox.StandardButton.Yes
+                        | QMessageBox.StandardButton.No,
+                        QMessageBox.StandardButton.No,
+                    )
+                    if answer != QMessageBox.StandardButton.Yes:
+                        return
+                    updated = session.execute(
+                        ApplyAnimationKeyframeEdit(
+                            result.assignment,
+                            activate_advanced=True,
+                            acknowledge_dormant=(
+                                activation.requires_dormant_acknowledgement
+                            ),
+                        )
+                    )
                 assignment = next(
                     item
                     for item in updated.animations
