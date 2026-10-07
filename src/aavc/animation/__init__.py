@@ -1,3 +1,9 @@
+from .shadow_glow import (
+    GlowState,
+    ShadowState,
+    evaluate_assignment_glow,
+    evaluate_assignment_shadow,
+)
 from .blur import BlurState, blur_sigma_limit, evaluate_assignment_blur
 from .crop import (
     CROP_PROPERTIES,
@@ -15,6 +21,7 @@ from .keyframes import (
     K1_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES,
     K2_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES,
     K3_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES,
+    K4_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES,
     KEYFRAME_PROPERTY_LIMITS,
     advanced_keyframe_track_support_reason,
     evaluate_advanced_keyframe_track,
@@ -34,11 +41,14 @@ __all__ = [
     "ACTIVE_KEYFRAME_PROPERTIES",
     "AnimationEffect",
     "BlurState",
+    "GlowState",
+    "ShadowState",
     "CROP_PROPERTIES",
     "CropVisibility",
     "K1_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES",
     "K2_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES",
     "K3_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES",
+    "K4_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES",
     "KEYFRAME_PROPERTY_LIMITS",
     "blur_sigma_limit",
     "assignment_has_supported_crop",
@@ -51,6 +61,8 @@ __all__ = [
     "evaluate_advanced_keyframe_track",
     "evaluate_assignment_advanced_keyframe",
     "evaluate_assignment_blur",
+    "evaluate_assignment_glow",
+    "evaluate_assignment_shadow",
     "evaluate_assignment_crop_visibility",
     "evaluate_assignment_keyframe",
     "evaluate_effect",
