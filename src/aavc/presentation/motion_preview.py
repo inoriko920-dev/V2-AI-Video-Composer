@@ -8,10 +8,10 @@ from aavc.animation import (
     ShadowState,
     evaluate_assignment_advanced_keyframe,
     evaluate_assignment_blur,
-    evaluate_assignment_glow,
-    evaluate_assignment_shadow,
     evaluate_assignment_crop_visibility,
+    evaluate_assignment_glow,
     evaluate_assignment_keyframe,
+    evaluate_assignment_shadow,
     evaluate_effect,
 )
 from aavc.animation.compiler import (
