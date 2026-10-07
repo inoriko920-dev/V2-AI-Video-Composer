@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave J — AUTOMATED WINDOWS USER ACCEPTANCE PASS / FINAL RELEASE GATE READY: 0.2.0rc1**
+**Wave J — COMPLETE / v0.2.0 PUBLISHED AND VERIFIED**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -619,3 +619,31 @@ preview, short render, copy/paste animation, and locked-target behavior. Final
 Run the final `v0.2.0` release gate from the accepted source line. Final publication
 must use the canonical final-release workflow/gate and must not bypass checksum,
 portable, CI, CodeQL, or source-provenance verification.
+
+
+## Wave J final release closure — v0.2.0
+- Final release tag: `v0.2.0`.
+- Immutable release commit: `c6ad75308d302cd816301a2a7a34ebe7eb4148a7`.
+- GitHub Release ID: `405435925`.
+- Published at: `2026-10-07T06:11:34Z`.
+- Final workflow run `37579907844`: **PASS**.
+- Main CI run `37579907856`: **PASS**.
+- Main CodeQL run `37579907845`: **PASS**.
+- Full technical final suite: **630 passed**.
+- STEP09 screenshot gate: **8/8 PASS**.
+- Windows PyInstaller onedir + portable verification: **PASS**.
+- Packaged EXE UI launch: **PASS**.
+- Windows ZIP SHA-256: `eea46b42400c91e22d731c8261b9d7f29933ee0f94d45bcaa331a001805c525c`.
+- Exact source ZIP SHA-256: `fbdabd43c71f1585e817ce30f27d611668ecb0dc3c39df0b19a441968f0f7fe9`.
+- Final candidate artifact ID: `11463714566`.
+- Final candidate digest: `sha256:aa3e575bcb854240f5f51a7f8fbe1f76b125c20578e097b4fdb954fd9468ce03`.
+- Final UI evidence artifact ID: `11464770244`.
+- Final UI evidence digest: `sha256:136077fc37289065092abd8d4c93459a69ea169d8148a858462edfbcaba9def4`.
+- Published tag/release verification: **PASS**; tag points exactly to the release commit.
+- `v0.1.0` and `v0.1.1` remain unchanged.
+- The `v0.2.0` publication workflow is retired to read-only historical verification and cannot republish or move the tag.
+
+## Next exact action
+Wave J is complete. Do not move or replace `v0.2.0`. Any future bug fix or feature
+must start as a new explicitly planned version (for example a 0.2.x patch or later
+minor version) and pass its own release gates.
