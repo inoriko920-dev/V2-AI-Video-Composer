@@ -13,10 +13,13 @@ from aavc.animation.contract import (
     ADVANCED_KEYFRAME_CONTRACT,
     ADVANCED_KEYFRAME_CONTRACT_METADATA_KEY,
 )
+from aavc.application.services.export_service import ensure_advanced_render_capabilities
 from aavc.application.services.validation import validate_project
 from aavc.application.services.vertical_slice import create_project_state
 from aavc.domain.animation import AnimationKeyframe, AnimationKeyframeTrack
+from aavc.domain.errors import RenderError
 from aavc.domain.project.models import AnimationAssignment
+from aavc.platform.process_runner import ProcessResult, ProcessRunner
 from aavc.presentation.motion_preview import native_visual_preview_opacity
 from aavc.rendering import build_ffmpeg_command, build_render_plan, validate_render_plan
 from aavc.rendering.advanced_filters import compile_k1_opacity_filters
@@ -189,3 +192,45 @@ def test_k1_bezier_opacity_remains_blocked_until_k6(tmp_path: Path) -> None:
         for issue in report.issues
     )
     assert not report.ok
+
+
+
+class _CapabilityRunner(ProcessRunner):
+    def __init__(self, *, opacity_ok: bool) -> None:
+        self.opacity_ok = opacity_ok
+
+    def run(
+        self,
+        argv,
+        *,
+        timeout_seconds: float | None = None,
+    ) -> ProcessResult:
+        del timeout_seconds
+        if "-version" in argv:
+            return ProcessResult(0, "ffmpeg version 9.0 Copyright", "")
+        if self.opacity_ok:
+            return ProcessResult(0, "", "")
+        return ProcessResult(1, "", "runtime alpha unavailable")
+
+
+def test_k1_capability_gate_fails_closed_when_runtime_alpha_probe_fails(
+    tmp_path: Path,
+) -> None:
+    plan = build_render_plan(_advanced_project(), tmp_path / "out.mp4")
+
+    with pytest.raises(RenderError, match="ADVANCED_BACKEND_UNAVAILABLE"):
+        ensure_advanced_render_capabilities(
+            plan,
+            ffmpeg_path="fake-ffmpeg",
+            runner=_CapabilityRunner(opacity_ok=False),
+        )
+
+
+def test_k1_capability_gate_accepts_proven_runtime_alpha(tmp_path: Path) -> None:
+    plan = build_render_plan(_advanced_project(), tmp_path / "out.mp4")
+
+    ensure_advanced_render_capabilities(
+        plan,
+        ffmpeg_path="fake-ffmpeg",
+        runner=_CapabilityRunner(opacity_ok=True),
+    )
