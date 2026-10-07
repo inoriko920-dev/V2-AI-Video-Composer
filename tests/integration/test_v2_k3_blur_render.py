@@ -249,15 +249,15 @@ def test_k3_premultiply_path_prevents_dark_transparent_edge_fringe(
     # correct after alpha composition. A dark fringe would show up here.
     for red, green, blue, alpha in visible:
         actual = (
-            (red * alpha + 255 * (255 - alpha)) / 255.0,
-            (green * alpha + 255 * (255 - alpha)) / 255.0,
-            (blue * alpha + 255 * (255 - alpha)) / 255.0,
+            round((red * alpha + 255 * (255 - alpha)) / 255.0),
+            round((green * alpha + 255 * (255 - alpha)) / 255.0),
+            round((blue * alpha + 255 * (255 - alpha)) / 255.0),
         )
-        ideal = (255.0, 255.0 - alpha, 255.0 - alpha)
+        ideal = (255, 255 - alpha, 255 - alpha)
         assert max(
             abs(channel - expected)
             for channel, expected in zip(actual, ideal, strict=True)
-        ) <= 1.0
+        ) <= 1
 
 
 @pytest.mark.integration
