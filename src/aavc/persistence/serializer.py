@@ -17,6 +17,11 @@ from aavc.domain.animation import (
     KeyframeInterpolation,
     TransformProperty,
 )
+from aavc.animation.contract import (
+    AUTOMATIC_MIGRATION_SCHEMA_VERSION,
+    MAX_SUPPORTED_SCHEMA_VERSION,
+    validate_project_animation_contract,
+)
 from aavc.domain.project.models import (
     AnimationAssignment,
     AssetBinding,
@@ -29,13 +34,14 @@ from aavc.domain.project.models import (
 )
 from aavc.persistence.migrations import migrate_project_payload
 
-CURRENT_SCHEMA_VERSION = 3
+CURRENT_SCHEMA_VERSION = AUTOMATIC_MIGRATION_SCHEMA_VERSION
 _ASSET_STATUSES = {"READY", "MISSING", "CORRUPT", "DUPLICATE"}
 
 
 def dumps_project(project: ProjectState) -> str:
+    validate_project_animation_contract(project)
     payload = project.to_dict()
-    payload["schema_version"] = CURRENT_SCHEMA_VERSION
+    payload["schema_version"] = project.schema_version
     return json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True)
 
 
@@ -318,17 +324,21 @@ def loads_project(text: str) -> ProjectState:
     data = _mapping(json.loads(text), "root")
     raw_schema_version = data.get("schema_version", 1)
     source_schema_version = _integer(raw_schema_version, "schema_version", positive=True)
-    if source_schema_version > CURRENT_SCHEMA_VERSION:
+    if source_schema_version > MAX_SUPPORTED_SCHEMA_VERSION:
         raise ValueError(
             "Versi project tidak didukung: "
             f"schema {source_schema_version} lebih baru dari schema "
-            f"{CURRENT_SCHEMA_VERSION} yang didukung aplikasi ini"
+            f"{MAX_SUPPORTED_SCHEMA_VERSION} yang didukung aplikasi ini"
         )
-    data = migrate_project_payload(
-        data,
-        source_version=source_schema_version,
-        target_version=CURRENT_SCHEMA_VERSION,
-    )
+    if source_schema_version < CURRENT_SCHEMA_VERSION:
+        data = migrate_project_payload(
+            data,
+            source_version=source_schema_version,
+            target_version=CURRENT_SCHEMA_VERSION,
+        )
+        effective_schema_version = CURRENT_SCHEMA_VERSION
+    else:
+        effective_schema_version = source_schema_version
 
     scenes = tuple(
         _deserialize_scene(raw, index)
@@ -351,7 +361,7 @@ def loads_project(text: str) -> ProjectState:
         metadata[key] = value
 
     project = ProjectState(
-        schema_version=CURRENT_SCHEMA_VERSION,
+        schema_version=effective_schema_version,
         title=_string(data.get("title"), "title"),
         source_docx=_string(data.get("source_docx"), "source_docx"),
         asset_directory=_string(data.get("asset_directory"), "asset_directory"),
@@ -405,6 +415,7 @@ def loads_project(text: str) -> ProjectState:
         non_negative=True,
     )
     _validate_project_invariants(project)
+    validate_project_animation_contract(project)
     return project
 
 
@@ -430,14 +441,24 @@ def _existing_schema_version(path: Path) -> int | None:
     return version
 
 
-def migration_backup_path(path: str | Path) -> Path:
+def migration_backup_path(
+    path: str | Path,
+    *,
+    target_version: int = CURRENT_SCHEMA_VERSION,
+) -> Path:
     destination = Path(path)
     return destination.with_suffix(
-        destination.suffix + f".pre-schema-v{CURRENT_SCHEMA_VERSION}.bak"
+        destination.suffix + f".pre-schema-v{target_version}.bak"
     )
 
 
-def save_project(project: ProjectState, path: str | Path) -> Path:
+def save_project(
+    project: ProjectState,
+    path: str | Path,
+    *,
+    create_schema_backup: bool = True,
+    allow_schema_downgrade: bool = False,
+) -> Path:
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
     temporary = temporary_sibling_path(destination, label="save")
@@ -446,9 +467,22 @@ def save_project(project: ProjectState, path: str | Path) -> Path:
         existing_version = _existing_schema_version(destination)
         if (
             existing_version is not None
-            and existing_version < CURRENT_SCHEMA_VERSION
+            and existing_version > project.schema_version
+            and not allow_schema_downgrade
         ):
-            backup = migration_backup_path(destination)
+            raise ValueError(
+                "SCHEMA_DOWNGRADE_BLOCKED: tidak boleh menimpa project "
+                f"schema v{existing_version} dengan schema v{project.schema_version}"
+            )
+        if (
+            create_schema_backup
+            and existing_version is not None
+            and existing_version < project.schema_version
+        ):
+            backup = migration_backup_path(
+                destination,
+                target_version=project.schema_version,
+            )
             if not backup.exists():
                 shutil.copy2(destination, backup)
         temporary.replace(destination)
