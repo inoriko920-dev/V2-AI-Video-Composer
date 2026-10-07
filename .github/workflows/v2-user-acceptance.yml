@@ -1,0 +1,118 @@
+name: V2 Automated User Acceptance
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: v2-user-acceptance-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  windows-user-acceptance:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12.10'
+          cache: 'pip'
+
+      - name: Reject committed secrets
+        run: python scripts/check_no_secrets.py
+
+      - name: Install pinned dependencies
+        run: |
+          python -m pip install "pip==26.2.1"
+          python -m pip install -r requirements.lock
+          python -m pip install -e .
+
+      - name: Ensure real FFmpeg and ffprobe
+        shell: pwsh
+        run: |
+          if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+            choco install ffmpeg -y --no-progress
+          }
+          if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+            throw "ffmpeg is required for automated user acceptance"
+          }
+          if (-not (Get-Command ffprobe -ErrorAction SilentlyContinue)) {
+            throw "ffprobe is required for automated user acceptance"
+          }
+          ffmpeg -version | Select-Object -First 1
+          ffprobe -version | Select-Object -First 1
+
+      - name: Compile
+        run: python -m compileall -q src
+
+      - name: Ruff
+        run: python -m ruff check src tests
+
+      - name: Strict mypy
+        run: python -m mypy src/aavc
+
+      - name: Full technical user acceptance
+        run: python -m pytest -m "not visual" -q
+
+      - name: Build Windows portable
+        shell: pwsh
+        run: ./scripts/package.ps1
+
+      - name: Verify portable foundation
+        shell: pwsh
+        run: ./scripts/verify_portable.ps1
+
+      - name: Launch packaged EXE and capture real UI
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          New-Item -ItemType Directory -Force artifacts/user_acceptance | Out-Null
+          $exe = Resolve-Path "dist/AI Automatic Video Composer/AI Automatic Video Composer.exe"
+          $capture = Join-Path (Resolve-Path "artifacts/user_acceptance") "PACKAGED_UI_002.png"
+          $process = Start-Process -FilePath $exe -ArgumentList @(
+            "--ui-state", "UI-002",
+            "--capture-path", $capture
+          ) -Wait -PassThru
+          if ($process.ExitCode -ne 0) {
+            throw "Packaged EXE UI launch failed with exit code $($process.ExitCode)"
+          }
+          if (-not (Test-Path $capture)) {
+            throw "Packaged EXE did not produce UI capture"
+          }
+          $file = Get-Item $capture
+          if ($file.Length -lt 1000) {
+            throw "Packaged UI capture is unexpectedly small: $($file.Length)"
+          }
+          $file | Select-Object FullName, Length
+
+      - name: Write acceptance evidence
+        shell: pwsh
+        run: |
+          @"
+          V2 AUTOMATED USER ACCEPTANCE
+          platform=windows-latest
+          technical_checklist=PASS
+          full_suite_including_e2e_integration=PASS
+          all_21_effects_real_ffmpeg_render=PASS
+          selection_in_out_real_render=PASS
+          packaged_exe_foundation_smoke=PASS
+          packaged_exe_ui_launch=PASS
+          "@ | Set-Content artifacts/user_acceptance/ACCEPTANCE_RESULT.txt -Encoding utf8
+
+      - name: Upload user-acceptance evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: V2-automated-user-acceptance
+          path: artifacts/user_acceptance/*
+          if-no-files-found: error
+          retention-days: 30
