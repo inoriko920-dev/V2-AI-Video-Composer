@@ -9,7 +9,7 @@ from aavc.domain.errors import RenderError
 from aavc.domain.project.models import ProjectState
 from aavc.jobs import CancellationToken
 from aavc.platform.process_runner import ProcessRunner
-from aavc.platform.tool_registry import resolve_ffmpeg, resolve_ffprobe
+from aavc.platform.tool_registry import ToolResolution, resolve_ffmpeg, resolve_ffprobe
 from aavc.rendering import (
     RenderManifest,
     RenderResult,
@@ -19,6 +19,12 @@ from aavc.rendering import (
     validate_render_plan,
     verify_render_output,
 )
+from aavc.rendering.advanced_capabilities import (
+    AdvancedFFmpegCapabilityProbe,
+    AdvancedFFmpegFeature,
+)
+from aavc.rendering.advanced_filters import render_plan_requires_k1_opacity
+from aavc.rendering.render_plan import RenderPlan
 from aavc.subtitles import compile_srt_to_ass
 
 
@@ -42,6 +48,33 @@ def subtitle_staging_path(output: str | Path) -> Path:
     )
 
 
+def ensure_advanced_render_capabilities(
+    plan: RenderPlan,
+    *,
+    ffmpeg_path: str,
+    runner: ProcessRunner | None = None,
+) -> None:
+    if not render_plan_requires_k1_opacity(plan):
+        return
+
+    capabilities = AdvancedFFmpegCapabilityProbe(
+        runner=runner,
+        resolver=lambda: ToolResolution(
+            name="ffmpeg",
+            path=ffmpeg_path,
+            source="render",
+        ),
+    ).probe()
+    if capabilities.supports(AdvancedFFmpegFeature.OPACITY_RUNTIME_ALPHA):
+        return
+
+    detail = "; ".join(capabilities.diagnostics) or "runtime alpha tidak didukung"
+    raise RenderError(
+        "ADVANCED_BACKEND_UNAVAILABLE: backend opacity advanced-v1 tidak siap: "
+        + detail
+    )
+
+
 def render_project(
     project: ProjectState,
     options: ExportOptions,
@@ -50,6 +83,7 @@ def render_project(
     ffprobe: str | None = None,
     runner: ProcessRunner | None = None,
     probe_runner: ProcessRunner | None = None,
+    capability_runner: ProcessRunner | None = None,
     cancellation_token: CancellationToken | None = None,
     progress_callback: Callable[[float], None] | None = None,
     verify_output: bool = True,
@@ -100,6 +134,11 @@ def render_project(
             raise RenderError(f"Render preflight gagal: {'; '.join(errors)}")
 
         ffmpeg_path = ffmpeg or resolve_ffmpeg().path
+        ensure_advanced_render_capabilities(
+            plan,
+            ffmpeg_path=ffmpeg_path,
+            runner=capability_runner,
+        )
         command = build_ffmpeg_command(plan, ffmpeg=ffmpeg_path)
         manifest = RenderManifest.from_plan(plan)
         validator = None
