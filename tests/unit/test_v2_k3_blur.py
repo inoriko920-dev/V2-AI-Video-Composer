@@ -129,10 +129,14 @@ def test_k3_compiler_samples_output_frames_rounds_and_deduplicates() -> None:
     assert filters[1] == "premultiply=inplace=1"
     assert "sendcmd=c='" in joined
     assert "0.250000 gblur@unit_blur sigma 2.00" in joined
+    assert "0.250000 gblur@unit_blur sigmaV 2.00" in joined
     assert "0.500000 gblur@unit_blur sigma 4.00" in joined
+    assert "0.500000 gblur@unit_blur sigmaV 4.00" in joined
     assert "0.750000 gblur@unit_blur sigma 6.00" in joined
+    assert "0.750000 gblur@unit_blur sigmaV 6.00" in joined
     assert "1.000000 gblur@unit_blur sigma 8.00" in joined
-    assert "gblur@unit_blur=sigma=0.00:steps=2" in joined
+    assert "1.000000 gblur@unit_blur sigmaV 8.00" in joined
+    assert "gblur@unit_blur=sigma=0.00:sigmaV=0.00:steps=2" in joined
     assert filters[-1] == "unpremultiply=inplace=1"
 
 
