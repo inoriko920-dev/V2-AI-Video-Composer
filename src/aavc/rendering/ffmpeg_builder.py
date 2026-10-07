@@ -12,7 +12,7 @@ from aavc.animation.compiler import (
 from aavc.animation.contract import ResolvedAnimationKeyframeContract
 from aavc.domain.project.models import AnimationAssignment
 
-from .advanced_filters import compile_k1_opacity_filters, compile_k2_crop_filters
+from .advanced_filters import compile_k1_opacity_filters, compile_k2_crop_mask_filter
 from .render_plan import RenderPlan, SceneRenderPlan
 
 
@@ -60,13 +60,23 @@ def _scaled_asset_clause(
         f"force_original_aspect_ratio=decrease:flags={scale_flags},"
         "setpts=PTS-STARTPTS"
     )
+    clauses: list[str] = []
     if animation_keyframe_contract == "advanced-v1":
-        crop_filters = compile_k2_crop_filters(
+        crop_mask_filter = compile_k2_crop_mask_filter(
             assignment,
             duration_seconds=duration_seconds,
         )
-        if crop_filters:
-            base += "," + ",".join(crop_filters)
+        if crop_mask_filter is not None:
+            crop_base = f"{output_name}_cropbase"
+            crop_alpha = f"{output_name}_cropalpha"
+            crop_mask = f"{output_name}_cropmask"
+            clauses.append(
+                f"{base},format=rgba,split=2[{crop_base}][{crop_alpha}]"
+            )
+            clauses.append(
+                f"[{crop_alpha}]alphaextract,{crop_mask_filter}[{crop_mask}]"
+            )
+            base = f"[{crop_base}][{crop_mask}]alphamerge"
 
     scale_filter = compile_native_scale_filter(
         assignment,
@@ -94,7 +104,8 @@ def _scaled_asset_clause(
         )
         if opacity_filters:
             base += "," + ",".join(opacity_filters)
-    return f"{base}[{output_name}]"
+    clauses.append(f"{base}[{output_name}]")
+    return ";".join(clauses)
 
 
 def _overlay_clause(
