@@ -1,0 +1,40 @@
+name: Complete Git Bundle Backup V2
+
+on:
+  push:
+    branches:
+      - backup/v2-ai-video-composer-20261007-235215-wib
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Create verified full Git bundle
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git clone --mirror "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" mirror.git
+          git -C mirror.git fsck --full
+          mkdir -p out
+          git -C mirror.git bundle create "$PWD/out/V2-AI-Video-Composer-COMPLETE-GIT-HISTORY.bundle" --all
+          git -C mirror.git bundle verify "$PWD/out/V2-AI-Video-Composer-COMPLETE-GIT-HISTORY.bundle" > out/GIT_BUNDLE_VERIFY.txt 2>&1
+          git -C mirror.git bundle list-heads "$PWD/out/V2-AI-Video-Composer-COMPLETE-GIT-HISTORY.bundle" > out/GIT_BUNDLE_REFS.txt
+          git -C mirror.git for-each-ref --sort=refname --format='%(refname) %(objectname)' > out/ALL_REFS.txt
+          git -C mirror.git log --all --date=iso-strict --pretty=format:'%H|%ad|%an|%ae|%D|%s' > out/COMMIT_HISTORY.txt
+          git -C mirror.git rev-parse refs/heads/main > out/MAIN_COMMIT.txt
+          sha256sum out/V2-AI-Video-Composer-COMPLETE-GIT-HISTORY.bundle > out/GIT_BUNDLE_SHA256.txt
+          test -s out/V2-AI-Video-Composer-COMPLETE-GIT-HISTORY.bundle
+      - name: Upload verified Git bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: V2-AI-Video-Composer-COMPLETE-GIT-HISTORY
+          path: out/*
+          if-no-files-found: error
+          retention-days: 30
