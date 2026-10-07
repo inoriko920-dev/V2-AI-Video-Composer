@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from aavc.animation.crop import CROP_PROPERTIES, assignment_has_supported_crop
 from aavc.animation.keyframes import (
+    KEYFRAME_PROPERTY_LIMITS,
     clamp_keyframe_value,
     find_keyframe_track,
     is_supported_advanced_keyframe_track,
@@ -14,7 +16,136 @@ if TYPE_CHECKING:
 
 
 K1_ACTIVE_RENDER_PROPERTIES = frozenset({"opacity"})
+K2_ACTIVE_RENDER_PROPERTIES = frozenset(CROP_PROPERTIES)
 
+
+
+
+def _easing_expression(easing: str, fraction: str) -> str:
+    if easing == "ease_in":
+        return f"({fraction})*({fraction})"
+    if easing == "ease_out":
+        return f"1-(1-({fraction}))*(1-({fraction}))"
+    if easing == "ease_in_out":
+        return (
+            f"if(lt(({fraction}),0.5),"
+            f"2*({fraction})*({fraction}),"
+            f"1-pow(-2*({fraction})+2,2)/2)"
+        )
+    return fraction
+
+
+def _advanced_time_expression(
+    assignment: AnimationAssignment | None,
+    property_name: str,
+    *,
+    duration_seconds: float,
+    time_variable: str = "T",
+    neutral: float = 0.0,
+) -> str:
+    track = find_keyframe_track(assignment, property_name)
+    if track is None or not is_supported_advanced_keyframe_track(track):
+        return _number(neutral)
+
+    duration = max(0.001, float(duration_seconds))
+    points = track.keyframes
+    expression = _number(points[-1].value)
+    for start, end in reversed(tuple(zip(points, points[1:], strict=False))):
+        if start.interpolation == "hold":
+            segment = _number(start.value)
+        else:
+            start_seconds = start.time * duration
+            span = max(0.000001, (end.time - start.time) * duration)
+            fraction = (
+                f"({time_variable}-{_number(start_seconds)})/"
+                f"{_number(span)}"
+            )
+            eased = _easing_expression(start.easing, fraction)
+            delta = end.value - start.value
+            segment = f"{_number(start.value)}+({_number(delta)})*({eased})"
+        expression = (
+            f"if(lt({time_variable},{_number(end.time * duration)}),"
+            f"{segment},{expression})"
+        )
+
+    if points[0].time > 0:
+        expression = (
+            f"if(lt({time_variable},{_number(points[0].time * duration)}),"
+            f"{_number(points[0].value)},{expression})"
+        )
+
+    limits = KEYFRAME_PROPERTY_LIMITS.get(property_name)
+    if limits is None:
+        return expression
+    lower, upper = limits
+    return (
+        f"min({_number(upper)},max({_number(lower)},"
+        f"({expression})))"
+    )
+
+
+def _normalize_crop_pair(first: str, second: str) -> tuple[str, str]:
+    total = f"(({first})+({second}))"
+    normalized_first = (
+        f"if(gt({total},0.900000),"
+        f"0.900000*({first})/{total},({first}))"
+    )
+    normalized_second = (
+        f"if(gt({total},0.900000),"
+        f"0.900000*({second})/{total},({second}))"
+    )
+    return normalized_first, normalized_second
+
+
+def compile_k2_crop_filters(
+    assignment: AnimationAssignment | None,
+    *,
+    duration_seconds: float,
+) -> tuple[str, ...]:
+    """Compile four-side crop as a fixed-size spatial alpha gate."""
+
+    if not assignment_has_supported_crop(assignment):
+        return ()
+
+    left = _advanced_time_expression(
+        assignment,
+        "crop_left",
+        duration_seconds=duration_seconds,
+    )
+    top = _advanced_time_expression(
+        assignment,
+        "crop_top",
+        duration_seconds=duration_seconds,
+    )
+    right = _advanced_time_expression(
+        assignment,
+        "crop_right",
+        duration_seconds=duration_seconds,
+    )
+    bottom = _advanced_time_expression(
+        assignment,
+        "crop_bottom",
+        duration_seconds=duration_seconds,
+    )
+    left, right = _normalize_crop_pair(left, right)
+    top, bottom = _normalize_crop_pair(top, bottom)
+
+    gate = (
+        f"gte(X,W*({left}))*"
+        f"lt(X,W*(1-({right})))*"
+        f"gte(Y,H*({top}))*"
+        f"lt(Y,H*(1-({bottom})))"
+    )
+    return (
+        "format=rgba",
+        (
+            "geq="
+            "r='r(X,Y)':"
+            "g='g(X,Y)':"
+            "b='b(X,Y)':"
+            f"a='alpha(X,Y)*({gate})'"
+        ),
+    )
 
 def assignment_has_k1_opacity(
     assignment: AnimationAssignment | None,
@@ -130,6 +261,17 @@ def render_plan_requires_k1_opacity(plan: RenderPlan) -> bool:
         return False
     return any(
         assignment is not None and assignment_has_k1_opacity(assignment)
+        for scene in plan.scenes
+        for assignment in scene.animations
+    )
+
+
+
+def render_plan_requires_k2_crop(plan: RenderPlan) -> bool:
+    if plan.animation_keyframe_contract != "advanced-v1":
+        return False
+    return any(
+        assignment is not None and assignment_has_supported_crop(assignment)
         for scene in plan.scenes
         for assignment in scene.animations
     )
