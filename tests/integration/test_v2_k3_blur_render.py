@@ -203,7 +203,7 @@ def test_k3_runtime_blur_matches_static_reference_frame_by_frame(
             filters=(
                 "format=rgba,"
                 "premultiply=inplace=1,"
-                f"gblur=sigma={sigma:.2f}:steps=2,"
+                f"gblur=sigma={sigma:.2f}:sigmaV={sigma:.2f}:steps=2,"
                 "unpremultiply=inplace=1"
             ),
             frames=1,
@@ -241,11 +241,23 @@ def test_k3_premultiply_path_prevents_dark_transparent_edge_fringe(
         tuple(raw[index : index + 4])
         for index in range(0, len(raw), 4)
     )
-    visible = [pixel for pixel in pixels if pixel[3] > 5]
+    visible = [pixel for pixel in pixels if pixel[3] > 0]
     assert visible
-    assert min(pixel[0] for pixel in visible) >= 254
-    assert max(pixel[1] for pixel in visible) <= 1
-    assert max(pixel[2] for pixel in visible) <= 1
+
+    # Judge the edge after compositing on white. Very low-alpha pixels can
+    # have noisy unpremultiplied RGB in 8-bit FFmpeg, while remaining visually
+    # correct after alpha composition. A dark fringe would show up here.
+    for red, green, blue, alpha in visible:
+        actual = (
+            (red * alpha + 255 * (255 - alpha)) / 255.0,
+            (green * alpha + 255 * (255 - alpha)) / 255.0,
+            (blue * alpha + 255 * (255 - alpha)) / 255.0,
+        )
+        ideal = (255.0, 255.0 - alpha, 255.0 - alpha)
+        assert max(
+            abs(channel - expected)
+            for channel, expected in zip(actual, ideal, strict=True)
+        ) <= 1.0
 
 
 @pytest.mark.integration
