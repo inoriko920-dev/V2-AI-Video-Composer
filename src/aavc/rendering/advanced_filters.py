@@ -63,10 +63,10 @@ def _bezier_value_expression(
     p3 = end.value
     one_minus = f"(1-({eased}))"
     cubic = (
-        f"pow({one_minus},3)*{_number(p0)}"
-        f"+3*pow({one_minus},2)*({eased})*{_number(p1)}"
-        f"+3*({one_minus})*pow(({eased}),2)*{_number(p2)}"
-        f"+pow(({eased}),3)*{_number(p3)}"
+        f"({one_minus})*({one_minus})*({one_minus})*{_number(p0)}"
+        f"+3*({one_minus})*({one_minus})*({eased})*{_number(p1)}"
+        f"+3*({one_minus})*({eased})*({eased})*{_number(p2)}"
+        f"+({eased})*({eased})*({eased})*{_number(p3)}"
     )
     amount = clamp_keyframe_overshoot(start.overshoot)
     if amount <= 0.0 or delta == 0.0:
