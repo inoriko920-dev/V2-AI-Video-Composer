@@ -16,14 +16,19 @@ from aavc.application.commands import (
 )
 from aavc.application.services.project_session import ProjectSession
 from aavc.application.services.vertical_slice import create_project_state
-from aavc.domain.animation import AnimationKeyframe, AnimationKeyframeTrack
-from aavc.domain.project.models import AnimationAssignment
+from aavc.domain.animation import (
+    AnimationKeyframe,
+    AnimationKeyframeTrack,
+    KeyframeInterpolation,
+    TransformProperty,
+)
+from aavc.domain.project.models import AnimationAssignment, ProjectState
 from aavc.presentation.dialogs.asset_motion import build_asset_motion_assignment
 
 FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "step10"
 
 
-def _project():
+def _project() -> ProjectState:
     return create_project_state(
         title="v0.2.1-k7",
         scene_docx=FIXTURE / "scene_asset_demo.docx",
@@ -32,9 +37,9 @@ def _project():
 
 
 def _track(
-    property_name: str,
+    property_name: TransformProperty,
     *,
-    interpolation: str = "linear",
+    interpolation: KeyframeInterpolation = "linear",
 ) -> AnimationKeyframeTrack:
     values = {
         "scale": (1.0, 1.2),
@@ -58,7 +63,7 @@ def _track(
     )
 
 
-def _target(project, index: int = 0) -> tuple[int, str]:
+def _target(project: ProjectState, index: int = 0) -> tuple[int, str]:
     targets = [
         (scene.scene_number, asset_id)
         for scene in project.scenes
