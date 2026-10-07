@@ -5,6 +5,9 @@ from enum import StrEnum
 from pathlib import Path
 
 from aavc.animation import (
+    CROP_PROPERTIES,
+    crop_assignment_has_clamped_keyframes,
+    crop_assignment_has_pair_normalization,
     is_supported_advanced_keyframe_track,
     keyframe_track_support_reason,
 )
@@ -108,6 +111,33 @@ def validate_render_plan(plan: RenderPlan) -> PreflightReport:
                 for effect in {assignment.enter_effect, assignment.exit_effect}:
                     if not is_native_visual_effect(effect):
                         fallback_effects.add(effect)
+            if (
+                plan.animation_keyframe_contract == "advanced-v1"
+                and crop_assignment_has_clamped_keyframes(assignment)
+            ):
+                issues.append(
+                    PreflightIssue(
+                        "ADVANCED_VALUE_CLAMPED",
+                        PreflightSeverity.WARNING,
+                        "Nilai crop pada "
+                        f"Scene {scene.scene_number}/{assignment.asset_id} "
+                        "melewati batas 0–0,45 dan akan di-clamp",
+                    )
+                )
+            if (
+                plan.animation_keyframe_contract == "advanced-v1"
+                and crop_assignment_has_pair_normalization(assignment)
+            ):
+                issues.append(
+                    PreflightIssue(
+                        "ADVANCED_CROP_NORMALIZED",
+                        PreflightSeverity.WARNING,
+                        "Crop pada "
+                        f"Scene {scene.scene_number}/{assignment.asset_id} "
+                        "dinormalisasi agar minimal 10% area tetap terlihat",
+                    )
+                )
+
             for track in assignment.keyframe_tracks:
                 if track_requires_advanced(track):
                     if plan.animation_keyframe_contract == "legacy-v3":
@@ -121,7 +151,10 @@ def validate_render_plan(plan: RenderPlan) -> PreflightReport:
                             )
                         )
                     elif (
-                        track.property_name == "opacity"
+                        (
+                            track.property_name == "opacity"
+                            or track.property_name in CROP_PROPERTIES
+                        )
                         and is_supported_advanced_keyframe_track(track)
                     ):
                         continue
