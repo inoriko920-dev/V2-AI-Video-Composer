@@ -4,6 +4,10 @@ import time
 from pathlib import Path
 from typing import Any
 
+from aavc.animation.contract import (
+    ResolvedAnimationKeyframeContract,
+    validate_project_animation_contract,
+)
 from aavc.domain.project.models import AnimationAssignment, ProjectState
 from aavc.presentation.motion_preview import (
     native_motion_preview_offset,
@@ -68,6 +72,7 @@ def render_native_motion_pixmap(
     time_seconds: float | None,
     width: int = 1280,
     height: int = 720,
+    animation_keyframe_contract: ResolvedAnimationKeyframeContract = "legacy-v3",
 ) -> Any:
     """Render one preview frame; None time renders the canonical static layout."""
 
@@ -115,6 +120,7 @@ def render_native_motion_pixmap(
                 assignment,
                 time_seconds=time_seconds,
                 duration_seconds=plan.duration_seconds,
+                animation_keyframe_contract=animation_keyframe_contract,
             )
             scale_factor = native_visual_preview_scale(
                 assignment,
@@ -252,6 +258,7 @@ def install_native_motion_preview(root: Any, project: ProjectState) -> bool:
         return False
 
     subtitle_cues = _load_preview_subtitles(project)
+    animation_keyframe_contract = validate_project_animation_contract(project)
     previous_button.setToolTip("Pilih Scene sebelumnya pada preview.")
     next_button.setToolTip("Pilih Scene berikutnya pada preview.")
     play_button.setToolTip(
@@ -371,6 +378,7 @@ def install_native_motion_preview(root: Any, project: ProjectState) -> bool:
             plan,
             project.animations,
             time_seconds=time_seconds,
+            animation_keyframe_contract=animation_keyframe_contract,
         )
         cue = active_subtitle_cue(subtitle_cues, global_seconds)
         pixmap = overlay_subtitle_pixmap(
