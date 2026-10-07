@@ -18,10 +18,14 @@ class RecordingVersionRunner(ProcessRunner):
         version_returncode: int = 0,
         opacity_returncode: int = 0,
         crop_returncode: int = 0,
+        blur_returncode: int = 0,
+        blur_frame_change: bool = True,
     ) -> None:
         self.version_returncode = version_returncode
         self.opacity_returncode = opacity_returncode
         self.crop_returncode = crop_returncode
+        self.blur_returncode = blur_returncode
+        self.blur_frame_change = blur_frame_change
         self.calls = 0
 
     def run(
@@ -49,6 +53,29 @@ class RecordingVersionRunner(ProcessRunner):
                     "crop probe failed",
                 )
             return ProcessResult(0, "", "")
+        if "gblur@k3_probe" in joined:
+            if self.blur_returncode:
+                return ProcessResult(
+                    self.blur_returncode,
+                    "",
+                    "gblur probe failed",
+                )
+            hashes = (
+                (
+                    "0, 0, 0, 1, 4096, aaaa\n"
+                    "0, 1, 1, 1, 4096, bbbb\n"
+                    "0, 2, 2, 1, 4096, cccc\n"
+                    "0, 3, 3, 1, 4096, dddd\n"
+                )
+                if self.blur_frame_change
+                else (
+                    "0, 0, 0, 1, 4096, aaaa\n"
+                    "0, 1, 1, 1, 4096, aaaa\n"
+                    "0, 2, 2, 1, 4096, aaaa\n"
+                    "0, 3, 3, 1, 4096, aaaa\n"
+                )
+            )
+            return ProcessResult(0, hashes, "")
         if self.opacity_returncode:
             return ProcessResult(
                 self.opacity_returncode,
@@ -62,7 +89,7 @@ def _resolver() -> ToolResolution:
     return ToolResolution(name="ffmpeg", path="fake-ffmpeg", source="test")
 
 
-def test_k2_advanced_probe_is_cached_and_promotes_opacity_and_spatial_alpha() -> None:
+def test_k3_probe_promotes_opacity_crop_and_commandable_gblur() -> None:
     runner = RecordingVersionRunner()
     probe = AdvancedFFmpegCapabilityProbe(runner=runner, resolver=_resolver)
 
@@ -76,16 +103,22 @@ def test_k2_advanced_probe_is_cached_and_promotes_opacity_and_spatial_alpha() ->
         {
             AdvancedFFmpegFeature.OPACITY_RUNTIME_ALPHA,
             AdvancedFFmpegFeature.DYNAMIC_SPATIAL_ALPHA,
+            AdvancedFFmpegFeature.NAMED_GBLUR,
+            AdvancedFFmpegFeature.SENDCMD_RUNTIME_SIGMA,
+            AdvancedFFmpegFeature.PREMULTIPLY_ALPHA,
         }
     )
     assert first.supports(AdvancedFFmpegFeature.OPACITY_RUNTIME_ALPHA)
     assert first.supports(AdvancedFFmpegFeature.DYNAMIC_SPATIAL_ALPHA)
+    assert first.supports(AdvancedFFmpegFeature.NAMED_GBLUR)
+    assert first.supports(AdvancedFFmpegFeature.SENDCMD_RUNTIME_SIGMA)
+    assert first.supports(AdvancedFFmpegFeature.PREMULTIPLY_ALPHA)
     assert second == first
-    assert runner.calls == 3
+    assert runner.calls == 4
 
     refreshed = probe.refresh()
     assert refreshed.fingerprint == first.fingerprint
-    assert runner.calls == 6
+    assert runner.calls == 8
 
 
 def test_advanced_probe_fails_closed_when_ffmpeg_probe_fails() -> None:
@@ -106,13 +139,13 @@ def test_tool_capability_refresh_invalidates_advanced_cache_without_extra_probe(
     advanced = service.advanced_capabilities()
     assert advanced.available is True
     assert advanced.supports(AdvancedFFmpegFeature.OPACITY_RUNTIME_ALPHA)
-    assert runner.calls == 4
-
-    service.refresh()
     assert runner.calls == 5
 
+    service.refresh()
+    assert runner.calls == 6
+
     service.advanced_capabilities()
-    assert runner.calls == 8
+    assert runner.calls == 10
 
 
 
@@ -134,3 +167,28 @@ def test_k2_crop_feature_is_not_promoted_when_spatial_alpha_probe_fails() -> Non
     assert result.supports(AdvancedFFmpegFeature.OPACITY_RUNTIME_ALPHA)
     assert not result.supports(AdvancedFFmpegFeature.DYNAMIC_SPATIAL_ALPHA)
     assert any("crop probe failed" in item for item in result.diagnostics)
+
+
+
+def test_k3_gblur_features_are_not_promoted_when_micro_render_fails() -> None:
+    runner = RecordingVersionRunner(blur_returncode=1)
+    result = AdvancedFFmpegCapabilityProbe(runner=runner, resolver=_resolver).probe()
+
+    assert result.available is True
+    assert not result.supports(AdvancedFFmpegFeature.NAMED_GBLUR)
+    assert not result.supports(AdvancedFFmpegFeature.SENDCMD_RUNTIME_SIGMA)
+    assert not result.supports(AdvancedFFmpegFeature.PREMULTIPLY_ALPHA)
+    assert any("gblur probe failed" in item for item in result.diagnostics)
+
+
+def test_k3_gblur_features_are_not_promoted_without_frame_change() -> None:
+    runner = RecordingVersionRunner(blur_frame_change=False)
+    result = AdvancedFFmpegCapabilityProbe(runner=runner, resolver=_resolver).probe()
+
+    assert result.available is True
+    assert not result.supports(AdvancedFFmpegFeature.NAMED_GBLUR)
+    assert not result.supports(AdvancedFFmpegFeature.SENDCMD_RUNTIME_SIGMA)
+    assert any(
+        "frame hashes tidak membuktikan" in item
+        for item in result.diagnostics
+    )
