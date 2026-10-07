@@ -5,6 +5,10 @@ from pathlib import Path
 from typing import Literal
 
 from aavc.animation import keyframe_track_support_reason
+from aavc.animation.contract import (
+    track_requires_advanced,
+    validate_project_animation_contract,
+)
 from aavc.animation.compiler import is_native_visual_effect
 from aavc.domain.project.models import ProjectState
 
@@ -28,6 +32,7 @@ def _path_is_file(value: str | None) -> bool:
 
 def validate_project(project: ProjectState) -> tuple[ValidationIssue, ...]:
     issues: list[ValidationIssue] = []
+    contract = validate_project_animation_contract(project)
     by_asset = {binding.asset_id: binding for binding in project.bindings}
 
     if project.narration_audio and not _path_is_file(project.narration_audio):
@@ -101,6 +106,37 @@ def validate_project(project: ProjectState) -> tuple[ValidationIssue, ...]:
                 )
 
         for track in assignment.keyframe_tracks:
+            if track_requires_advanced(track):
+                if contract == "legacy-v3":
+                    issues.append(
+                        ValidationIssue(
+                            code="ADVANCED_TRACK_DORMANT",
+                            severity="WARNING",
+                            message=(
+                                f"Track advanced {track.property_name} pada "
+                                f"{assignment.asset_id} tersimpan tetapi belum aktif "
+                                "pada schema v3"
+                            ),
+                            scene_number=assignment.scene_number,
+                            asset_id=assignment.asset_id,
+                        )
+                    )
+                else:
+                    issues.append(
+                        ValidationIssue(
+                            code="ADVANCED_BACKEND_UNAVAILABLE",
+                            severity="ERROR",
+                            message=(
+                                f"Track advanced {track.property_name} pada "
+                                f"{assignment.asset_id} belum memiliki backend yang "
+                                "dipromosikan pada K0"
+                            ),
+                            scene_number=assignment.scene_number,
+                            asset_id=assignment.asset_id,
+                        )
+                    )
+                continue
+
             reason = keyframe_track_support_reason(track)
             if reason is None:
                 continue
