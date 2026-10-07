@@ -193,9 +193,10 @@ class AdvancedFFmpegCapabilityProbe:
                     "-vf",
                     (
                         "premultiply=inplace=1,"
-                        "sendcmd=c='0-1 [expr] "
-                        "gblur@k3_probe sigma 4*TI',"
-                        "gblur@k3_probe=sigma=0:steps=2,"
+                        "sendcmd=c='"
+                        "0-1 [expr] gblur@k3_probe sigma 4*TI;"
+                        "0-1 [expr] gblur@k3_probe sigmaV 4*TI',"
+                        "gblur@k3_probe=sigma=0:sigmaV=0:steps=2,"
                         "unpremultiply=inplace=1"
                     ),
                     "-frames:v",
