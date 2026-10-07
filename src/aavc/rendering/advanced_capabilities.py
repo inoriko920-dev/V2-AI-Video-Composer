@@ -99,8 +99,11 @@ class AdvancedFFmpegCapabilityProbe:
         )
         return self._cached
 
-    def refresh(self) -> AdvancedFFmpegCapabilities:
+    def invalidate(self) -> None:
         self._cached = None
+
+    def refresh(self) -> AdvancedFFmpegCapabilities:
+        self.invalidate()
         return self.probe()
 
     @staticmethod
