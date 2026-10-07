@@ -179,7 +179,6 @@ def test_tool_capability_refresh_invalidates_advanced_cache_without_extra_probe(
     assert runner.calls == 12
 
 
-
 def test_k1_opacity_feature_is_not_promoted_when_micro_probe_fails() -> None:
     runner = RecordingVersionRunner(opacity_returncode=1)
     result = AdvancedFFmpegCapabilityProbe(runner=runner, resolver=_resolver).probe()
@@ -187,7 +186,6 @@ def test_k1_opacity_feature_is_not_promoted_when_micro_probe_fails() -> None:
     assert result.available is True
     assert not result.supports(AdvancedFFmpegFeature.OPACITY_RUNTIME_ALPHA)
     assert any("opacity probe failed" in item for item in result.diagnostics)
-
 
 
 def test_k2_crop_feature_is_not_promoted_when_spatial_alpha_probe_fails() -> None:
@@ -198,7 +196,6 @@ def test_k2_crop_feature_is_not_promoted_when_spatial_alpha_probe_fails() -> Non
     assert result.supports(AdvancedFFmpegFeature.OPACITY_RUNTIME_ALPHA)
     assert not result.supports(AdvancedFFmpegFeature.DYNAMIC_SPATIAL_ALPHA)
     assert any("crop probe failed" in item for item in result.diagnostics)
-
 
 
 def test_k3_gblur_features_are_not_promoted_when_micro_render_fails() -> None:
@@ -223,7 +220,6 @@ def test_k3_gblur_features_are_not_promoted_without_frame_change() -> None:
         "frame hashes tidak membuktikan" in item
         for item in result.diagnostics
     )
-
 
 
 def test_k4_features_are_not_promoted_when_alpha_branch_probe_fails() -> None:
