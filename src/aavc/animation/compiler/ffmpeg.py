@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from aavc.animation.keyframes import (
     KEYFRAME_PROPERTY_LIMITS,
+    clamp_keyframe_overshoot,
+    clamp_keyframe_velocity,
     find_keyframe_track,
+    is_supported_advanced_keyframe_track,
     is_supported_keyframe_track,
 )
 from aavc.domain.animation import AnimationKeyframeTrack
@@ -188,6 +191,38 @@ def _easing_expression(easing: str, fraction: str) -> str:
     return fraction
 
 
+def _bezier_expression(
+    start_value: float,
+    end_value: float,
+    *,
+    eased: str,
+    start_velocity: float | None,
+    end_velocity: float | None,
+    overshoot: float | None,
+) -> str:
+    delta = end_value - start_value
+    velocity0 = clamp_keyframe_velocity(start_velocity)
+    velocity1 = clamp_keyframe_velocity(end_velocity)
+    p0 = start_value
+    p1 = start_value + (velocity0 * delta) / 3.0
+    p2 = end_value - (velocity1 * delta) / 3.0
+    p3 = end_value
+    one_minus = f"(1-({eased}))"
+    cubic = (
+        f"pow({one_minus},3)*{_number(p0)}"
+        f"+3*pow({one_minus},2)*({eased})*{_number(p1)}"
+        f"+3*({one_minus})*pow(({eased}),2)*{_number(p2)}"
+        f"+pow(({eased}),3)*{_number(p3)}"
+    )
+    amount = clamp_keyframe_overshoot(overshoot)
+    if amount <= 0.0 or delta == 0.0:
+        return cubic
+    return (
+        f"({cubic})+({_number(delta * amount)})*"
+        f"sin(3.141592654*({eased}))*({eased})"
+    )
+
+
 def _segment_expression(
     start_value: float,
     end_value: float,
@@ -196,12 +231,24 @@ def _segment_expression(
     end_seconds: float,
     interpolation: str,
     easing: str,
+    start_velocity: float | None = None,
+    end_velocity: float | None = None,
+    overshoot: float | None = None,
 ) -> str:
     if interpolation == "hold":
         return _number(start_value)
     span = max(0.000001, end_seconds - start_seconds)
     fraction = f"(t-{_number(start_seconds)})/{_number(span)}"
     eased = _easing_expression(easing, fraction)
+    if interpolation == "bezier":
+        return _bezier_expression(
+            start_value,
+            end_value,
+            eased=eased,
+            start_velocity=start_velocity,
+            end_velocity=end_velocity,
+            overshoot=overshoot,
+        )
     delta = end_value - start_value
     return f"{_number(start_value)}+({_number(delta)})*({eased})"
 
@@ -210,8 +257,14 @@ def _compile_keyframe_track_expression(
     track: AnimationKeyframeTrack,
     *,
     duration_seconds: float,
+    advanced_semantics: bool = False,
 ) -> str | None:
-    if not is_supported_keyframe_track(track):
+    supported = (
+        is_supported_advanced_keyframe_track(track)
+        if advanced_semantics
+        else is_supported_keyframe_track(track)
+    )
+    if not supported:
         return None
 
     duration = max(0.001, float(duration_seconds))
@@ -225,6 +278,9 @@ def _compile_keyframe_track_expression(
             end_seconds=end.time * duration,
             interpolation=start.interpolation,
             easing=start.easing,
+            start_velocity=start.velocity,
+            end_velocity=end.velocity,
+            overshoot=start.overshoot,
         )
         expression = (
             f"if(lt(t,{_number(end.time * duration)}),"
@@ -251,6 +307,7 @@ def compile_keyframe_value_expression(
     property_name: str,
     *,
     duration_seconds: float,
+    advanced_semantics: bool = False,
 ) -> str | None:
     track = find_keyframe_track(assignment, property_name)
     if track is None:
@@ -258,6 +315,7 @@ def compile_keyframe_value_expression(
     return _compile_keyframe_track_expression(
         track,
         duration_seconds=duration_seconds,
+        advanced_semantics=advanced_semantics,
     )
 
 
