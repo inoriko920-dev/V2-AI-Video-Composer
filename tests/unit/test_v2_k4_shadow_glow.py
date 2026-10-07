@@ -252,7 +252,7 @@ def test_k4_v3_tracks_stay_dormant_and_filtergraph_unchanged(
 
 
 @pytest.mark.parametrize("property_name", ["shadow", "glow"])
-def test_k4_bezier_tracks_remain_blocked_until_k6(
+def test_k6_bezier_shadow_glow_are_active(
     tmp_path: Path,
     property_name: str,
 ) -> None:
@@ -263,12 +263,12 @@ def test_k4_bezier_tracks_remain_blocked_until_k6(
     graph = _filter_graph(build_ffmpeg_command(plan))
     report = validate_render_plan(plan)
 
-    assert "k4_opacity_0_0" not in graph
-    assert any(
+    assert "k4_opacity_0_0" in graph
+    assert not any(
         issue.code == "ADVANCED_BACKEND_UNAVAILABLE"
         for issue in report.issues
     )
-    assert not report.ok
+    assert report.ok
 
 
 class _K4CapabilityRunner(ProcessRunner):
