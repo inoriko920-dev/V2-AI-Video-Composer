@@ -24,6 +24,7 @@ K1_ACTIVE_RENDER_PROPERTIES = frozenset({"opacity"})
 K2_ACTIVE_RENDER_PROPERTIES = frozenset(CROP_PROPERTIES)
 K3_ACTIVE_RENDER_PROPERTIES = frozenset({"blur"})
 K4_ACTIVE_RENDER_PROPERTIES = frozenset({"shadow", "glow"})
+K5_ACTIVE_RENDER_PROPERTIES = frozenset({"mask_progress"})
 
 
 def _number(value: float) -> str:
@@ -406,6 +407,119 @@ def compile_k3_blur_filters(
     return tuple(filters)
 
 
+def assignment_has_k5_mask(
+    assignment: AnimationAssignment | None,
+) -> bool:
+    track = find_keyframe_track(assignment, "mask_progress")
+    return track is not None and is_supported_advanced_keyframe_track(track)
+
+
+def _unit_clamp_expression(expression: str) -> str:
+    return f"(abs({expression})-abs(({expression})-1.000000)+1.000000)/2"
+
+
+def _mask_segment_expression(
+    start_value: float,
+    end_value: float,
+    *,
+    interpolation: str,
+    easing: str,
+) -> str:
+    if interpolation == "hold":
+        raw = _number(start_value)
+    else:
+        eased = _crop_easing_expression(easing)
+        delta = end_value - start_value
+        raw = f"{_number(start_value)}+({_number(delta)})*({eased})"
+    return _unit_clamp_expression(raw)
+
+
+def _mask_track_command_intervals(
+    assignment: AnimationAssignment | None,
+    *,
+    duration_seconds: float,
+    target: str,
+) -> tuple[str, ...]:
+    track = find_keyframe_track(assignment, "mask_progress")
+    if track is None or not is_supported_advanced_keyframe_track(track):
+        return ()
+
+    duration = max(0.001, float(duration_seconds))
+    points = track.keyframes
+    intervals: list[tuple[float, float, str]] = []
+
+    first_seconds = points[0].time * duration
+    first_value = _unit_clamp_expression(_number(points[0].value))
+    if first_seconds > 0.0:
+        intervals.append((0.0, first_seconds, first_value))
+
+    if len(points) == 1:
+        intervals.append((first_seconds, duration, first_value))
+    else:
+        for start, end in zip(points, points[1:], strict=False):
+            intervals.append(
+                (
+                    start.time * duration,
+                    end.time * duration,
+                    _mask_segment_expression(
+                        start.value,
+                        end.value,
+                        interpolation=start.interpolation,
+                        easing=start.easing,
+                    ),
+                )
+            )
+        last_seconds = points[-1].time * duration
+        if last_seconds < duration:
+            intervals.append(
+                (
+                    last_seconds,
+                    duration,
+                    _unit_clamp_expression(_number(points[-1].value)),
+                )
+            )
+
+    commands: list[str] = []
+    for start_seconds, end_seconds, value_expr in intervals:
+        if end_seconds <= start_seconds:
+            continue
+        commands.append(
+            f"{_number(start_seconds)}-{_number(end_seconds)} "
+            f"[expr] {target} x ceil(W*({value_expr}))"
+        )
+    return tuple(commands)
+
+
+def compile_k5_mask_filters(
+    assignment: AnimationAssignment | None,
+    *,
+    duration_seconds: float,
+    instance_id: str,
+) -> tuple[str, ...]:
+    """Compile hard-edge left-to-right reveal on a stable RGBA canvas."""
+
+    track = find_keyframe_track(assignment, "mask_progress")
+    if track is None or not is_supported_advanced_keyframe_track(track):
+        return ()
+
+    duration = max(0.001, float(duration_seconds))
+    initial = evaluate_advanced_keyframe_track(track, 0.0)
+    target = f"drawbox@{instance_id}"
+    commands = _mask_track_command_intervals(
+        assignment,
+        duration_seconds=duration,
+        target=target,
+    )
+    filters: list[str] = ["format=rgba"]
+    if commands:
+        filters.append("sendcmd=c='" + ";".join(commands) + "'")
+    filters.append(
+        f"{target}=x=iw*{initial:.6f}:y=0:w=iw:h=ih:"
+        "color=black@0:t=fill:replace=1"
+    )
+    return tuple(filters)
+
+
 def assignment_has_k4_shadow(
     assignment: AnimationAssignment | None,
 ) -> bool:
@@ -781,6 +895,16 @@ def render_plan_requires_k3_blur(plan: RenderPlan) -> bool:
         return False
     return any(
         assignment is not None and assignment_has_k3_blur(assignment)
+        for scene in plan.scenes
+        for assignment in scene.animations
+    )
+
+
+def render_plan_requires_k5_mask(plan: RenderPlan) -> bool:
+    if plan.animation_keyframe_contract != "advanced-v1":
+        return False
+    return any(
+        assignment is not None and assignment_has_k5_mask(assignment)
         for scene in plan.scenes
         for assignment in scene.animations
     )
