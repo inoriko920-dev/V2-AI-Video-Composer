@@ -6,7 +6,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
-ROOT = Path(__file__).resolve().parents[1]
+# Planning-only generator; no application runtime imports.\nROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "00_POST_RELEASE_AUDIT_AND_SCOPE.md"
 OUTDIR = ROOT / "docx"
 OUTPUT = OUTDIR / "00_V2_0.2.2_POST_RELEASE_AUDIT_AND_SCOPE.docx"
