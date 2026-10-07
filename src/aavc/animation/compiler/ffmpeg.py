@@ -280,15 +280,15 @@ def _enter_scale_expression(effect: str, window: str) -> str | None:
     if floor is None:
         return None
     excursion = 1.0 - floor
-    return f"{floor:.2f}+{excursion:.2f}*t/{window}"
+    return f"{floor:.2f}{excursion:+.2f}*t/{window}"
 
 
 def _exit_scale_expression(effect: str, exit_start: str, window: str) -> str | None:
     floor = _scale_floor(effect)
     if floor is None:
         return None
-    excursion = 1.0 - floor
-    return f"1-{excursion:.2f}*(t-{exit_start})/{window}"
+    change = floor - 1.0
+    return f"1{change:+.2f}*(t-{exit_start})/{window}"
 
 
 def _native_scale_factor(
