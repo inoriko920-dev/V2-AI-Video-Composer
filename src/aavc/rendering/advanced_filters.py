@@ -190,9 +190,9 @@ def _crop_track_command_intervals(
         if end_seconds <= start_seconds:
             continue
         pixel_expr = (
-            f"{dimension}*(1-({value_expr}))"
+            f"ceil({dimension}*(1-({value_expr})))"
             if invert
-            else f"{dimension}*({value_expr})"
+            else f"ceil({dimension}*({value_expr}))"
         )
         commands.append(
             f"{_number(start_seconds)}-{_number(end_seconds)} "
