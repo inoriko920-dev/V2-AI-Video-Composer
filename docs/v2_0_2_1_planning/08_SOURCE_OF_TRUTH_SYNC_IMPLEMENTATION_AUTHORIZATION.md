@@ -9,8 +9,14 @@ Detailed artifact:
 Authoritative planning DOCXs 00, 01, 02, 03, 04, 05C, 06, 07 and 08 are synchronized under:
 `docs/v2_0_2_1_planning/docx/`
 
-Binary synchronization commit:
+Initial binary synchronization commit:
 `ef82d55cf6a03e20606b0cddc71f504b4c715e11`
+
+Final STEP 08 DOCX replacement commit:
+`8fd302905bddda8be3b633e0d2d0c0a1e8250fbe`
+
+Final STEP 08 DOCX SHA-256:
+`d807af60f5aa46c5796eed7a3282f60ffb45833b9ac38689c48fddad779ee8af`
 
 The obsolete STEP 05 image-prompt DOCX is intentionally excluded from the authoritative DOCX directory.
 
