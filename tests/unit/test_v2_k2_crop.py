@@ -155,7 +155,7 @@ def test_k2_crop_precedes_scale_and_rotation_in_final_graph(tmp_path: Path) -> N
         )
     )
 
-    crop_index = graph.index("geq=")
+    crop_index = graph.index("drawbox@crop_opacity_0_0_left")
     scale_index = graph.index("scale=w='", crop_index)
     rotate_index = graph.index("rotate=a='", scale_index)
 
