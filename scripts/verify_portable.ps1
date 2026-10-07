@@ -15,7 +15,7 @@ if ($smoke -notmatch "AAVC_FOUNDATION_SMOKE_OK") { throw "Foundation smoke token
 
 $requiredNames = @(
   "project.schema.json",
-  "RELEASE_NOTES_0.2.1_RC1.md",
+  "RELEASE_NOTES_0.2.1.md",
   "USER_GUIDE.md",
   "MAINTENANCE.md",
   "BACKUP_AND_RECOVERY.md"
@@ -41,4 +41,4 @@ if ($forbidden) { throw "Forbidden runtime/user file ditemukan dalam artifact: $
 Write-Host "PORTABLE_SMOKE_OK"
 Write-Host "EXE=$exe"
 Write-Host "FFMPEG_SLOT_OK=$ffmpegReadme"
-Write-Host "RC_RELEASE_DOCS_OK"
+Write-Host "FINAL_RELEASE_DOCS_OK"
