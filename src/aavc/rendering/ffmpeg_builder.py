@@ -9,8 +9,10 @@ from aavc.animation.compiler import (
     compile_native_rotation_filter,
     compile_native_scale_filter,
 )
+from aavc.animation.contract import ResolvedAnimationKeyframeContract
 from aavc.domain.project.models import AnimationAssignment
 
+from .advanced_filters import compile_k1_opacity_filters
 from .render_plan import RenderPlan, SceneRenderPlan
 
 
@@ -50,6 +52,8 @@ def _scaled_asset_clause(
     scale_flags: str,
     assignment: AnimationAssignment | None,
     duration_seconds: float,
+    animation_keyframe_contract: ResolvedAnimationKeyframeContract,
+    opacity_instance_id: str,
 ) -> str:
     base = (
         f"[{input_index}:v]scale=w={max_width}:h={max_height}:"
@@ -74,6 +78,14 @@ def _scaled_asset_clause(
     )
     if alpha_filters:
         base += "," + ",".join(alpha_filters)
+    if animation_keyframe_contract == "advanced-v1":
+        opacity_filters = compile_k1_opacity_filters(
+            assignment,
+            duration_seconds=duration_seconds,
+            instance_id=opacity_instance_id,
+        )
+        if opacity_filters:
+            base += "," + ",".join(opacity_filters)
     return f"{base}[{output_name}]"
 
 
@@ -138,6 +150,8 @@ def build_ffmpeg_command(plan: RenderPlan, ffmpeg: str = "ffmpeg") -> list[str]:
                     scale_flags=scale_flags,
                     assignment=assignment,
                     duration_seconds=duration,
+                    animation_keyframe_contract=plan.animation_keyframe_contract,
+                    opacity_instance_id=f"opacity_{sidx}_0",
                 )
             )
             out = f"scene{sidx}"
@@ -168,6 +182,8 @@ def build_ffmpeg_command(plan: RenderPlan, ffmpeg: str = "ffmpeg") -> list[str]:
                         scale_flags=scale_flags,
                         assignment=_animation_at(scene, aidx),
                         duration_seconds=duration,
+                        animation_keyframe_contract=plan.animation_keyframe_contract,
+                        opacity_instance_id=f"opacity_{sidx}_{aidx}",
                     )
                 )
             tmp = f"tmp{sidx}"
