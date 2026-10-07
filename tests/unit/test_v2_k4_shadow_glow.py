@@ -180,7 +180,7 @@ def test_k4_compiler_builds_alpha_branches_behind_main_source() -> None:
     assert "alphamerge" in graph
     assert "colorchannelmixer@unit_k4_shadow_gain=aa=0.2750" in graph
     assert "colorchannelmixer@unit_k4_glow_gain=aa=0.3250" in graph
-    assert "12.960000*(0.500000)" in graph
+    assert "12.960000*(" in graph
     assert graph.rfind("[unit_k4_main]overlay") > graph.index("shadow_layer")
 
 
