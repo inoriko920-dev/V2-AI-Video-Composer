@@ -586,6 +586,7 @@ def show_asset_motion_dialog(
             return
         spec = keyframe_property_spec(property_name)
         track = selected_track()
+        new_time: float | None
         if track is None:
             new_time = 0.0
             points: list[AnimationKeyframe] = []
@@ -605,11 +606,11 @@ def show_asset_motion_dialog(
                 ),
                 None,
             )
-            if new_time is None:
-                inline_status.setText(
-                    "Tidak ada slot waktu sederhana yang tersedia untuk Add."
-                )
-                return
+        if new_time is None:
+            inline_status.setText(
+                "Tidak ada slot waktu sederhana yang tersedia untuk Add."
+            )
+            return
         points.append(AnimationKeyframe(time=new_time, value=spec.default))
         points.sort(key=lambda point: point.time)
         replace_track(
