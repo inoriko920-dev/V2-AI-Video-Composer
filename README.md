@@ -14,7 +14,7 @@ This repository is the **only writable development target for V2**.
 - Wave D: **COMPLETE** — schema v3 keyframe data model and backward migration passed CI; existing effects remain canonical.
 - Wave E: **COMPLETE** — foundational X/Y position, scale, and rotation keyframes passed preview/final parity gates.
 - Wave F: **COMPLETE** — transactional manual editing, Scene animation copy/paste, and validation repair actions passed CI.
-- Wave J final gate: **IN PROGRESS** — automated Windows user acceptance is PASS; final `v0.2.0` publication is the active step.
+- Wave J: **COMPLETE** — stable `v0.2.0` is published and verified.
 
 The historical README copied from the legacy repository is preserved below as baseline documentation.
 
@@ -37,9 +37,9 @@ Windows desktop application for composing narrative/infographic videos from scen
 - STEP 14: **PASS / Release Candidate Ready**
 - STEP 15: **PASS / Final Release Ready**
 
-Current published historical maintenance release: **0.1.1**. V2 **0.2.0** is in its guarded final publication gate.
+Current stable V2 release: **0.2.0**. Historical `v0.1.0` and `v0.1.1` remain frozen.
 
-Latest completed post-release source line: **0.2 stability-hardened test build verified** (not yet a published GitHub Release).
+Latest stable release line: **0.2.0 published / verified**.
 
 - Stability-hardened runtime source: `9ce7d3c3125947c69e7dcf357f6ecbbc6707fee7`
 - Post-merge CI run `37429362040`: **PASS**
@@ -149,9 +149,9 @@ For release evidence, publication, rollback rules and maintenance policy, see:
 - `BACKUP_AND_RECOVERY.md`
 - `docs/`
 
-Current published release line: **0.1.1** on the compatible **0.1.x** maintenance line.
+Current published stable release line: **0.2.0** on the **0.2.x** maintenance line.
 
-Current post-release source state: **0.2 stability-hardened test build verified / automated gates PASS / not published as a GitHub Release**.
+Current release state: **v0.2.0 published / verified; automated Windows acceptance, CI, CodeQL, final packaging and checksum gates PASS**.
 
 
 ## License
@@ -166,7 +166,7 @@ Third-party dependencies retain their own licenses. FFmpeg/ffprobe are external 
 - Wave G: **COMPLETE** — Gemini background cancellation/progress and secret-free key-pool health diagnostics passed CI.
 - Wave H: **COMPLETE** — frozen-reference UI parity, truthful action state, and focus/disabled interaction polish passed CI + screenshot gates.
 - Wave I: **COMPLETE** — PyAV Windows feasibility spike passed; no optional backend was promoted into runtime.
-- Wave J: **FINAL GATE IN PROGRESS** — 21/21 effects are native, automated Windows user acceptance passed, and `v0.2.0` is being prepared for guarded publication.
+- Wave J: **COMPLETE** — 21/21 effects are native and stable `v0.2.0` is published / verified.
 
 
 ## Wave I dependency gate
@@ -207,9 +207,8 @@ for animation testing. Advanced opacity/crop/blur/shadow/glow/mask keyframe trac
 bezier/velocity/overshoot remain explicitly outside the production-ready keyframe set.
 
 
-### V2 0.2.0 final gate
-The delegated Windows user-acceptance gate passed with 630 technical tests, real
-FFmpeg rendering for all 21 canonical effects, real Selection In/Out rendering,
-portable verification, and packaged-EXE UI launch. Final publication uses the guarded
-`.github/workflows/v2-final-0.2.0.yml` workflow and will not overwrite any existing
-release/tag.
+### V2 0.2.0 stable release
+`v0.2.0` is published and verified at commit `c6ad75308d302cd816301a2a7a34ebe7eb4148a7`.
+The final Windows workflow, CodeQL, automated user acceptance, 21-effect real FFmpeg
+render, portable verification, packaged-EXE UI launch, and SHA-256 integrity checks all
+passed. The release/tag is immutable; future fixes must use a new version.

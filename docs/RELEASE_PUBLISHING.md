@@ -2,20 +2,28 @@
 
 ## V2 0.2.0 publication
 
-Status: **FINAL GATE IN PROGRESS**
+Status: **PUBLISHED / VERIFIED**
 
-Canonical final target:
+Canonical release:
 - Version: `0.2.0`
 - Git tag: `v0.2.0`
-- Workflow: `.github/workflows/v2-final-0.2.0.yml`
-- Accepted RC technical suite: 630 PASS
-- Real 21-effect FFmpeg render: PASS
-- Real Selection In/Out render: PASS
-- Packaged EXE UI launch: PASS
+- Release commit: `c6ad75308d302cd816301a2a7a34ebe7eb4148a7`
+- GitHub Release ID: `405435925`
+- Final workflow run: `37579907844` — PASS
+- Main CI: `37579907856` — PASS
+- Main CodeQL: `37579907845` — PASS
+- Windows ZIP SHA-256:
+  `eea46b42400c91e22d731c8261b9d7f29933ee0f94d45bcaa331a001805c525c`
+- Source ZIP SHA-256:
+  `fbdabd43c71f1585e817ce30f27d611668ecb0dc3c39df0b19a441968f0f7fe9`
+- Final candidate artifact: `11463714566`
+- Final UI evidence artifact: `11464770244`
 
-The V2 final workflow is guarded and may not overwrite an existing `v0.2.0`
-tag or release. Publication occurs only after its own Windows final gate and CodeQL
-job both pass. Historical `v0.1.0` and `v0.1.1` remain immutable.
+The guarded final workflow completed Windows validation, internal CodeQL, checksum
+re-verification, immutable tag/release checks, publication, and published-tag
+verification. The workflow is now retained as historical verification-only. Historical
+`v0.1.0` and `v0.1.1` remain immutable, and `v0.2.0` must never be moved or
+overwritten.
 
 ---
 
