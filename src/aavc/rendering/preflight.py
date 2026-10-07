@@ -114,7 +114,7 @@ def validate_render_plan(plan: RenderPlan) -> PreflightReport:
                                 PreflightSeverity.WARNING,
                                 "Track keyframe "
                                 f"{track.property_name} pada Scene {scene.scene_number}/"
-                                f"{assignment.asset_id} tersimpan tetapi dormant pada schema v3",
+                                f"{assignment.asset_id} tersimpan tetapi belum aktif (dormant) pada schema v3",
                             )
                         )
                     else:
