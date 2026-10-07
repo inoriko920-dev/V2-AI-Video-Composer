@@ -4,8 +4,12 @@ from dataclasses import dataclass
 
 from aavc.animation import (
     CropVisibility,
+    GlowState,
+    ShadowState,
     evaluate_assignment_advanced_keyframe,
     evaluate_assignment_blur,
+    evaluate_assignment_glow,
+    evaluate_assignment_shadow,
     evaluate_assignment_crop_visibility,
     evaluate_assignment_keyframe,
     evaluate_effect,
@@ -181,6 +185,54 @@ def native_visual_preview_blur_sigma(
         canvas_height=canvas_height,
     )
     return state.sigma
+
+
+def native_visual_preview_shadow(
+    assignment: AnimationAssignment | None,
+    *,
+    time_seconds: float,
+    duration_seconds: float,
+    canvas_width: int,
+    canvas_height: int,
+    animation_keyframe_contract: ResolvedAnimationKeyframeContract = "legacy-v3",
+) -> ShadowState:
+    """Evaluate K4 Shadow state for responsive Qt Approx preview."""
+
+    if assignment is None or animation_keyframe_contract != "advanced-v1":
+        return ShadowState()
+
+    duration = max(0.001, float(duration_seconds))
+    current = max(0.0, min(float(time_seconds), duration))
+    return evaluate_assignment_shadow(
+        assignment,
+        current / duration,
+        canvas_width=canvas_width,
+        canvas_height=canvas_height,
+    )
+
+
+def native_visual_preview_glow(
+    assignment: AnimationAssignment | None,
+    *,
+    time_seconds: float,
+    duration_seconds: float,
+    canvas_width: int,
+    canvas_height: int,
+    animation_keyframe_contract: ResolvedAnimationKeyframeContract = "legacy-v3",
+) -> GlowState:
+    """Evaluate K4 Glow state for responsive Qt Approx preview."""
+
+    if assignment is None or animation_keyframe_contract != "advanced-v1":
+        return GlowState()
+
+    duration = max(0.001, float(duration_seconds))
+    current = max(0.0, min(float(time_seconds), duration))
+    return evaluate_assignment_glow(
+        assignment,
+        current / duration,
+        canvas_width=canvas_width,
+        canvas_height=canvas_height,
+    )
 
 
 def native_visual_preview_scale(
