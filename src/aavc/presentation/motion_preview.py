@@ -4,8 +4,8 @@ from dataclasses import dataclass
 
 from aavc.animation import (
     CropVisibility,
-    evaluate_assignment_blur,
     evaluate_assignment_advanced_keyframe,
+    evaluate_assignment_blur,
     evaluate_assignment_crop_visibility,
     evaluate_assignment_keyframe,
     evaluate_effect,
