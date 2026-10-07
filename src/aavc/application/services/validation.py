@@ -162,6 +162,7 @@ def validate_project(project: ProjectState) -> tuple[ValidationIssue, ...]:
                     (
                         track.property_name == "opacity"
                         or track.property_name == "blur"
+                        or track.property_name == "mask_progress"
                         or track.property_name in {"shadow", "glow"}
                         or track.property_name in CROP_PROPERTIES
                     )
