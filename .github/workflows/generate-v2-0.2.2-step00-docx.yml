@@ -3,7 +3,7 @@ name: Generate V2 0.2.2 STEP00 DOCX
 on:
   push:
     branches:
-      - v2/0.2.2-planning
+      - main
     paths:
       - "docs/v2_0_2_2_planning/00_POST_RELEASE_AUDIT_AND_SCOPE.md"
       - "docs/v2_0_2_2_planning/_generator/generate_step00_docx.py"
