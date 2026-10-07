@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave J — RC AUTOMATED PASS / USER TEST PENDING: 0.2.0rc1 Windows portable**
+**Wave J — 21/21 ANIMATION BLOCKER CLOSED / REFRESHED RC USER TEST PENDING: 0.2.0rc1 Windows portable**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -563,3 +563,30 @@ publish v0.2.0 yet.
 Give the 0.2.0rc1 Windows user-test artifact to the user. Do not publish final
 `v0.2.0` until the user reports that no blocker remains. If the user reports a
 blocker, fix it in V2 and repeat the RC gate before any final release.
+
+
+## Wave J animation blocker closure — 21/21 native effects
+- User-test blocker: the canonical registry exposed 21 effects while only 9 had native preview/final-render capability coverage.
+- Pull request: `#13`.
+- Final tested PR head: `5d0703cf65385b87e07badc5488e27a783fdd561`.
+- Merge/squash commit: `ebbf68ff4210c02012e0ea74b44a72438c7e5c8c`.
+- PR-head tree and merged-main tree are identical: `a42635184b752fa1aeb61de2ddaf7a42605f845f`.
+- Windows CI run `37570283898`: **PASS**.
+- CodeQL run `37570283899`: **PASS**.
+- Optional Backend Spike run `37570283887`: **PASS**.
+- Wave J refreshed RC package run `37570283870`: **PASS**.
+- Regression tests: **627 passed, 1 deselected**.
+- STEP09 8-screenshot gate: **PASS**.
+- Windows PyInstaller onedir build + portable smoke/content/secret verification: **PASS**.
+- Refreshed user-test artifact ID: `11459479975`.
+- Refreshed artifact digest: `sha256:be9a8a11c7517b4f209969dc8546c80069b81342cfbfa5bf5d7e285816cf4f79`.
+- STEP09 evidence artifact ID: `11459594823`.
+- All 21 canonical registry effects now participate in native preview/FFmpeg capability coverage; unknown legacy/future effect names retain explicit fail-soft fallback warnings.
+- No new runtime dependency, project-schema change, broad UI redesign, or legacy-repository modification was introduced.
+- Foundational keyframes remain production-ready for position X/Y, scale, and rotation; advanced keyframe properties/interpolation remain a separate future capability and are not silently claimed.
+
+## Next exact action
+Give the refreshed `0.2.0rc1` Windows artifact `11459479975` to the user and repeat
+user testing with emphasis on all 21 animation choices, Manual/Random/AI assignment,
+preview, short render, copy/paste animation, and locked-target behavior. Final
+`v0.2.0` publication remains **BLOCKED** until the refreshed RC has no user-test blocker.
