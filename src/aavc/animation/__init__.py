@@ -1,7 +1,17 @@
+from .crop import (
+    CROP_PROPERTIES,
+    CropVisibility,
+    assignment_has_supported_crop,
+    crop_assignment_has_clamped_keyframes,
+    evaluate_assignment_crop_visibility,
+    normalize_crop_visibility,
+)
 from .evaluator import TransformDelta, evaluate_effect
 from .keyframes import (
     ACTIVE_KEYFRAME_PROPERTIES,
+    ACTIVE_ADVANCED_KEYFRAME_PROPERTIES,
     K1_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES,
+    K2_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES,
     KEYFRAME_PROPERTY_LIMITS,
     advanced_keyframe_track_support_reason,
     evaluate_advanced_keyframe_track,
@@ -17,16 +27,23 @@ from .randomizer import randomize_project_animations
 from .registry import AnimationEffect, all_effects, effect_names, get_effect, validate_effect
 
 __all__ = [
+    "ACTIVE_ADVANCED_KEYFRAME_PROPERTIES",
     "ACTIVE_KEYFRAME_PROPERTIES",
     "AnimationEffect",
+    "CROP_PROPERTIES",
+    "CropVisibility",
     "K1_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES",
+    "K2_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES",
     "KEYFRAME_PROPERTY_LIMITS",
+    "assignment_has_supported_crop",
+    "crop_assignment_has_clamped_keyframes",
     "advanced_keyframe_track_support_reason",
     "TransformDelta",
     "all_effects",
     "effect_names",
     "evaluate_advanced_keyframe_track",
     "evaluate_assignment_advanced_keyframe",
+    "evaluate_assignment_crop_visibility",
     "evaluate_assignment_keyframe",
     "evaluate_effect",
     "evaluate_keyframe_track",
@@ -34,6 +51,7 @@ __all__ = [
     "is_supported_advanced_keyframe_track",
     "is_supported_keyframe_track",
     "keyframe_track_support_reason",
+    "normalize_crop_visibility",
     "get_effect",
     "randomize_project_animations",
     "validate_effect",
