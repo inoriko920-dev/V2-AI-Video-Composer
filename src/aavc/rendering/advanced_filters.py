@@ -17,6 +17,9 @@ if TYPE_CHECKING:
 K1_ACTIVE_RENDER_PROPERTIES = frozenset({"opacity"})
 K2_ACTIVE_RENDER_PROPERTIES = frozenset(CROP_PROPERTIES)
 
+def _number(value: float) -> str:
+    return f"{float(value):.6f}"
+
 def _easing_expression(easing: str, fraction: str) -> str:
     if easing == "ease_in":
         return f"({fraction})*({fraction})"
@@ -147,9 +150,6 @@ def assignment_has_k1_opacity(
 ) -> bool:
     track = find_keyframe_track(assignment, "opacity")
     return track is not None and is_supported_advanced_keyframe_track(track)
-
-def _number(value: float) -> str:
-    return f"{float(value):.6f}"
 
 def _eased_ti_expression(easing: str) -> str:
     if easing == "ease_in":
