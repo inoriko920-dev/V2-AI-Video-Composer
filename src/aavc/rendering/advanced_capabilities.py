@@ -234,6 +234,80 @@ class AdvancedFFmpegCapabilityProbe:
                 )
                 diagnostics.append("K3 runtime-gblur probe gagal: " + detail)
 
+        try:
+            k4_probe = self._runner.run(
+                [
+                    tool.path,
+                    "-hide_banner",
+                    "-loglevel",
+                    "error",
+                    "-f",
+                    "lavfi",
+                    "-i",
+                    (
+                        "color=c=black@0:s=32x32:r=4:d=1,"
+                        "format=rgba,"
+                        "drawbox=x=12:y=12:w=8:h=8:"
+                        "color=red@1:t=fill:replace=1"
+                    ),
+                    "-filter_complex",
+                    (
+                        "[0:v]split=3[k4main][k4blanksrc][k4fxsrc];"
+                        "[k4blanksrc]colorchannelmixer=aa=0[k4blank];"
+                        "[k4fxsrc]split=2[k4colorsrc][k4alphasrc];"
+                        "[k4alphasrc]alphaextract,"
+                        "sendcmd=c='"
+                        "0-1 [expr] gblur@k4_branch sigma 3*TI;"
+                        "0-1 [expr] gblur@k4_branch sigmaV 3*TI',"
+                        "gblur@k4_branch=sigma=0:sigmaV=0:steps=2[k4mask];"
+                        "[k4colorsrc]lutrgb=r=255:g=255:b=255[k4color];"
+                        "[k4color][k4mask]alphamerge,"
+                        "sendcmd=c='0-1 [expr] "
+                        "colorchannelmixer@k4_gain aa 0.6*TI',"
+                        "colorchannelmixer@k4_gain=aa=0[k4layer];"
+                        "[k4blank][k4layer]overlay="
+                        "x='2*t':y='2*t':eval=frame:shortest=1:format=auto[k4bg];"
+                        "[k4bg][k4main]overlay="
+                        "x=0:y=0:shortest=1:format=auto[k4out]"
+                    ),
+                    "-map",
+                    "[k4out]",
+                    "-frames:v",
+                    "4",
+                    "-pix_fmt",
+                    "rgba",
+                    "-f",
+                    "framemd5",
+                    "-",
+                ],
+                timeout_seconds=10.0,
+            )
+        except (OSError, RuntimeError) as error:
+            diagnostics.append(
+                "K4 alpha-branch/overlay probe gagal: " + str(error)
+            )
+        else:
+            hashes = {
+                line.rsplit(",", 1)[-1].strip()
+                for line in k4_probe.stdout.splitlines()
+                if line and not line.startswith("#") and "," in line
+            }
+            if k4_probe.returncode == 0 and len(hashes) >= 3:
+                features.update(
+                    {
+                        AdvancedFFmpegFeature.ALPHA_BRANCH,
+                        AdvancedFFmpegFeature.OVERLAY_EXPRESSIONS,
+                    }
+                )
+            else:
+                detail = (
+                    k4_probe.stderr[-1000:]
+                    or "frame hashes tidak membuktikan alpha branch dinamis"
+                )
+                diagnostics.append(
+                    "K4 alpha-branch/overlay probe gagal: " + detail
+                )
+
         self._cached = AdvancedFFmpegCapabilities(
             available=True,
             executable_path=tool.path,
