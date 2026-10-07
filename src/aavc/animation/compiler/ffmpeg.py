@@ -374,6 +374,7 @@ def _rotation_term(
     start = f"{exit_start:.6f}"
     return f"if(gt(t,{start}),((t-{start})/{window})*{max_angle:.6f},0)"
 
+
 def compile_native_rotation_filter(
     assignment: AnimationAssignment | None,
     *,
@@ -476,6 +477,7 @@ def _motion_term(
             f"if(gt(t,{start}),((t-{start})/{window})*{distance_expr},0)"
         )
     return axis, expression
+
 
 def _combine(base: str, terms: list[str]) -> str:
     if not terms:
