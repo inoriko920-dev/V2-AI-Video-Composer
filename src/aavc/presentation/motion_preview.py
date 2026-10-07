@@ -187,6 +187,30 @@ def native_visual_preview_blur_sigma(
     return state.sigma
 
 
+def native_visual_preview_mask_progress(
+    assignment: AnimationAssignment | None,
+    *,
+    time_seconds: float,
+    duration_seconds: float,
+    animation_keyframe_contract: ResolvedAnimationKeyframeContract = "legacy-v3",
+) -> float:
+    """Evaluate K5 hard-edge left-to-right reveal progress."""
+
+    if assignment is None or animation_keyframe_contract != "advanced-v1":
+        return 1.0
+
+    duration = max(0.001, float(duration_seconds))
+    current = max(0.0, min(float(time_seconds), duration))
+    value = evaluate_assignment_advanced_keyframe(
+        assignment,
+        "mask_progress",
+        current / duration,
+    )
+    if value is None:
+        return 1.0
+    return max(0.0, min(1.0, float(value)))
+
+
 def native_visual_preview_shadow(
     assignment: AnimationAssignment | None,
     *,
