@@ -4,7 +4,10 @@ from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 
-from aavc.animation import keyframe_track_support_reason
+from aavc.animation import (
+    is_supported_advanced_keyframe_track,
+    keyframe_track_support_reason,
+)
 from aavc.animation.compiler import is_native_visual_effect
 from aavc.animation.contract import track_requires_advanced
 
@@ -117,6 +120,11 @@ def validate_render_plan(plan: RenderPlan) -> PreflightReport:
                                 f"{assignment.asset_id} tersimpan tetapi belum aktif (dormant) pada schema v3",
                             )
                         )
+                    elif (
+                        track.property_name == "opacity"
+                        and is_supported_advanced_keyframe_track(track)
+                    ):
+                        continue
                     else:
                         issues.append(
                             PreflightIssue(
@@ -124,8 +132,8 @@ def validate_render_plan(plan: RenderPlan) -> PreflightReport:
                                 PreflightSeverity.ERROR,
                                 "Track advanced "
                                 f"{track.property_name} pada Scene {scene.scene_number}/"
-                                f"{assignment.asset_id} belum memiliki backend yang "
-                                "dipromosikan pada K0",
+                                f"{assignment.asset_id} belum memiliki backend aktif "
+                                "pada wave saat ini",
                             )
                         )
                     continue
