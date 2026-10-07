@@ -41,7 +41,7 @@ class RecordingVersionRunner(ProcessRunner):
                 )
             return ProcessResult(0, "ffmpeg version 9.0.2 Copyright", "")
         joined = " ".join(argv)
-        if "geq=" in joined:
+        if "drawbox@k2_left" in joined:
             if self.crop_returncode:
                 return ProcessResult(
                     self.crop_returncode,
