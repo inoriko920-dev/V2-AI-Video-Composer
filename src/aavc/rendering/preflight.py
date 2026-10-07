@@ -175,16 +175,7 @@ def validate_render_plan(plan: RenderPlan) -> PreflightReport:
                                 f"{assignment.asset_id} tersimpan tetapi belum aktif (dormant) pada schema v3",
                             )
                         )
-                    elif (
-                        (
-                            track.property_name == "opacity"
-                            or track.property_name == "blur"
-                            or track.property_name == "mask_progress"
-                            or track.property_name in {"shadow", "glow"}
-                            or track.property_name in CROP_PROPERTIES
-                        )
-                        and is_supported_advanced_keyframe_track(track)
-                    ):
+                    elif is_supported_advanced_keyframe_track(track):
                         continue
                     else:
                         issues.append(
