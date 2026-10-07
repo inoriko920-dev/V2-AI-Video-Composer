@@ -1,9 +1,3 @@
-from .shadow_glow import (
-    GlowState,
-    ShadowState,
-    evaluate_assignment_glow,
-    evaluate_assignment_shadow,
-)
 from .blur import BlurState, blur_sigma_limit, evaluate_assignment_blur
 from .crop import (
     CROP_PROPERTIES,
@@ -35,6 +29,12 @@ from .keyframes import (
 )
 from .randomizer import randomize_project_animations
 from .registry import AnimationEffect, all_effects, effect_names, get_effect, validate_effect
+from .shadow_glow import (
+    GlowState,
+    ShadowState,
+    evaluate_assignment_glow,
+    evaluate_assignment_shadow,
+)
 
 __all__ = [
     "ACTIVE_ADVANCED_KEYFRAME_PROPERTIES",
