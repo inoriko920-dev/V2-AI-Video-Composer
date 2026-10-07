@@ -467,7 +467,10 @@ def _motion_term(
 
     axis, dimension, base_distance = simple_motion
     distance = base_distance * intensity
-    distance_expr = f"{dimension}*{distance:.6f}"
+    if distance < 0:
+        distance_expr = f"-{dimension}*{abs(distance):.6f}"
+    else:
+        distance_expr = f"{dimension}*{distance:.6f}"
     if entering:
         expression = f"if(lt(t,{window}),(1-t/{window})*{distance_expr},0)"
     else:
