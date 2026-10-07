@@ -173,28 +173,32 @@ def test_preflight_keeps_v3_opacity_dormant_and_activates_it_only_in_v4(
     assert advanced_report.ok
 
 
-def test_active_v4_still_fails_closed_for_unimplemented_advanced_property(
+def test_active_v4_still_fails_closed_for_unimplemented_k6_interpolation(
     tmp_path: Path,
 ) -> None:
     project = _project()
     scene = project.scenes[0]
-    crop_track = AnimationKeyframeTrack(
+    bezier_track = AnimationKeyframeTrack(
         property_name="mask_progress",
         keyframes=(
-            AnimationKeyframe(time=0.0, value=0.0),
-            AnimationKeyframe(time=1.0, value=0.2),
+            AnimationKeyframe(
+                time=0.0,
+                value=0.0,
+                interpolation="bezier",
+            ),
+            AnimationKeyframe(time=1.0, value=1.0),
         ),
     )
     assignment = AnimationAssignment(
         scene_number=scene.scene_number,
         asset_id=scene.asset_ids[0],
         intensity=0.0,
-        keyframe_tracks=(crop_track,),
+        keyframe_tracks=(bezier_track,),
     )
     advanced = _promote(replace(project, animations=(assignment,)))
 
     report = validate_render_plan(
-        build_render_plan(advanced, tmp_path / "advanced-mask.mp4")
+        build_render_plan(advanced, tmp_path / "advanced-mask-bezier.mp4")
     )
 
     assert any(
