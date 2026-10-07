@@ -7,6 +7,12 @@ ACTIVE_KEYFRAME_PROPERTIES = frozenset(
     {"position_x", "position_y", "scale", "rotation_degrees"}
 )
 K1_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES = frozenset({"opacity"})
+K2_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES = frozenset(
+    {"crop_left", "crop_top", "crop_right", "crop_bottom"}
+)
+ACTIVE_ADVANCED_KEYFRAME_PROPERTIES = (
+    K1_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES | K2_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES
+)
 SUPPORTED_KEYFRAME_INTERPOLATIONS = frozenset({"hold", "linear"})
 KEYFRAME_PROPERTY_LIMITS: dict[str, tuple[float, float]] = {
     "position_x": (-0.10, 0.10),
@@ -14,6 +20,10 @@ KEYFRAME_PROPERTY_LIMITS: dict[str, tuple[float, float]] = {
     "scale": (0.75, 1.50),
     "rotation_degrees": (-30.0, 30.0),
     "opacity": (0.0, 1.0),
+    "crop_left": (0.0, 0.45),
+    "crop_top": (0.0, 0.45),
+    "crop_right": (0.0, 0.45),
+    "crop_bottom": (0.0, 0.45),
 }
 
 
@@ -69,7 +79,7 @@ def advanced_keyframe_track_support_reason(
     return _track_support_reason(
         track,
         active_properties=(
-            ACTIVE_KEYFRAME_PROPERTIES | K1_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES
+            ACTIVE_KEYFRAME_PROPERTIES | ACTIVE_ADVANCED_KEYFRAME_PROPERTIES
         ),
     )
 
