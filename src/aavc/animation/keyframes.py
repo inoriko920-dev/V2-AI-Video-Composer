@@ -11,10 +11,12 @@ K2_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES = frozenset(
     {"crop_left", "crop_top", "crop_right", "crop_bottom"}
 )
 K3_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES = frozenset({"blur"})
+K4_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES = frozenset({"shadow", "glow"})
 ACTIVE_ADVANCED_KEYFRAME_PROPERTIES = (
     K1_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES
     | K2_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES
     | K3_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES
+    | K4_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES
 )
 SUPPORTED_KEYFRAME_INTERPOLATIONS = frozenset({"hold", "linear"})
 KEYFRAME_PROPERTY_LIMITS: dict[str, tuple[float, float]] = {
@@ -28,6 +30,8 @@ KEYFRAME_PROPERTY_LIMITS: dict[str, tuple[float, float]] = {
     "crop_right": (0.0, 0.45),
     "crop_bottom": (0.0, 0.45),
     "blur": (0.0, 1.0),
+    "shadow": (0.0, 1.0),
+    "glow": (0.0, 1.0),
 }
 
 
