@@ -19,7 +19,6 @@ CROP_PROPERTIES = (
 MAX_CROP_SIDE = 0.45
 MAX_CROP_PAIR = 0.90
 
-
 @dataclass(frozen=True, slots=True)
 class CropVisibility:
     left: float = 0.0
@@ -36,7 +35,6 @@ class CropVisibility:
     def visible_height(self) -> float:
         return max(0.0, 1.0 - self.top - self.bottom)
 
-
 def assignment_has_supported_crop(
     assignment: AnimationAssignment | None,
 ) -> bool:
@@ -48,14 +46,12 @@ def assignment_has_supported_crop(
         for property_name in CROP_PROPERTIES
     )
 
-
 def _normalize_pair(first: float, second: float) -> tuple[float, float, bool]:
     total = first + second
     if total <= MAX_CROP_PAIR or total <= 0.0:
         return first, second, False
     scale = MAX_CROP_PAIR / total
     return first * scale, second * scale, True
-
 
 def normalize_crop_visibility(
     left: float,
@@ -77,7 +73,6 @@ def normalize_crop_visibility(
         bottom=bottom,
         normalized=horizontal or vertical,
     )
-
 
 def evaluate_assignment_crop_visibility(
     assignment: AnimationAssignment | None,
@@ -102,7 +97,6 @@ def evaluate_assignment_crop_visibility(
         values["crop_bottom"],
     )
 
-
 def crop_assignment_has_clamped_keyframes(
     assignment: AnimationAssignment | None,
 ) -> bool:
@@ -118,8 +112,6 @@ def crop_assignment_has_clamped_keyframes(
         ):
             return True
     return False
-
-
 
 def crop_assignment_has_pair_normalization(
     assignment: AnimationAssignment | None,
