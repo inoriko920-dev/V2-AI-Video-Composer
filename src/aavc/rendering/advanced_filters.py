@@ -3,6 +3,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from aavc.animation.blur import blur_sigma_limit
+from aavc.animation.shadow_glow import (
+    evaluate_assignment_glow,
+    evaluate_assignment_shadow,
+)
 from aavc.animation.crop import (
     CROP_PROPERTIES,
     assignment_has_supported_crop,
@@ -23,6 +27,7 @@ if TYPE_CHECKING:
 K1_ACTIVE_RENDER_PROPERTIES = frozenset({"opacity"})
 K2_ACTIVE_RENDER_PROPERTIES = frozenset(CROP_PROPERTIES)
 K3_ACTIVE_RENDER_PROPERTIES = frozenset({"blur"})
+K4_ACTIVE_RENDER_PROPERTIES = frozenset({"shadow", "glow"})
 
 
 def _number(value: float) -> str:
@@ -405,6 +410,241 @@ def compile_k3_blur_filters(
     return tuple(filters)
 
 
+def assignment_has_k4_shadow(
+    assignment: AnimationAssignment | None,
+) -> bool:
+    track = find_keyframe_track(assignment, "shadow")
+    return track is not None and is_supported_advanced_keyframe_track(track)
+
+
+def assignment_has_k4_glow(
+    assignment: AnimationAssignment | None,
+) -> bool:
+    track = find_keyframe_track(assignment, "glow")
+    return track is not None and is_supported_advanced_keyframe_track(track)
+
+
+def _k4_intensity_samples(
+    assignment: AnimationAssignment | None,
+    property_name: str,
+    *,
+    duration_seconds: float,
+    fps: int,
+) -> tuple[tuple[float, float], ...]:
+    track = find_keyframe_track(assignment, property_name)
+    if track is None or not is_supported_advanced_keyframe_track(track):
+        return ()
+
+    duration = max(0.001, float(duration_seconds))
+    rate = max(1, int(fps))
+    frame_count = max(1, int(round(duration * rate)))
+    samples: list[tuple[float, float]] = []
+    last_value: float | None = None
+    for frame_index in range(frame_count):
+        seconds = frame_index / rate
+        normalized = min(1.0, seconds / duration)
+        value = round(
+            float(evaluate_advanced_keyframe_track(track, normalized)),
+            4,
+        )
+        if last_value is not None and abs(value - last_value) < 0.00005:
+            continue
+        samples.append((seconds, value))
+        last_value = value
+
+    end_value = round(float(evaluate_advanced_keyframe_track(track, 1.0)), 4)
+    if not samples or abs(end_value - samples[-1][1]) >= 0.00005:
+        samples.append((duration, end_value))
+    return tuple(samples)
+
+
+def _k4_branch_commands(
+    samples: tuple[tuple[float, float], ...],
+    *,
+    sigma_scale: float,
+    alpha_scale: float,
+    blur_target: str,
+    gain_target: str,
+) -> tuple[str, ...]:
+    commands: list[str] = []
+    for seconds, intensity in samples[1:]:
+        sigma = round(sigma_scale * intensity, 2)
+        alpha = round(alpha_scale * intensity, 4)
+        commands.extend(
+            (
+                f"{_number(seconds)} {blur_target} sigma {sigma:.2f}",
+                f"{_number(seconds)} {blur_target} sigmaV {sigma:.2f}",
+                f"{_number(seconds)} {gain_target} aa {alpha:.4f}",
+            )
+        )
+    return tuple(commands)
+
+
+def compile_k4_shadow_glow_clauses(
+    input_label: str,
+    output_label: str,
+    assignment: AnimationAssignment | None,
+    *,
+    duration_seconds: float,
+    fps: int,
+    canvas_width: int,
+    canvas_height: int,
+    instance_id: str,
+) -> tuple[str, ...]:
+    """Build K4 Shadow/Glow branches behind the post-rotation source."""
+
+    shadow = assignment_has_k4_shadow(assignment)
+    glow = assignment_has_k4_glow(assignment)
+    if not shadow and not glow:
+        return ()
+
+    shortest = max(1.0, float(min(int(canvas_width), int(canvas_height))))
+    branch_names: list[str] = []
+    if shadow:
+        branch_names.append(f"{instance_id}_shadow_src")
+    if glow:
+        branch_names.append(f"{instance_id}_glow_src")
+
+    main = f"{instance_id}_main"
+    blank_src = f"{instance_id}_blank_src"
+    split_outputs = "".join(
+        f"[{name}]" for name in (main, blank_src, *branch_names)
+    )
+    clauses: list[str] = [
+        f"[{input_label}]format=rgba,split={2 + len(branch_names)}{split_outputs}"
+    ]
+    blank = f"{instance_id}_blank"
+    clauses.append(
+        f"[{blank_src}]colorchannelmixer=aa=0[{blank}]"
+    )
+
+    layers: list[tuple[str, str, str]] = []
+
+    if glow:
+        samples = _k4_intensity_samples(
+            assignment,
+            "glow",
+            duration_seconds=duration_seconds,
+            fps=fps,
+        )
+        initial = samples[0][1]
+        sigma_scale = 0.018 * shortest
+        alpha_scale = 0.65
+        blur_target = f"gblur@{instance_id}_glow_blur"
+        gain_target = f"colorchannelmixer@{instance_id}_glow_gain"
+        commands = _k4_branch_commands(
+            samples,
+            sigma_scale=sigma_scale,
+            alpha_scale=alpha_scale,
+            blur_target=blur_target,
+            gain_target=gain_target,
+        )
+        glow_color_src = f"{instance_id}_glow_color_src"
+        glow_alpha_src = f"{instance_id}_glow_alpha_src"
+        glow_mask = f"{instance_id}_glow_mask"
+        glow_color = f"{instance_id}_glow_color"
+        glow_merged = f"{instance_id}_glow_merged"
+        glow_layer = f"{instance_id}_glow_layer"
+        clauses.append(
+            f"[{instance_id}_glow_src]split=2"
+            f"[{glow_color_src}][{glow_alpha_src}]"
+        )
+        alpha_chain = f"[{glow_alpha_src}]alphaextract"
+        if commands:
+            alpha_chain += ",sendcmd=c='" + ";".join(commands) + "'"
+        alpha_chain += (
+            f",{blur_target}=sigma={sigma_scale * initial:.2f}:"
+            f"sigmaV={sigma_scale * initial:.2f}:steps=2"
+            f"[{glow_mask}]"
+        )
+        clauses.append(alpha_chain)
+        clauses.append(
+            f"[{glow_color_src}]lutrgb=r=255:g=255:b=255[{glow_color}]"
+        )
+        clauses.append(
+            f"[{glow_color}][{glow_mask}]alphamerge[{glow_merged}]"
+        )
+        clauses.append(
+            f"[{glow_merged}]{gain_target}=aa={alpha_scale * initial:.4f}"
+            f"[{glow_layer}]"
+        )
+        layers.append((glow_layer, "0", "0"))
+
+    if shadow:
+        samples = _k4_intensity_samples(
+            assignment,
+            "shadow",
+            duration_seconds=duration_seconds,
+            fps=fps,
+        )
+        initial = samples[0][1]
+        sigma_scale = 0.014 * shortest
+        alpha_scale = 0.55
+        blur_target = f"gblur@{instance_id}_shadow_blur"
+        gain_target = f"colorchannelmixer@{instance_id}_shadow_gain"
+        commands = _k4_branch_commands(
+            samples,
+            sigma_scale=sigma_scale,
+            alpha_scale=alpha_scale,
+            blur_target=blur_target,
+            gain_target=gain_target,
+        )
+        shadow_color_src = f"{instance_id}_shadow_color_src"
+        shadow_alpha_src = f"{instance_id}_shadow_alpha_src"
+        shadow_mask = f"{instance_id}_shadow_mask"
+        shadow_color = f"{instance_id}_shadow_color"
+        shadow_merged = f"{instance_id}_shadow_merged"
+        shadow_layer = f"{instance_id}_shadow_layer"
+        clauses.append(
+            f"[{instance_id}_shadow_src]split=2"
+            f"[{shadow_color_src}][{shadow_alpha_src}]"
+        )
+        alpha_chain = f"[{shadow_alpha_src}]alphaextract"
+        if commands:
+            alpha_chain += ",sendcmd=c='" + ";".join(commands) + "'"
+        alpha_chain += (
+            f",{blur_target}=sigma={sigma_scale * initial:.2f}:"
+            f"sigmaV={sigma_scale * initial:.2f}:steps=2"
+            f"[{shadow_mask}]"
+        )
+        clauses.append(alpha_chain)
+        clauses.append(
+            f"[{shadow_color_src}]lutrgb=r=0:g=0:b=0[{shadow_color}]"
+        )
+        clauses.append(
+            f"[{shadow_color}][{shadow_mask}]alphamerge[{shadow_merged}]"
+        )
+        clauses.append(
+            f"[{shadow_merged}]{gain_target}=aa={alpha_scale * initial:.4f}"
+            f"[{shadow_layer}]"
+        )
+        intensity_expr = _advanced_time_expression(
+            assignment,
+            "shadow",
+            duration_seconds=duration_seconds,
+            time_variable="t",
+        )
+        offset_scale = 0.012 * shortest
+        offset_expr = f"{offset_scale:.6f}*({intensity_expr})"
+        layers.append((shadow_layer, offset_expr, offset_expr))
+
+    current = blank
+    for index, (layer, x_expr, y_expr) in enumerate(layers):
+        next_label = f"{instance_id}_bg_{index}"
+        clauses.append(
+            f"[{current}][{layer}]overlay="
+            f"x='{x_expr}':y='{y_expr}':eval=frame:shortest=1:format=auto"
+            f"[{next_label}]"
+        )
+        current = next_label
+
+    clauses.append(
+        f"[{current}][{main}]overlay=x=0:y=0:shortest=1:format=auto"
+        f"[{output_label}]"
+    )
+    return tuple(clauses)
+
+
 def assignment_has_k1_opacity(
     assignment: AnimationAssignment | None,
 ) -> bool:
@@ -534,6 +774,20 @@ def render_plan_requires_k3_blur(plan: RenderPlan) -> bool:
         return False
     return any(
         assignment is not None and assignment_has_k3_blur(assignment)
+        for scene in plan.scenes
+        for assignment in scene.animations
+    )
+
+
+def render_plan_requires_k4_shadow_glow(plan: RenderPlan) -> bool:
+    if plan.animation_keyframe_contract != "advanced-v1":
+        return False
+    return any(
+        assignment is not None
+        and (
+            assignment_has_k4_shadow(assignment)
+            or assignment_has_k4_glow(assignment)
+        )
         for scene in plan.scenes
         for assignment in scene.animations
     )
