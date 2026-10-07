@@ -3,10 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from aavc.animation.blur import blur_sigma_limit
-from aavc.animation.shadow_glow import (
-    evaluate_assignment_glow,
-    evaluate_assignment_shadow,
-)
 from aavc.animation.crop import (
     CROP_PROPERTIES,
     assignment_has_supported_crop,
@@ -589,7 +585,7 @@ def compile_k4_shadow_glow_clauses(
         alpha_scale = 0.55
         blur_target = f"gblur@{instance_id}_shadow_blur"
         gain_target = f"colorchannelmixer@{instance_id}_shadow_gain"
-        commands = _k4_branch_commands(
+        sigma_commands, alpha_commands = _k4_branch_commands(
             samples,
             sigma_scale=sigma_scale,
             alpha_scale=alpha_scale,
