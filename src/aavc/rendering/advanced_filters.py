@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from aavc.animation.blur import blur_sigma_limit
 from aavc.animation.crop import (
     CROP_PROPERTIES,
     assignment_has_supported_crop,
@@ -10,6 +11,7 @@ from aavc.animation.crop import (
 from aavc.animation.keyframes import (
     KEYFRAME_PROPERTY_LIMITS,
     clamp_keyframe_value,
+    evaluate_advanced_keyframe_track,
     find_keyframe_track,
     is_supported_advanced_keyframe_track,
 )
@@ -20,6 +22,7 @@ if TYPE_CHECKING:
 
 K1_ACTIVE_RENDER_PROPERTIES = frozenset({"opacity"})
 K2_ACTIVE_RENDER_PROPERTIES = frozenset(CROP_PROPERTIES)
+K3_ACTIVE_RENDER_PROPERTIES = frozenset({"blur"})
 
 
 def _number(value: float) -> str:
@@ -311,6 +314,90 @@ def compile_k2_crop_filters(
     return tuple(filters)
 
 
+def assignment_has_k3_blur(
+    assignment: AnimationAssignment | None,
+) -> bool:
+    track = find_keyframe_track(assignment, "blur")
+    return track is not None and is_supported_advanced_keyframe_track(track)
+
+
+def _blur_sigma_samples(
+    assignment: AnimationAssignment | None,
+    *,
+    duration_seconds: float,
+    fps: int,
+    canvas_width: int,
+    canvas_height: int,
+) -> tuple[tuple[float, float], ...]:
+    track = find_keyframe_track(assignment, "blur")
+    if track is None or not is_supported_advanced_keyframe_track(track):
+        return ()
+
+    duration = max(0.001, float(duration_seconds))
+    rate = max(1, int(fps))
+    frame_count = max(1, int(round(duration * rate)))
+    sigma_limit = blur_sigma_limit(canvas_width, canvas_height)
+    samples: list[tuple[float, float]] = []
+    last_sigma: float | None = None
+
+    for frame_index in range(frame_count):
+        seconds = frame_index / rate
+        normalized = min(1.0, seconds / duration)
+        intensity = evaluate_advanced_keyframe_track(track, normalized)
+        sigma = round(float(intensity) * sigma_limit, 2)
+        if last_sigma is not None and abs(sigma - last_sigma) < 0.005:
+            continue
+        samples.append((seconds, sigma))
+        last_sigma = sigma
+
+    end_sigma = round(
+        float(evaluate_advanced_keyframe_track(track, 1.0)) * sigma_limit,
+        2,
+    )
+    if not samples or abs(end_sigma - samples[-1][1]) >= 0.005:
+        samples.append((duration, end_sigma))
+    return tuple(samples)
+
+
+def compile_k3_blur_filters(
+    assignment: AnimationAssignment | None,
+    *,
+    duration_seconds: float,
+    fps: int,
+    canvas_width: int,
+    canvas_height: int,
+    instance_id: str,
+) -> tuple[str, ...]:
+    """Compile K3 Blur from canonical frame samples into runtime gblur commands."""
+
+    samples = _blur_sigma_samples(
+        assignment,
+        duration_seconds=duration_seconds,
+        fps=fps,
+        canvas_width=canvas_width,
+        canvas_height=canvas_height,
+    )
+    if not samples:
+        return ()
+
+    target = f"gblur@{instance_id}"
+    initial_sigma = samples[0][1]
+    commands = [
+        f"{_number(seconds)} {target} sigma {sigma:.2f}"
+        for seconds, sigma in samples[1:]
+    ]
+    filters: list[str] = ["format=rgba", "premultiply=inplace=1"]
+    if commands:
+        filters.append("sendcmd=c='" + ";".join(commands) + "'")
+    filters.extend(
+        (
+            f"{target}=sigma={initial_sigma:.2f}:steps=2",
+            "unpremultiply=inplace=1",
+        )
+    )
+    return tuple(filters)
+
+
 def assignment_has_k1_opacity(
     assignment: AnimationAssignment | None,
 ) -> bool:
@@ -430,6 +517,16 @@ def render_plan_requires_k2_crop(plan: RenderPlan) -> bool:
         return False
     return any(
         assignment is not None and assignment_has_supported_crop(assignment)
+        for scene in plan.scenes
+        for assignment in scene.animations
+    )
+
+
+def render_plan_requires_k3_blur(plan: RenderPlan) -> bool:
+    if plan.animation_keyframe_contract != "advanced-v1":
+        return False
+    return any(
+        assignment is not None and assignment_has_k3_blur(assignment)
         for scene in plan.scenes
         for assignment in scene.animations
     )
