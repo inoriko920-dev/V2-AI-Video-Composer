@@ -1,0 +1,296 @@
+name: V2 Final Release 0.2.0
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: v2-final-0.2.0-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  codeql-python:
+    name: final-codeql-python
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4
+        with:
+          languages: python
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4
+        with:
+          category: /language:python-final-0.2.0
+
+  windows-final:
+    name: windows-final-0.2.0
+    runs-on: windows-latest
+    timeout-minutes: 50
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12.10'
+          cache: 'pip'
+
+      - name: Reject committed secrets
+        run: python scripts/check_no_secrets.py
+
+      - name: Install pinned dependencies
+        run: |
+          python -m pip install "pip==26.2.1"
+          python -m pip install -r requirements.lock
+          python -m pip install -e .
+
+      - name: Verify dependency graph
+        run: python -m pip check
+
+      - name: Ensure real FFmpeg and ffprobe
+        shell: pwsh
+        run: |
+          if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+            choco install ffmpeg -y --no-progress
+          }
+          if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+            throw "ffmpeg is required for final release validation"
+          }
+          if (-not (Get-Command ffprobe -ErrorAction SilentlyContinue)) {
+            throw "ffprobe is required for final release validation"
+          }
+          ffmpeg -version | Select-Object -First 1
+          ffprobe -version | Select-Object -First 1
+
+      - name: Verify final version
+        shell: pwsh
+        run: |
+          $runtime = (python -c "from aavc import __version__; print(__version__)").Trim()
+          if ($runtime -ne "0.2.0") { throw "Expected runtime 0.2.0, got $runtime" }
+          $metadata = (python -c "from importlib.metadata import version; print(version('ai-automatic-video-composer'))").Trim()
+          if ($metadata -ne "0.2.0") { throw "Expected metadata 0.2.0, got $metadata" }
+
+      - name: Compile
+        run: python -m compileall -q src
+
+      - name: Ruff
+        run: python -m ruff check src tests
+
+      - name: Strict mypy
+        run: python -m mypy src/aavc
+
+      - name: Full technical final suite
+        run: python -m pytest -m "not visual" -q
+
+      - name: Capture STEP09 actual UI
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python scripts/capture_step09_ui.py
+
+      - name: Verify STEP09 screenshots
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem artifacts/step09_actual/*.png
+          if ($files.Count -ne 8) {
+            throw "Expected 8 STEP09 screenshots, found $($files.Count)"
+          }
+          $tooSmall = $files | Where-Object { $_.Length -lt 1000 }
+          if ($tooSmall) {
+            throw "One or more STEP09 screenshots are unexpectedly small"
+          }
+
+      - name: Build Windows onedir
+        shell: pwsh
+        run: ./scripts/package.ps1
+
+      - name: Verify portable artifact
+        shell: pwsh
+        run: ./scripts/verify_portable.ps1
+
+      - name: Launch packaged EXE and capture UI
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          New-Item -ItemType Directory -Force artifacts/final_acceptance | Out-Null
+          $exe = Resolve-Path "dist/AI Automatic Video Composer/AI Automatic Video Composer.exe"
+          $capture = Join-Path (Resolve-Path "artifacts/final_acceptance") "PACKAGED_FINAL_UI_002.png"
+          $process = Start-Process -FilePath $exe -ArgumentList @(
+            "--ui-state", "UI-002",
+            "--capture-path", $capture
+          ) -Wait -PassThru
+          if ($process.ExitCode -ne 0) {
+            throw "Packaged final EXE UI launch failed with exit code $($process.ExitCode)"
+          }
+          if (-not (Test-Path $capture)) {
+            throw "Packaged final EXE did not produce UI capture"
+          }
+          $file = Get-Item $capture
+          if ($file.Length -lt 1000) {
+            throw "Packaged final UI capture is unexpectedly small"
+          }
+
+      - name: Prepare final 0.2.0 bundle
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force release | Out-Null
+          $portable = "release/AI-Automatic-Video-Composer-0.2.0-win64.zip"
+          $source = "release/AI-Automatic-Video-Composer-0.2.0-source.zip"
+          if (Test-Path $portable) { Remove-Item $portable -Force }
+          if (Test-Path $source) { Remove-Item $source -Force }
+
+          Compress-Archive -Path "dist/AI Automatic Video Composer/*" -DestinationPath $portable -CompressionLevel Optimal
+          git archive --format=zip --output=$source HEAD
+
+          Copy-Item RELEASE_NOTES_0.2.0.md release/RELEASE_NOTES_0.2.0.md
+          Copy-Item docs/USER_GUIDE.md release/USER_GUIDE.md
+          Copy-Item MAINTENANCE.md release/MAINTENANCE.md
+          Copy-Item BACKUP_AND_RECOVERY.md release/BACKUP_AND_RECOVERY.md
+          Copy-Item V2_FINAL_RELEASE_MANIFEST_0.2.0.md release/V2_FINAL_RELEASE_MANIFEST_0.2.0.md
+
+          $commit = (git rev-parse HEAD).Trim()
+          "release_commit=$commit" | Set-Content release/BUILD_INFO.txt -Encoding utf8
+          "version=0.2.0" | Add-Content release/BUILD_INFO.txt -Encoding utf8
+          "channel=stable" | Add-Content release/BUILD_INFO.txt -Encoding utf8
+          "accepted_rc_user_acceptance_run=37577634087" | Add-Content release/BUILD_INFO.txt -Encoding utf8
+
+          $files = @($portable, $source)
+          $sumLines = foreach ($file in $files) {
+            $hash = (Get-FileHash $file -Algorithm SHA256).Hash.ToLower()
+            "$hash  $([System.IO.Path]::GetFileName($file))"
+          }
+          $sumLines | Set-Content release/SHA256SUMS.txt -Encoding utf8
+
+          foreach ($line in Get-Content release/SHA256SUMS.txt) {
+            $parts = $line -split "\s+", 2
+            $expected = $parts[0]
+            $name = $parts[1]
+            $actual = (Get-FileHash (Join-Path release $name) -Algorithm SHA256).Hash.ToLower()
+            if ($actual -ne $expected) { throw "Checksum mismatch for $name" }
+          }
+
+          Get-ChildItem release | Select-Object Name, Length
+
+      - name: Upload final candidate bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: AAVC-0.2.0-final-candidate
+          path: release/*
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload final UI evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: AAVC-0.2.0-final-ui-evidence
+          path: |
+            artifacts/step09_actual/*.png
+            artifacts/final_acceptance/*.png
+          if-no-files-found: error
+          retention-days: 90
+
+  publish:
+    name: publish-v0.2.0
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs:
+      - codeql-python
+      - windows-final
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout exact release commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Download verified final candidate
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: AAVC-0.2.0-final-candidate
+          path: release_bundle
+
+      - name: Re-verify downloaded release checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd release_bundle
+          sha256sum -c SHA256SUMS.txt
+          grep -Fx "release_commit=$GITHUB_SHA" BUILD_INFO.txt
+          grep -Fx "version=0.2.0" BUILD_INFO.txt
+          grep -Fx "channel=stable" BUILD_INFO.txt
+
+      - name: Guard immutable v0.2.0 tag and release
+        id: guard
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo="$GITHUB_REPOSITORY"
+          if gh api "repos/$repo/git/ref/tags/v0.2.0" > existing_tag.json 2>/dev/null; then
+            existing_sha="$(jq -r '.object.sha' existing_tag.json)"
+            if [ "$existing_sha" != "$GITHUB_SHA" ]; then
+              echo "::error::v0.2.0 tag already exists at $existing_sha; refusing to move it to $GITHUB_SHA"
+              exit 1
+            fi
+            if gh release view v0.2.0 --repo "$repo" >/dev/null 2>&1; then
+              echo "publish_needed=false" >> "$GITHUB_OUTPUT"
+              echo "Exact v0.2.0 release already exists; preserving it."
+              exit 0
+            fi
+            echo "::error::v0.2.0 tag exists at the expected commit but no release exists; refusing ambiguous publication."
+            exit 1
+          fi
+
+          if gh release view v0.2.0 --repo "$repo" >/dev/null 2>&1; then
+            echo "::error::v0.2.0 release exists without the expected tag guard; refusing overwrite."
+            exit 1
+          fi
+          echo "publish_needed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Publish immutable GitHub Release v0.2.0
+        if: steps.guard.outputs.publish_needed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create v0.2.0 release_bundle/*             --repo "$GITHUB_REPOSITORY"             --target "$GITHUB_SHA"             --title "AI Automatic Video Composer v0.2.0"             --notes-file release_bundle/RELEASE_NOTES_0.2.0.md
+
+      - name: Verify published tag and release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v0.2.0" --jq '.object.sha')"
+          if [ "$tag_sha" != "$GITHUB_SHA" ]; then
+            echo "::error::Published v0.2.0 tag points to $tag_sha instead of $GITHUB_SHA"
+            exit 1
+          fi
+          gh release view v0.2.0 --repo "$GITHUB_REPOSITORY"             --json tagName,isDraft,isPrerelease,url             --jq '{tagName,isDraft,isPrerelease,url}'
