@@ -2,6 +2,11 @@ from .animation_assignment import (
     RemoveAnimationAssignment,
     SetAnimationAssignmentsBatch,
 )
+from .animation_keyframes import (
+    AdvancedAnimationActivationRequired,
+    ApplyAnimationKeyframeEdit,
+    RemoveAnimationKeyframeTrack,
+)
 from .animation_randomization import RandomizeAnimationAssignments
 from .project_commands import (
     ProjectCommand,
@@ -25,6 +30,8 @@ from .scene_order import (
 from .transaction import ProjectTransaction
 
 __all__ = [
+    "AdvancedAnimationActivationRequired",
+    "ApplyAnimationKeyframeEdit",
     "CopySceneAnimations",
     "DeleteScene",
     "DuplicateScene",
@@ -35,6 +42,7 @@ __all__ = [
     "RandomizeAnimationAssignments",
     "RelinkAsset",
     "RemoveAnimationAssignment",
+    "RemoveAnimationKeyframeTrack",
     "SetAnimationAssignment",
     "SetAnimationAssignmentsBatch",
     "SetNarrationAudio",
