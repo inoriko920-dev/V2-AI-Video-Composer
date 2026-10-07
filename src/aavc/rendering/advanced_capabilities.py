@@ -42,8 +42,9 @@ class AdvancedFFmpegCapabilities:
 class AdvancedFFmpegCapabilityProbe:
     """Feature-based FFmpeg capability detection for advanced animation waves.
 
-    K1 promotes only runtime opacity after a real micro-render probe. Later
-    waves add independent probes without inheriting capability by version.
+    K1 promotes runtime opacity and K2 promotes dynamic spatial alpha only
+    after independent real micro-render probes. Later waves add their own
+    proofs without inheriting capability by version.
     """
 
     def __init__(
@@ -126,6 +127,51 @@ class AdvancedFFmpegCapabilityProbe:
                 diagnostics.append(
                     "K1 opacity runtime-alpha probe gagal: "
                     + (opacity_probe.stderr[-1000:] or "unknown FFmpeg error")
+                )
+
+        try:
+            crop_probe = self._runner.run(
+                [
+                    tool.path,
+                    "-hide_banner",
+                    "-loglevel",
+                    "error",
+                    "-f",
+                    "lavfi",
+                    "-i",
+                    "color=c=red:s=16x16:r=4:d=0.5",
+                    "-vf",
+                    (
+                        "format=rgba,"
+                        "geq="
+                        "r='r(X,Y)':"
+                        "g='g(X,Y)':"
+                        "b='b(X,Y)':"
+                        "a='alpha(X,Y)*"
+                        "gte(X,W*(0.10+0.10*T))*"
+                        "lt(X,W*(0.90-0.10*T))*"
+                        "gte(Y,H*0.10)*"
+                        "lt(Y,H*0.90)'"
+                    ),
+                    "-frames:v",
+                    "2",
+                    "-f",
+                    "null",
+                    "-",
+                ],
+                timeout_seconds=10.0,
+            )
+        except (OSError, RuntimeError) as error:
+            diagnostics.append(
+                "K2 dynamic-spatial-alpha probe gagal: " + str(error)
+            )
+        else:
+            if crop_probe.returncode == 0:
+                features.add(AdvancedFFmpegFeature.DYNAMIC_SPATIAL_ALPHA)
+            else:
+                diagnostics.append(
+                    "K2 dynamic-spatial-alpha probe gagal: "
+                    + (crop_probe.stderr[-1000:] or "unknown FFmpeg error")
                 )
 
         self._cached = AdvancedFFmpegCapabilities(
