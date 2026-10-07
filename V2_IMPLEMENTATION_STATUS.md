@@ -21,7 +21,7 @@ All V2 development happens only in this repository.
 - Approval basis: explicit user instruction to continue after planning completion on 2026-10-07
 
 ## Current wave
-**Wave J — 21/21 ANIMATION BLOCKER CLOSED / REFRESHED RC USER TEST PENDING: 0.2.0rc1 Windows portable**
+**Wave J — AUTOMATED WINDOWS USER ACCEPTANCE PASS / FINAL RELEASE GATE READY: 0.2.0rc1**
 
 Baseline evidence:
 - Wave A documentation commit: `bdcfb34191f10bd8debbfc23ea88b821a101ce89`
@@ -590,3 +590,32 @@ Give the refreshed `0.2.0rc1` Windows artifact `11459479975` to the user and rep
 user testing with emphasis on all 21 animation choices, Manual/Random/AI assignment,
 preview, short render, copy/paste animation, and locked-target behavior. Final
 `v0.2.0` publication remains **BLOCKED** until the refreshed RC has no user-test blocker.
+
+
+## Wave J delegated Windows user acceptance closure
+- The user delegated the RC user-test execution to the implementation agent.
+- Acceptance harness PR: `#14`.
+- Final tested PR head: `1463c2a8718d88768939df33f075f22d54d726c6`.
+- Merge/squash commit: `54d6cb49ceca001bb68e5f29a88869d3972a4861`.
+- Tested PR-head tree and merged-main tree are identical: `458b52265ea74ceca443edaebd6d7b0cc3fd4d8b`.
+- Windows Automated User Acceptance run `37577634087`: **PASS**.
+- Full non-visual technical suite: **630 passed**.
+- Real FFmpeg version used on Windows acceptance: **9.0.2 essentials build**.
+- All 21 canonical effects completed a real FFmpeg render and verified output: **PASS**.
+- Real Selection In/Out render and output verification: **PASS**.
+- Windows portable build + foundation smoke/content/secret checks: **PASS**.
+- Packaged EXE itself launched with Qt offscreen and produced a real UI screenshot: **PASS** (47,565 bytes).
+- Acceptance evidence artifact ID: `11463332035`.
+- Acceptance evidence digest: `sha256:151d8a08b9fed90d663833706ce3beb5abab8a55930616a2f3d8269262ad649f`.
+- Concurrent CI run `37577634089`: **PASS**.
+- Concurrent CodeQL run `37577634074`: **PASS**.
+- Concurrent Wave J RC package run `37577634102`: **PASS**.
+- Concurrent Optional Backend Spike run `37577634083`: **PASS**.
+- Refreshed acceptance-source RC artifact ID: `11463282189`.
+- Refreshed acceptance-source RC artifact digest: `sha256:3788ec3a807bdeea165fca7c6d92303dfa0ea7eb5b2cc73d2378cc6687ba1c9a`.
+- The acceptance harness changes only tests/workflow evidence; no production source, schema, runtime dependency, or visual UI behavior changed.
+
+## Next exact action
+Run the final `v0.2.0` release gate from the accepted source line. Final publication
+must use the canonical final-release workflow/gate and must not bypass checksum,
+portable, CI, CodeQL, or source-provenance verification.
