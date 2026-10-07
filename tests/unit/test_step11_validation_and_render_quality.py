@@ -37,14 +37,14 @@ def test_validation_reports_missing_asset() -> None:
     )
 
 
-def test_validation_reports_non_native_visual_effect_once_per_assignment() -> None:
+def test_validation_reports_unknown_visual_effect_once_per_assignment() -> None:
     project = _project()
     scene = project.scenes[0]
     assignment = AnimationAssignment(
         scene_number=scene.scene_number,
         asset_id=scene.asset_ids[0],
-        enter_effect="Wipe",
-        exit_effect="Blur",
+        enter_effect="Legacy Motion",
+        exit_effect="Legacy Alpha",
         intensity=1.0,
     )
 
@@ -55,17 +55,17 @@ def test_validation_reports_non_native_visual_effect_once_per_assignment() -> No
     assert fallback[0].severity == "WARNING"
     assert fallback[0].scene_number == scene.scene_number
     assert fallback[0].asset_id == scene.asset_ids[0]
-    assert "Blur, Wipe" in fallback[0].message
+    assert "Legacy Alpha, Legacy Motion" in fallback[0].message
 
 
-def test_validation_deduplicates_same_unsupported_effect() -> None:
+def test_validation_deduplicates_same_unknown_effect() -> None:
     project = _project()
     scene = project.scenes[0]
     assignment = AnimationAssignment(
         scene_number=scene.scene_number,
         asset_id=scene.asset_ids[0],
-        enter_effect="Wipe",
-        exit_effect="Wipe",
+        enter_effect="Legacy Effect",
+        exit_effect="Legacy Effect",
         intensity=1.0,
     )
 
@@ -73,7 +73,7 @@ def test_validation_deduplicates_same_unsupported_effect() -> None:
     fallback = [issue for issue in issues if issue.code == "VISUAL_EFFECT_FALLBACK"]
 
     assert len(fallback) == 1
-    assert fallback[0].message.count("Wipe") == 1
+    assert fallback[0].message.count("Legacy Effect") == 1
 
 
 def test_validation_accepts_native_visual_effects() -> None:
