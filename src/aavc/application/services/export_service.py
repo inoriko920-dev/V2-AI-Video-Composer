@@ -28,6 +28,7 @@ from aavc.rendering.advanced_filters import (
     render_plan_requires_k2_crop,
     render_plan_requires_k3_blur,
     render_plan_requires_k4_shadow_glow,
+    render_plan_requires_k5_mask,
 )
 from aavc.rendering.render_plan import RenderPlan
 from aavc.subtitles import compile_srt_to_ass
@@ -81,6 +82,8 @@ def ensure_advanced_render_capabilities(
                 AdvancedFFmpegFeature.OVERLAY_EXPRESSIONS,
             }
         )
+    if render_plan_requires_k5_mask(plan):
+        required.add(AdvancedFFmpegFeature.DYNAMIC_SPATIAL_ALPHA)
     if not required:
         return
 
