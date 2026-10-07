@@ -5,11 +5,11 @@ from pathlib import Path
 from typing import Literal
 
 from aavc.animation import keyframe_track_support_reason
+from aavc.animation.compiler import is_native_visual_effect
 from aavc.animation.contract import (
     track_requires_advanced,
     validate_project_animation_contract,
 )
-from aavc.animation.compiler import is_native_visual_effect
 from aavc.domain.project.models import ProjectState
 
 Severity = Literal["ERROR", "WARNING"]
