@@ -9,6 +9,8 @@ from aavc.animation import (
     crop_assignment_has_clamped_keyframes,
     crop_assignment_has_pair_normalization,
     is_supported_advanced_keyframe_track,
+    keyframe_parameter_clamps,
+    keyframe_parameter_mismatches,
     keyframe_track_support_reason,
 )
 from aavc.animation.compiler import is_native_visual_effect
@@ -141,6 +143,35 @@ def validate_project(project: ProjectState) -> tuple[ValidationIssue, ...]:
                     asset_id=assignment.asset_id,
                 )
             )
+
+        if contract == "advanced-v1":
+            for track in assignment.keyframe_tracks:
+                for detail in keyframe_parameter_mismatches(track):
+                    issues.append(
+                        ValidationIssue(
+                            code="ADVANCED_PARAMETER_MISMATCH",
+                            severity="WARNING",
+                            message=(
+                                f"{track.property_name} pada "
+                                f"{assignment.asset_id}: {detail}"
+                            ),
+                            scene_number=assignment.scene_number,
+                            asset_id=assignment.asset_id,
+                        )
+                    )
+                for detail in keyframe_parameter_clamps(track):
+                    issues.append(
+                        ValidationIssue(
+                            code="ADVANCED_VALUE_CLAMPED",
+                            severity="WARNING",
+                            message=(
+                                f"{track.property_name} pada "
+                                f"{assignment.asset_id}: {detail}"
+                            ),
+                            scene_number=assignment.scene_number,
+                            asset_id=assignment.asset_id,
+                        )
+                    )
 
         for track in assignment.keyframe_tracks:
             if track_requires_advanced(track):
