@@ -1,11 +1,6 @@
 name: Backup V2 AI Video Composer
 
 on:
-  push:
-    branches:
-      - v2/0.2.2-w06a-repo-workflow-security
-    paths:
-      - ".github/workflows/backup-single-app.yml"
   workflow_dispatch:
 
 permissions:
