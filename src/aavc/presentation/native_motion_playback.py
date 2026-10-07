@@ -11,6 +11,7 @@ from aavc.animation.contract import (
 from aavc.domain.project.models import AnimationAssignment, ProjectState
 from aavc.presentation.motion_preview import (
     native_motion_preview_offset,
+    native_visual_preview_crop,
     native_visual_preview_opacity,
     native_visual_preview_rotation,
     native_visual_preview_scale,
@@ -65,6 +66,33 @@ def _rotate_pixmap_same_size(pixmap: Any, angle_degrees: float) -> Any:
     return rotated
 
 
+def _clip_pixmap_visibility(pixmap: Any, crop: Any) -> Any:
+    from PySide6.QtCore import QRectF, Qt
+    from PySide6.QtGui import QPainter, QPixmap
+
+    if (
+        crop.left <= 0.0
+        and crop.top <= 0.0
+        and crop.right <= 0.0
+        and crop.bottom <= 0.0
+    ):
+        return pixmap
+
+    clipped = QPixmap(pixmap.size())
+    clipped.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(clipped)
+    width = pixmap.width()
+    height = pixmap.height()
+    left = width * crop.left
+    top = height * crop.top
+    visible_width = max(0.0, width * crop.visible_width)
+    visible_height = max(0.0, height * crop.visible_height)
+    painter.setClipRect(QRectF(left, top, visible_width, visible_height))
+    painter.drawPixmap(0, 0, pixmap)
+    painter.end()
+    return clipped
+
+
 def render_native_motion_pixmap(
     plan: ScenePreviewPlan,
     assignments: tuple[AnimationAssignment, ...],
@@ -116,6 +144,13 @@ def render_native_motion_pixmap(
                 time_seconds=time_seconds,
                 duration_seconds=plan.duration_seconds,
             )
+            crop = native_visual_preview_crop(
+                assignment,
+                time_seconds=time_seconds,
+                duration_seconds=plan.duration_seconds,
+                animation_keyframe_contract=animation_keyframe_contract,
+            )
+            scaled = _clip_pixmap_visibility(scaled, crop)
             opacity = native_visual_preview_opacity(
                 assignment,
                 time_seconds=time_seconds,
