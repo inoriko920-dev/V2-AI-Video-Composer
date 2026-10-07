@@ -37,9 +37,9 @@ Windows desktop application for composing narrative/infographic videos from scen
 - STEP 14: **PASS / Release Candidate Ready**
 - STEP 15: **PASS / Final Release Ready**
 
-Current stable V2 release target: **0.2.1**. Historical `v0.1.0` and `v0.1.1` remain frozen.
+Current stable V2 release: **0.2.1**. Historical `v0.2.0`, `v0.1.1`, and `v0.1.0` remain frozen.
 
-Latest stable release line: **0.2.1 final gate / publication workflow**; published `v0.2.0` remains immutable until `v0.2.1` publication completes.
+Latest stable release line: **0.2.1 published / verified** at `eb94efebf142ba8203dfc3ae3c5fa861222a0926`.
 
 - Stability-hardened runtime source: `9ce7d3c3125947c69e7dcf357f6ecbbc6707fee7`
 - Post-merge CI run `37429362040`: **PASS**
@@ -151,7 +151,7 @@ For release evidence, publication, rollback rules and maintenance policy, see:
 
 Current stable line is **0.2.x**. The 0.2.1 final source adds advanced-v1 while published `v0.2.0` remains immutable.
 
-Current release state: **v0.2.0 published / verified; automated Windows acceptance, CI, CodeQL, final packaging and checksum gates PASS**.
+Current release state: **v0.2.1 published / verified; Windows final gate, CI, CodeQL, portable packaging, packaged-EXE launch, checksum verification, and guarded publication PASS**.
 
 
 ## License
@@ -221,5 +221,7 @@ crop, blur, shadow, glow, mask progress, and Bezier/velocity/overshoot semantics
 preserving schema-v3 behavior until the user explicitly commits an advanced edit.
 The accepted 0.2.1rc1 Windows gate passed 761 technical tests, real FFmpeg validation,
 portable packaging, packaged-EXE UI launch, 10/100/500 Scene benchmark evidence, CI,
-CodeQL, and checksum reproducibility. Final publication uses a separate guarded
-`v2-final-0.2.1.yml` workflow and must never move or overwrite `v0.2.0`.
+CodeQL, and checksum reproducibility. Stable `v0.2.1` is now published and verified at
+`eb94efebf142ba8203dfc3ae3c5fa861222a0926`. The release/tag is immutable; the former
+publisher workflow is retained only as a read-only historical verifier. `v0.2.0` remains
+published and unchanged.
