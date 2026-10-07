@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from aavc.animation.crop import CROP_PROPERTIES, assignment_has_supported_crop
+from aavc.animation.crop import (
+    CROP_PROPERTIES,
+    assignment_has_supported_crop,
+    evaluate_assignment_crop_visibility,
+)
 from aavc.animation.keyframes import (
     KEYFRAME_PROPERTY_LIMITS,
     clamp_keyframe_value,
@@ -85,71 +89,226 @@ def _advanced_time_expression(
     )
 
 
-def _normalize_crop_pair(first: str, second: str) -> tuple[str, str]:
-    total = f"(({first})+({second}))"
-    normalized_first = (
-        f"if(gt({total},0.900000),"
-        f"0.900000*({first})/{total},({first}))"
-    )
-    normalized_second = (
-        f"if(gt({total},0.900000),"
-        f"0.900000*({second})/{total},({second}))"
-    )
-    return normalized_first, normalized_second
+def _crop_clamp_expression(expression: str) -> str:
+    """Clamp to 0..0.45 without commas so sendcmd can parse the argument."""
 
-
-def _crop_gate_expression(
-    assignment: AnimationAssignment | None,
-    *,
-    duration_seconds: float,
-) -> str | None:
-    if not assignment_has_supported_crop(assignment):
-        return None
-
-    left = _advanced_time_expression(
-        assignment,
-        "crop_left",
-        duration_seconds=duration_seconds,
-    )
-    top = _advanced_time_expression(
-        assignment,
-        "crop_top",
-        duration_seconds=duration_seconds,
-    )
-    right = _advanced_time_expression(
-        assignment,
-        "crop_right",
-        duration_seconds=duration_seconds,
-    )
-    bottom = _advanced_time_expression(
-        assignment,
-        "crop_bottom",
-        duration_seconds=duration_seconds,
-    )
-    left, right = _normalize_crop_pair(left, right)
-    top, bottom = _normalize_crop_pair(top, bottom)
     return (
-        f"gte(X,W*({left}))*"
-        f"lt(X,W*(1-({right})))*"
-        f"gte(Y,H*({top}))*"
-        f"lt(Y,H*(1-({bottom})))"
+        f"(abs({expression})-abs(({expression})-0.450000)+0.450000)/2"
     )
 
 
-def compile_k2_crop_mask_filter(
+def _crop_easing_expression(easing: str) -> str:
+    if easing == "ease_in":
+        return "TI*TI"
+    if easing == "ease_out":
+        return "1-(1-TI)*(1-TI)"
+    if easing == "ease_in_out":
+        x = "2*TI-1"
+        tail = f"(1-abs({x}))"
+        return f"0.5+sgn({x})*(1-({tail})*({tail}))/2"
+    return "TI"
+
+
+def _crop_segment_expression(
+    start_value: float,
+    end_value: float,
+    *,
+    interpolation: str,
+    easing: str,
+) -> str:
+    if interpolation == "hold":
+        raw = _number(start_value)
+    else:
+        eased = _crop_easing_expression(easing)
+        delta = end_value - start_value
+        raw = f"{_number(start_value)}+({_number(delta)})*({eased})"
+    return _crop_clamp_expression(raw)
+
+
+def _constant_crop_expression(value: float) -> str:
+    return _crop_clamp_expression(_number(value))
+
+
+def _crop_track_command_intervals(
+    assignment: AnimationAssignment | None,
+    property_name: str,
+    *,
+    duration_seconds: float,
+    target: str,
+    command: str,
+    dimension: str,
+    invert: bool = False,
+) -> tuple[str, ...]:
+    track = find_keyframe_track(assignment, property_name)
+    if track is None or not is_supported_advanced_keyframe_track(track):
+        return ()
+
+    duration = max(0.001, float(duration_seconds))
+    points = track.keyframes
+    intervals: list[tuple[float, float, str]] = []
+
+    first_seconds = points[0].time * duration
+    if first_seconds > 0.0:
+        intervals.append(
+            (0.0, first_seconds, _constant_crop_expression(points[0].value))
+        )
+
+    if len(points) == 1:
+        intervals.append(
+            (
+                first_seconds,
+                duration,
+                _constant_crop_expression(points[0].value),
+            )
+        )
+    else:
+        for start, end in zip(points, points[1:], strict=False):
+            intervals.append(
+                (
+                    start.time * duration,
+                    end.time * duration,
+                    _crop_segment_expression(
+                        start.value,
+                        end.value,
+                        interpolation=start.interpolation,
+                        easing=start.easing,
+                    ),
+                )
+            )
+        last_seconds = points[-1].time * duration
+        if last_seconds < duration:
+            intervals.append(
+                (
+                    last_seconds,
+                    duration,
+                    _constant_crop_expression(points[-1].value),
+                )
+            )
+
+    commands: list[str] = []
+    for start_seconds, end_seconds, value_expr in intervals:
+        if end_seconds <= start_seconds:
+            continue
+        pixel_expr = (
+            f"{dimension}*(1-({value_expr}))"
+            if invert
+            else f"{dimension}*({value_expr})"
+        )
+        commands.append(
+            f"{_number(start_seconds)}-{_number(end_seconds)} "
+            f"[expr] {target} {command} {pixel_expr}"
+        )
+    return tuple(commands)
+
+
+def _crop_enable_expression(
+    assignment: AnimationAssignment | None,
+    property_name: str,
+    *,
+    duration_seconds: float,
+) -> str:
+    value = _advanced_time_expression(
+        assignment,
+        property_name,
+        duration_seconds=duration_seconds,
+        time_variable="t",
+    )
+    return f"gt(({value}),0.000001)"
+
+
+def compile_k2_crop_filters(
     assignment: AnimationAssignment | None,
     *,
     duration_seconds: float,
-) -> str | None:
-    """Compile the alpha-plane crop gate while keeping RGB untouched."""
+    instance_id: str,
+) -> tuple[str, ...]:
+    """Compile K2 crop as four runtime transparent edge boxes.
 
-    gate = _crop_gate_expression(
-        assignment,
-        duration_seconds=duration_seconds,
+    The frame canvas never changes. Pixels outside the visible rectangle are
+    overwritten with transparent black while pixels inside remain untouched,
+    preserving the source alpha channel.
+    """
+
+    if not assignment_has_supported_crop(assignment):
+        return ()
+
+    duration = max(0.001, float(duration_seconds))
+    initial = evaluate_assignment_crop_visibility(assignment, 0.0)
+    commands: list[str] = []
+    filters: list[str] = ["format=rgba"]
+
+    specs = (
+        (
+            "crop_left",
+            "left",
+            "w",
+            "W",
+            False,
+            f"x=0:y=0:w=iw*{initial.left:.6f}:h=ih",
+        ),
+        (
+            "crop_top",
+            "top",
+            "h",
+            "H",
+            False,
+            f"x=0:y=0:w=iw:h=ih*{initial.top:.6f}",
+        ),
+        (
+            "crop_right",
+            "right",
+            "x",
+            "W",
+            True,
+            f"x=iw*(1-{initial.right:.6f}):y=0:w=iw:h=ih",
+        ),
+        (
+            "crop_bottom",
+            "bottom",
+            "y",
+            "H",
+            True,
+            f"x=0:y=ih*(1-{initial.bottom:.6f}):w=iw:h=ih",
+        ),
     )
-    if gate is None:
-        return None
-    return f"geq=lum='p(X,Y)*({gate})'"
+
+    active_specs: list[tuple[str, str, str, str, bool, str]] = []
+    for property_name, suffix, command, dimension, invert, geometry in specs:
+        track = find_keyframe_track(assignment, property_name)
+        if track is None or not is_supported_advanced_keyframe_track(track):
+            continue
+        target = f"drawbox@{instance_id}_{suffix}"
+        commands.extend(
+            _crop_track_command_intervals(
+                assignment,
+                property_name,
+                duration_seconds=duration,
+                target=target,
+                command=command,
+                dimension=dimension,
+                invert=invert,
+            )
+        )
+        active_specs.append(
+            (property_name, suffix, command, dimension, invert, geometry)
+        )
+
+    if commands:
+        filters.append("sendcmd=c='" + ";".join(commands) + "'")
+
+    for property_name, suffix, _command, _dimension, _invert, geometry in active_specs:
+        enable = _crop_enable_expression(
+            assignment,
+            property_name,
+            duration_seconds=duration,
+        )
+        filters.append(
+            f"drawbox@{instance_id}_{suffix}="
+            f"{geometry}:color=black@0:t=fill:replace=1:"
+            f"enable='{enable}'"
+        )
+
+    return tuple(filters)
 
 
 def assignment_has_k1_opacity(
