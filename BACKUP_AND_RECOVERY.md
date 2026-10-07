@@ -13,7 +13,11 @@ Keep these together for every final release:
 - status files STEP09–STEP15 and architecture documentation.
 
 ## User-project recovery
-Project documents use versioned `.aavcproj` JSON. Autosave/recovery files are runtime data and must never be packaged into a release artifact.
+Project documents use versioned `.aavcproj` JSON. AAVC 0.2.1 reads schema v3 and v4. Schema v4 is used only with `animation_keyframe_contract=advanced-v1`.
+
+On the first successful overwrite that promotes a saved v3 project to v4, AAVC creates a non-clobbering `.pre-schema-v4.bak` beside the project. Keep that file if rollback to a v0.2.0-readable v3 source may be needed.
+
+Autosave/recovery files are runtime data and must never be packaged into a release artifact. Recovery preserves the schema carried by the validated snapshot and must not silently promote or demote it.
 
 ## Disaster recovery sequence
 1. verify the source-backup checksum;
