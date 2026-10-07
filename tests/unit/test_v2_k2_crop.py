@@ -221,7 +221,7 @@ def test_k2_v3_crop_stays_dormant_and_filtergraph_unchanged(
     )
 
 
-def test_k2_bezier_crop_remains_blocked_until_k6(tmp_path: Path) -> None:
+def test_k6_bezier_crop_is_active_in_advanced_v1(tmp_path: Path) -> None:
     project = _advanced_project(
         (_track("crop_left", 0.0, 0.25, interpolation="bezier"),)
     )
@@ -229,12 +229,12 @@ def test_k2_bezier_crop_remains_blocked_until_k6(tmp_path: Path) -> None:
     graph = _filter_graph(build_ffmpeg_command(plan))
     report = validate_render_plan(plan)
 
-    assert "drawbox@crop_opacity_0_0_left" not in graph
-    assert any(
+    assert "drawbox@crop_opacity_0_0_left" in graph
+    assert not any(
         issue.code == "ADVANCED_BACKEND_UNAVAILABLE"
         for issue in report.issues
     )
-    assert not report.ok
+    assert report.ok
 
 
 class _CropCapabilityRunner(ProcessRunner):
