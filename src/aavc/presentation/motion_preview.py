@@ -264,6 +264,7 @@ def native_visual_preview_scale(
     *,
     time_seconds: float,
     duration_seconds: float,
+    animation_keyframe_contract: ResolvedAnimationKeyframeContract = "legacy-v3",
 ) -> float:
     """Evaluate native scale using the same timing window as FFmpeg."""
 
@@ -289,10 +290,11 @@ def native_visual_preview_scale(
                 progress = (current - exit_start) / window
             scale *= evaluate_effect(effect, progress, entering=entering).scale
 
-    keyframe_scale = evaluate_assignment_keyframe(
+    keyframe_scale = evaluate_assignment_keyframe_with_contract(
         assignment,
         "scale",
         current / duration,
+        advanced_semantics=animation_keyframe_contract == "advanced-v1",
     )
     if keyframe_scale is not None:
         scale *= keyframe_scale
@@ -304,6 +306,7 @@ def native_visual_preview_rotation(
     *,
     time_seconds: float,
     duration_seconds: float,
+    animation_keyframe_contract: ResolvedAnimationKeyframeContract = "legacy-v3",
 ) -> float:
     """Evaluate native Tumble rotation using the same timing window as FFmpeg."""
 
@@ -333,10 +336,11 @@ def native_visual_preview_rotation(
                 * intensity
             )
 
-    keyframe_rotation = evaluate_assignment_keyframe(
+    keyframe_rotation = evaluate_assignment_keyframe_with_contract(
         assignment,
         "rotation_degrees",
         current / duration,
+        advanced_semantics=animation_keyframe_contract == "advanced-v1",
     )
     if keyframe_rotation is not None:
         rotation += keyframe_rotation
@@ -348,6 +352,7 @@ def native_motion_preview_offset(
     *,
     time_seconds: float,
     duration_seconds: float,
+    animation_keyframe_contract: ResolvedAnimationKeyframeContract = "legacy-v3",
 ) -> PreviewMotionOffset:
     """Evaluate native motion using the same 0.25s timing contract as FFmpeg."""
 
@@ -378,15 +383,18 @@ def native_motion_preview_offset(
             offset_y += delta.offset_y * intensity
 
     normalized_time = current / duration
-    keyframe_x = evaluate_assignment_keyframe(
+    advanced_semantics = animation_keyframe_contract == "advanced-v1"
+    keyframe_x = evaluate_assignment_keyframe_with_contract(
         assignment,
         "position_x",
         normalized_time,
+        advanced_semantics=advanced_semantics,
     )
-    keyframe_y = evaluate_assignment_keyframe(
+    keyframe_y = evaluate_assignment_keyframe_with_contract(
         assignment,
         "position_y",
         normalized_time,
+        advanced_semantics=advanced_semantics,
     )
     if keyframe_x is not None:
         offset_x += keyframe_x
