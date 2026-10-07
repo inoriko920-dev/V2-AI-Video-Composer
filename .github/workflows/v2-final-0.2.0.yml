@@ -240,9 +240,10 @@ jobs:
           set -euo pipefail
           cd release_bundle
           sha256sum -c SHA256SUMS.txt
-          grep -Fx "release_commit=$GITHUB_SHA" BUILD_INFO.txt
-          grep -Fx "version=0.2.0" BUILD_INFO.txt
-          grep -Fx "channel=stable" BUILD_INFO.txt
+          tr -d '\r' < BUILD_INFO.txt > BUILD_INFO.normalized.txt
+          grep -Fx "release_commit=$GITHUB_SHA" BUILD_INFO.normalized.txt
+          grep -Fx "version=0.2.0" BUILD_INFO.normalized.txt
+          grep -Fx "channel=stable" BUILD_INFO.normalized.txt
 
       - name: Guard immutable v0.2.0 tag and release
         id: guard
