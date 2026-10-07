@@ -9,6 +9,8 @@ from aavc.animation import (
     crop_assignment_has_clamped_keyframes,
     crop_assignment_has_pair_normalization,
     is_supported_advanced_keyframe_track,
+    keyframe_parameter_clamps,
+    keyframe_parameter_mismatches,
     keyframe_track_support_reason,
 )
 from aavc.animation.compiler import is_native_visual_effect
@@ -137,6 +139,29 @@ def validate_render_plan(plan: RenderPlan) -> PreflightReport:
                         "dinormalisasi agar minimal 10% area tetap terlihat",
                     )
                 )
+
+            if plan.animation_keyframe_contract == "advanced-v1":
+                for track in assignment.keyframe_tracks:
+                    for detail in keyframe_parameter_mismatches(track):
+                        issues.append(
+                            PreflightIssue(
+                                "ADVANCED_PARAMETER_MISMATCH",
+                                PreflightSeverity.WARNING,
+                                f"{track.property_name} pada "
+                                f"Scene {scene.scene_number}/"
+                                f"{assignment.asset_id}: {detail}",
+                            )
+                        )
+                    for detail in keyframe_parameter_clamps(track):
+                        issues.append(
+                            PreflightIssue(
+                                "ADVANCED_VALUE_CLAMPED",
+                                PreflightSeverity.WARNING,
+                                f"{track.property_name} pada "
+                                f"Scene {scene.scene_number}/"
+                                f"{assignment.asset_id}: {detail}",
+                            )
+                        )
 
             for track in assignment.keyframe_tracks:
                 if track_requires_advanced(track):
