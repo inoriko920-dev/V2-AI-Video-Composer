@@ -9,8 +9,8 @@ from .crop import (
 )
 from .evaluator import TransformDelta, evaluate_effect
 from .keyframes import (
-    ACTIVE_KEYFRAME_PROPERTIES,
     ACTIVE_ADVANCED_KEYFRAME_PROPERTIES,
+    ACTIVE_KEYFRAME_PROPERTIES,
     K1_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES,
     K2_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES,
     KEYFRAME_PROPERTY_LIMITS,
@@ -38,6 +38,7 @@ __all__ = [
     "KEYFRAME_PROPERTY_LIMITS",
     "assignment_has_supported_crop",
     "crop_assignment_has_clamped_keyframes",
+    "crop_assignment_has_pair_normalization",
     "advanced_keyframe_track_support_reason",
     "TransformDelta",
     "all_effects",
