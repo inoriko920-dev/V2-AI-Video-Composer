@@ -213,7 +213,7 @@ jobs:
 
   publish:
     name: publish-v0.2.0
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && startsWith(github.event.head_commit.message, 'release(v2): publish 0.2.0 stable')
+    if: "${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && startsWith(github.event.head_commit.message, 'release(v2): publish 0.2.0 stable') }}"
     needs:
       - codeql-python
       - windows-final
