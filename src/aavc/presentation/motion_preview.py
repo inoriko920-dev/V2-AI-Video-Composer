@@ -3,7 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from aavc.animation import (
+    CropVisibility,
     evaluate_assignment_advanced_keyframe,
+    evaluate_assignment_crop_visibility,
     evaluate_assignment_keyframe,
     evaluate_effect,
 )
@@ -133,6 +135,26 @@ def native_visual_preview_opacity(
             opacity *= keyframe_opacity
 
     return max(0.0, min(1.0, opacity))
+
+
+def native_visual_preview_crop(
+    assignment: AnimationAssignment | None,
+    *,
+    time_seconds: float,
+    duration_seconds: float,
+    animation_keyframe_contract: ResolvedAnimationKeyframeContract = "legacy-v3",
+) -> CropVisibility:
+    """Evaluate K2 crop without changing the asset canvas geometry."""
+
+    if assignment is None or animation_keyframe_contract != "advanced-v1":
+        return CropVisibility()
+
+    duration = max(0.001, float(duration_seconds))
+    current = max(0.0, min(float(time_seconds), duration))
+    return evaluate_assignment_crop_visibility(
+        assignment,
+        current / duration,
+    )
 
 
 def native_visual_preview_scale(
