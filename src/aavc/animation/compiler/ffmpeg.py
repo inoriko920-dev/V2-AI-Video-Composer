@@ -84,6 +84,7 @@ def is_native_visual_effect(name: str) -> bool:
 def _has_supported_keyframe(
     assignment: AnimationAssignment | None,
     *property_names: str,
+    advanced_semantics: bool = False,
 ) -> bool:
     if assignment is None:
         return False
@@ -91,13 +92,19 @@ def _has_supported_keyframe(
         (
             track := find_keyframe_track(assignment, property_name)
         ) is not None
-        and is_supported_keyframe_track(track)
+        and (
+            is_supported_advanced_keyframe_track(track)
+            if advanced_semantics
+            else is_supported_keyframe_track(track)
+        )
         for property_name in property_names
     )
 
 
 def assignment_has_native_motion(
     assignment: AnimationAssignment | None,
+    *,
+    advanced_semantics: bool = False,
 ) -> bool:
     if assignment is None:
         return False
@@ -109,6 +116,7 @@ def assignment_has_native_motion(
         assignment,
         "position_x",
         "position_y",
+        advanced_semantics=advanced_semantics,
     )
 
 
@@ -125,6 +133,8 @@ def assignment_has_native_alpha(
 
 def assignment_has_native_scale(
     assignment: AnimationAssignment | None,
+    *,
+    advanced_semantics: bool = False,
 ) -> bool:
     if assignment is None:
         return False
@@ -132,11 +142,17 @@ def assignment_has_native_scale(
         is_native_visual_scale_effect(assignment.enter_effect)
         or is_native_visual_scale_effect(assignment.exit_effect)
     )
-    return legacy or _has_supported_keyframe(assignment, "scale")
+    return legacy or _has_supported_keyframe(
+        assignment,
+        "scale",
+        advanced_semantics=advanced_semantics,
+    )
 
 
 def assignment_has_native_rotation(
     assignment: AnimationAssignment | None,
+    *,
+    advanced_semantics: bool = False,
 ) -> bool:
     if assignment is None:
         return False
@@ -147,6 +163,7 @@ def assignment_has_native_rotation(
     return legacy or _has_supported_keyframe(
         assignment,
         "rotation_degrees",
+        advanced_semantics=advanced_semantics,
     )
 
 
@@ -378,10 +395,17 @@ def compile_native_scale_filter(
     assignment: AnimationAssignment | None,
     *,
     duration_seconds: float,
+    advanced_semantics: bool = False,
 ) -> str | None:
     """Compile frame-evaluated per-asset scale for native scale effects."""
 
-    if not assignment_has_native_scale(assignment) or assignment is None:
+    if (
+        not assignment_has_native_scale(
+            assignment,
+            advanced_semantics=advanced_semantics,
+        )
+        or assignment is None
+    ):
         return None
 
     factors: list[str] = []
@@ -399,6 +423,7 @@ def compile_native_scale_filter(
         assignment,
         "scale",
         duration_seconds=duration_seconds,
+        advanced_semantics=advanced_semantics,
     )
     if keyframe_factor is not None:
         factors.append(keyframe_factor)
@@ -437,10 +462,17 @@ def compile_native_rotation_filter(
     assignment: AnimationAssignment | None,
     *,
     duration_seconds: float,
+    advanced_semantics: bool = False,
 ) -> str | None:
     """Compile frame-evaluated native rotation without changing base layout size."""
 
-    if not assignment_has_native_rotation(assignment) or assignment is None:
+    if (
+        not assignment_has_native_rotation(
+            assignment,
+            advanced_semantics=advanced_semantics,
+        )
+        or assignment is None
+    ):
         return None
 
     duration = max(0.001, float(duration_seconds))
@@ -466,6 +498,7 @@ def compile_native_rotation_filter(
         assignment,
         "rotation_degrees",
         duration_seconds=duration,
+        advanced_semantics=advanced_semantics,
     )
     if keyframe_degrees is not None:
         terms.append(f"({keyframe_degrees})*0.017453293")
@@ -552,10 +585,17 @@ def compile_motion_overlay_position(
     base_y: str,
     assignment: AnimationAssignment | None,
     duration_seconds: float,
+    advanced_semantics: bool = False,
 ) -> tuple[str, str]:
     """Compile render-safe per-asset motion into overlay x/y expressions."""
 
-    if not assignment_has_native_motion(assignment) or assignment is None:
+    if (
+        not assignment_has_native_motion(
+            assignment,
+            advanced_semantics=advanced_semantics,
+        )
+        or assignment is None
+    ):
         return base_x, base_y
 
     duration = max(0.001, duration_seconds)
@@ -588,11 +628,13 @@ def compile_motion_overlay_position(
         assignment,
         "position_x",
         duration_seconds=duration,
+        advanced_semantics=advanced_semantics,
     )
     y_keyframe = compile_keyframe_value_expression(
         assignment,
         "position_y",
         duration_seconds=duration,
+        advanced_semantics=advanced_semantics,
     )
     if x_keyframe is not None:
         x_terms.append(f"W*({x_keyframe})")
