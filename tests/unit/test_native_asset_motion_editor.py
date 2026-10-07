@@ -31,7 +31,7 @@ def _project():
 
 
 def test_native_motion_choices_match_render_backed_contract() -> None:
-    assert NATIVE_MOTION_CHOICES == effect_names()
+    assert effect_names() == NATIVE_MOTION_CHOICES
     assert len(NATIVE_MOTION_CHOICES) == 21
 
 
