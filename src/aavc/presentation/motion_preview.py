@@ -10,7 +10,7 @@ from aavc.animation import (
     evaluate_assignment_blur,
     evaluate_assignment_crop_visibility,
     evaluate_assignment_glow,
-    evaluate_assignment_keyframe,
+    evaluate_assignment_keyframe_with_contract,
     evaluate_assignment_shadow,
     evaluate_effect,
 )
