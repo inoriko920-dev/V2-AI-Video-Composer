@@ -12,7 +12,7 @@ from aavc.animation.compiler import (
 from aavc.animation.contract import ResolvedAnimationKeyframeContract
 from aavc.domain.project.models import AnimationAssignment
 
-from .advanced_filters import compile_k1_opacity_filters
+from .advanced_filters import compile_k1_opacity_filters, compile_k2_crop_filters
 from .render_plan import RenderPlan, SceneRenderPlan
 
 
@@ -60,6 +60,14 @@ def _scaled_asset_clause(
         f"force_original_aspect_ratio=decrease:flags={scale_flags},"
         "setpts=PTS-STARTPTS"
     )
+    if animation_keyframe_contract == "advanced-v1":
+        crop_filters = compile_k2_crop_filters(
+            assignment,
+            duration_seconds=duration_seconds,
+        )
+        if crop_filters:
+            base += "," + ",".join(crop_filters)
+
     scale_filter = compile_native_scale_filter(
         assignment,
         duration_seconds=duration_seconds,
