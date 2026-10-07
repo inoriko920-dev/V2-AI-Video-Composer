@@ -153,6 +153,7 @@ def validate_render_plan(plan: RenderPlan) -> PreflightReport:
                     elif (
                         (
                             track.property_name == "opacity"
+                            or track.property_name == "blur"
                             or track.property_name in CROP_PROPERTIES
                         )
                         and is_supported_advanced_keyframe_track(track)
