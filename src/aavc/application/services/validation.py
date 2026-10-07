@@ -4,7 +4,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from aavc.animation import keyframe_track_support_reason
+from aavc.animation import (
+    is_supported_advanced_keyframe_track,
+    keyframe_track_support_reason,
+)
 from aavc.animation.compiler import is_native_visual_effect
 from aavc.animation.contract import (
     track_requires_advanced,
@@ -121,6 +124,11 @@ def validate_project(project: ProjectState) -> tuple[ValidationIssue, ...]:
                             asset_id=assignment.asset_id,
                         )
                     )
+                elif (
+                    track.property_name == "opacity"
+                    and is_supported_advanced_keyframe_track(track)
+                ):
+                    continue
                 else:
                     issues.append(
                         ValidationIssue(
@@ -128,8 +136,8 @@ def validate_project(project: ProjectState) -> tuple[ValidationIssue, ...]:
                             severity="ERROR",
                             message=(
                                 f"Track advanced {track.property_name} pada "
-                                f"{assignment.asset_id} belum memiliki backend yang "
-                                "dipromosikan pada K0"
+                                f"{assignment.asset_id} belum memiliki backend aktif "
+                                "pada wave saat ini"
                             ),
                             scene_number=assignment.scene_number,
                             asset_id=assignment.asset_id,
