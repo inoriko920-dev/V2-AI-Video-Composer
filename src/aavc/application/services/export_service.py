@@ -27,6 +27,7 @@ from aavc.rendering.advanced_filters import (
     render_plan_requires_k1_opacity,
     render_plan_requires_k2_crop,
     render_plan_requires_k3_blur,
+    render_plan_requires_k4_shadow_glow,
 )
 from aavc.rendering.render_plan import RenderPlan
 from aavc.subtitles import compile_srt_to_ass
@@ -69,6 +70,15 @@ def ensure_advanced_render_capabilities(
                 AdvancedFFmpegFeature.NAMED_GBLUR,
                 AdvancedFFmpegFeature.SENDCMD_RUNTIME_SIGMA,
                 AdvancedFFmpegFeature.PREMULTIPLY_ALPHA,
+            }
+        )
+    if render_plan_requires_k4_shadow_glow(plan):
+        required.update(
+            {
+                AdvancedFFmpegFeature.NAMED_GBLUR,
+                AdvancedFFmpegFeature.SENDCMD_RUNTIME_SIGMA,
+                AdvancedFFmpegFeature.ALPHA_BRANCH,
+                AdvancedFFmpegFeature.OVERLAY_EXPRESSIONS,
             }
         )
     if not required:
