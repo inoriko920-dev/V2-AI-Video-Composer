@@ -2,7 +2,7 @@
 
 ## V2 0.2.0 publication
 
-Status: **FINAL GATE IN PROGRESS**
+Status: **PUBLISHED / VERIFIED**
 
 Canonical final target:
 - Version: `0.2.0`
@@ -13,9 +13,17 @@ Canonical final target:
 - Real Selection In/Out render: PASS
 - Packaged EXE UI launch: PASS
 
-The V2 final workflow is guarded and may not overwrite an existing `v0.2.0`
-tag or release. Publication occurs only after its own Windows final gate and CodeQL
-job both pass. Historical `v0.1.0` and `v0.1.1` remain immutable.
+Canonical published evidence:
+- release commit: `c6ad75308d302cd816301a2a7a34ebe7eb4148a7`
+- final workflow run: `37579907844` — PASS
+- Windows ZIP SHA-256: `eea46b42400c91e22d731c8261b9d7f29933ee0f94d45bcaa331a001805c525c`
+- source ZIP SHA-256: `fbdabd43c71f1585e817ce30f27d611668ecb0dc3c39df0b19a441968f0f7fe9`
+- final candidate artifact: `11463714566`
+- final UI evidence artifact: `11464770244`
+
+The published tag is immutable. The V2 final workflow is now
+`workflow_dispatch`-only, read-only, pinned to the release commit, and contains no
+publication job. Historical `v0.1.0` and `v0.1.1` remain immutable.
 
 ---
 
