@@ -7,6 +7,11 @@ from pathlib import Path
 from typing import Any, cast
 from uuid import uuid4
 
+from aavc.animation.contract import (
+    AUTOMATIC_MIGRATION_SCHEMA_VERSION,
+    MAX_SUPPORTED_SCHEMA_VERSION,
+    validate_project_animation_contract,
+)
 from aavc.domain.animation import (
     KEYFRAME_EASINGS,
     KEYFRAME_INTERPOLATIONS,
@@ -16,11 +21,6 @@ from aavc.domain.animation import (
     KeyframeEasing,
     KeyframeInterpolation,
     TransformProperty,
-)
-from aavc.animation.contract import (
-    AUTOMATIC_MIGRATION_SCHEMA_VERSION,
-    MAX_SUPPORTED_SCHEMA_VERSION,
-    validate_project_animation_contract,
 )
 from aavc.domain.project.models import (
     AnimationAssignment,
