@@ -24,7 +24,7 @@ from aavc.domain.project.models import AnimationAssignment
 from aavc.platform.process_runner import ProcessResult, ProcessRunner
 from aavc.presentation.motion_preview import native_visual_preview_crop
 from aavc.rendering import build_ffmpeg_command, build_render_plan, validate_render_plan
-from aavc.rendering.advanced_filters import compile_k2_crop_filters
+from aavc.rendering.advanced_filters import compile_k2_crop_mask_filter
 
 FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "step10"
 
@@ -91,13 +91,11 @@ def _filter_graph(command: list[str]) -> str:
 def test_k2_crop_normalization_keeps_at_least_ten_percent_visible() -> None:
     crop = normalize_crop_visibility(0.45, 0.45, 0.45, 0.45)
 
-    assert crop == CropVisibility(
-        left=pytest.approx(0.45),
-        top=pytest.approx(0.45),
-        right=pytest.approx(0.45),
-        bottom=pytest.approx(0.45),
-        normalized=False,
-    )
+    assert crop.left == pytest.approx(0.45)
+    assert crop.top == pytest.approx(0.45)
+    assert crop.right == pytest.approx(0.45)
+    assert crop.bottom == pytest.approx(0.45)
+    assert crop.normalized is False
     assert crop.visible_width == pytest.approx(0.10)
     assert crop.visible_height == pytest.approx(0.10)
 
@@ -127,18 +125,16 @@ def test_k2_crop_preview_is_contract_aware() -> None:
 def test_k2_compiler_uses_fixed_canvas_dynamic_spatial_alpha() -> None:
     assignment = _advanced_project().animations[0]
 
-    filters = compile_k2_crop_filters(
+    mask_filter = compile_k2_crop_mask_filter(
         assignment,
         duration_seconds=2.0,
     )
-    joined = ",".join(filters)
 
-    assert filters[0] == "format=rgba"
-    assert "geq=" in joined
-    assert "alpha(X,Y)*" in joined
-    assert "gte(X,W*" in joined
-    assert "lt(X,W*(1-" in joined
-    assert "T" in joined
+    assert mask_filter is not None
+    assert "geq=lum='p(X,Y)*" in mask_filter
+    assert "gte(X,W*" in mask_filter
+    assert "lt(X,W*(1-" in mask_filter
+    assert "T" in mask_filter
 
 
 def test_k2_crop_precedes_scale_and_rotation_in_final_graph(tmp_path: Path) -> None:
