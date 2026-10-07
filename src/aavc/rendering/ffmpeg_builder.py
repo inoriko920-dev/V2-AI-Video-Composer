@@ -222,6 +222,9 @@ def build_ffmpeg_command(plan: RenderPlan, ffmpeg: str = "ffmpeg") -> list[str]:
                         scale_flags=scale_flags,
                         assignment=_animation_at(scene, aidx),
                         duration_seconds=duration,
+                        fps=plan.fps,
+                        canvas_width=plan.width,
+                        canvas_height=plan.height,
                         animation_keyframe_contract=plan.animation_keyframe_contract,
                         opacity_instance_id=f"opacity_{sidx}_{aidx}",
                     )
