@@ -175,6 +175,64 @@ class AdvancedFFmpegCapabilityProbe:
                     + (crop_probe.stderr[-1000:] or "unknown FFmpeg error")
                 )
 
+        try:
+            blur_probe = self._runner.run(
+                [
+                    tool.path,
+                    "-hide_banner",
+                    "-loglevel",
+                    "error",
+                    "-f",
+                    "lavfi",
+                    "-i",
+                    (
+                        "color=c=black:s=32x32:r=4:d=1,"
+                        "drawbox=x=15:y=15:w=2:h=2:"
+                        "color=white:t=fill,format=rgba"
+                    ),
+                    "-vf",
+                    (
+                        "premultiply=inplace=1,"
+                        "sendcmd=c='0-1 [expr] "
+                        "gblur@k3_probe sigma 4*TI',"
+                        "gblur@k3_probe=sigma=0:steps=2,"
+                        "unpremultiply=inplace=1"
+                    ),
+                    "-frames:v",
+                    "4",
+                    "-pix_fmt",
+                    "rgba",
+                    "-f",
+                    "framemd5",
+                    "-",
+                ],
+                timeout_seconds=10.0,
+            )
+        except (OSError, RuntimeError) as error:
+            diagnostics.append(
+                "K3 runtime-gblur probe gagal: " + str(error)
+            )
+        else:
+            hashes = {
+                line.rsplit(",", 1)[-1].strip()
+                for line in blur_probe.stdout.splitlines()
+                if line and not line.startswith("#") and "," in line
+            }
+            if blur_probe.returncode == 0 and len(hashes) >= 3:
+                features.update(
+                    {
+                        AdvancedFFmpegFeature.NAMED_GBLUR,
+                        AdvancedFFmpegFeature.SENDCMD_RUNTIME_SIGMA,
+                        AdvancedFFmpegFeature.PREMULTIPLY_ALPHA,
+                    }
+                )
+            else:
+                detail = (
+                    blur_probe.stderr[-1000:]
+                    or "frame hashes tidak membuktikan perubahan sigma per frame"
+                )
+                diagnostics.append("K3 runtime-gblur probe gagal: " + detail)
+
         self._cached = AdvancedFFmpegCapabilities(
             available=True,
             executable_path=tool.path,
