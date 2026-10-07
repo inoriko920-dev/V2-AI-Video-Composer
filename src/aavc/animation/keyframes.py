@@ -6,12 +6,14 @@ from aavc.domain.project.models import AnimationAssignment
 ACTIVE_KEYFRAME_PROPERTIES = frozenset(
     {"position_x", "position_y", "scale", "rotation_degrees"}
 )
+K1_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES = frozenset({"opacity"})
 SUPPORTED_KEYFRAME_INTERPOLATIONS = frozenset({"hold", "linear"})
 KEYFRAME_PROPERTY_LIMITS: dict[str, tuple[float, float]] = {
     "position_x": (-0.10, 0.10),
     "position_y": (-0.10, 0.10),
     "scale": (0.75, 1.50),
     "rotation_degrees": (-30.0, 30.0),
+    "opacity": (0.0, 1.0),
 }
 
 
@@ -31,9 +33,13 @@ def find_keyframe_track(
     )
 
 
-def keyframe_track_support_reason(track: AnimationKeyframeTrack) -> str | None:
-    if track.property_name not in ACTIVE_KEYFRAME_PROPERTIES:
-        return f"property {track.property_name} belum aktif di Wave E"
+def _track_support_reason(
+    track: AnimationKeyframeTrack,
+    *,
+    active_properties: frozenset[str],
+) -> str | None:
+    if track.property_name not in active_properties:
+        return f"property {track.property_name} belum aktif"
     for keyframe in track.keyframes:
         if keyframe.interpolation not in SUPPORTED_KEYFRAME_INTERPOLATIONS:
             return (
@@ -47,8 +53,33 @@ def keyframe_track_support_reason(track: AnimationKeyframeTrack) -> str | None:
     return None
 
 
+def keyframe_track_support_reason(track: AnimationKeyframeTrack) -> str | None:
+    reason = _track_support_reason(
+        track,
+        active_properties=ACTIVE_KEYFRAME_PROPERTIES,
+    )
+    if reason is not None and track.property_name not in ACTIVE_KEYFRAME_PROPERTIES:
+        return f"property {track.property_name} belum aktif di Wave E"
+    return reason
+
+
+def advanced_keyframe_track_support_reason(
+    track: AnimationKeyframeTrack,
+) -> str | None:
+    return _track_support_reason(
+        track,
+        active_properties=(
+            ACTIVE_KEYFRAME_PROPERTIES | K1_ACTIVE_ADVANCED_KEYFRAME_PROPERTIES
+        ),
+    )
+
+
 def is_supported_keyframe_track(track: AnimationKeyframeTrack) -> bool:
     return keyframe_track_support_reason(track) is None
+
+
+def is_supported_advanced_keyframe_track(track: AnimationKeyframeTrack) -> bool:
+    return advanced_keyframe_track_support_reason(track) is None
 
 
 def clamp_keyframe_value(property_name: str, value: float) -> float:
@@ -72,15 +103,10 @@ def _eased_fraction(easing: str, fraction: float) -> float:
     return u
 
 
-def evaluate_keyframe_track(
+def _evaluate_supported_keyframe_track(
     track: AnimationKeyframeTrack,
     normalized_time: float,
 ) -> float:
-    if not is_supported_keyframe_track(track):
-        raise ValueError(
-            keyframe_track_support_reason(track) or "Track keyframe tidak didukung"
-        )
-
     current = max(0.0, min(1.0, float(normalized_time)))
     points = track.keyframes
     if len(points) == 1 or current <= points[0].time:
@@ -101,6 +127,29 @@ def evaluate_keyframe_track(
     return clamp_keyframe_value(track.property_name, points[-1].value)
 
 
+def evaluate_keyframe_track(
+    track: AnimationKeyframeTrack,
+    normalized_time: float,
+) -> float:
+    if not is_supported_keyframe_track(track):
+        raise ValueError(
+            keyframe_track_support_reason(track) or "Track keyframe tidak didukung"
+        )
+    return _evaluate_supported_keyframe_track(track, normalized_time)
+
+
+def evaluate_advanced_keyframe_track(
+    track: AnimationKeyframeTrack,
+    normalized_time: float,
+) -> float:
+    if not is_supported_advanced_keyframe_track(track):
+        raise ValueError(
+            advanced_keyframe_track_support_reason(track)
+            or "Track keyframe advanced tidak didukung"
+        )
+    return _evaluate_supported_keyframe_track(track, normalized_time)
+
+
 def evaluate_assignment_keyframe(
     assignment: AnimationAssignment | None,
     property_name: str,
@@ -110,3 +159,14 @@ def evaluate_assignment_keyframe(
     if track is None or not is_supported_keyframe_track(track):
         return None
     return evaluate_keyframe_track(track, normalized_time)
+
+
+def evaluate_assignment_advanced_keyframe(
+    assignment: AnimationAssignment | None,
+    property_name: str,
+    normalized_time: float,
+) -> float | None:
+    track = find_keyframe_track(assignment, property_name)
+    if track is None or not is_supported_advanced_keyframe_track(track):
+        return None
+    return evaluate_advanced_keyframe_track(track, normalized_time)
