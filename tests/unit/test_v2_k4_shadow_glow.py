@@ -204,6 +204,7 @@ def test_k4_stage_is_after_rotation_and_before_group_opacity(tmp_path: Path) -> 
     opacity_index = graph.index("colorchannelmixer@opacity_0_0")
 
     assert rotate_index < k4_index < opacity_index
+    assert "]null" in graph
 
 
 def test_k4_v4_preflight_and_validation_are_green(tmp_path: Path) -> None:
