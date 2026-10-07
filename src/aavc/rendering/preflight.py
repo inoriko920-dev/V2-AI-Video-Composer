@@ -5,6 +5,7 @@ from enum import StrEnum
 from pathlib import Path
 
 from aavc.animation import keyframe_track_support_reason
+from aavc.animation.contract import track_requires_advanced
 from aavc.animation.compiler import is_native_visual_effect
 
 from .render_plan import RenderPlan
@@ -105,6 +106,30 @@ def validate_render_plan(plan: RenderPlan) -> PreflightReport:
                     if not is_native_visual_effect(effect):
                         fallback_effects.add(effect)
             for track in assignment.keyframe_tracks:
+                if track_requires_advanced(track):
+                    if plan.animation_keyframe_contract == "legacy-v3":
+                        issues.append(
+                            PreflightIssue(
+                                "ADVANCED_TRACK_DORMANT",
+                                PreflightSeverity.WARNING,
+                                "Track keyframe "
+                                f"{track.property_name} pada Scene {scene.scene_number}/"
+                                f"{assignment.asset_id} tersimpan tetapi dormant pada schema v3",
+                            )
+                        )
+                    else:
+                        issues.append(
+                            PreflightIssue(
+                                "ADVANCED_BACKEND_UNAVAILABLE",
+                                PreflightSeverity.ERROR,
+                                "Track advanced "
+                                f"{track.property_name} pada Scene {scene.scene_number}/"
+                                f"{assignment.asset_id} belum memiliki backend yang "
+                                "dipromosikan pada K0",
+                            )
+                        )
+                    continue
+
                 reason = keyframe_track_support_reason(track)
                 if reason is not None:
                     issues.append(
