@@ -13,7 +13,9 @@ from aavc.presentation.motion_preview import (
     native_motion_preview_offset,
     native_visual_preview_blur_sigma,
     native_visual_preview_crop,
+    native_visual_preview_glow,
     native_visual_preview_opacity,
+    native_visual_preview_shadow,
     native_visual_preview_rotation,
     native_visual_preview_scale,
     preview_narration_seconds,
@@ -123,6 +125,46 @@ def _blur_pixmap_approx(pixmap: Any, sigma: float) -> Any:
     return output
 
 
+def _drop_shadow_pixmap_approx(
+    pixmap: Any,
+    *,
+    color: str,
+    alpha: float,
+    blur_radius: float,
+    offset: float,
+) -> Any:
+    from PySide6.QtCore import QRectF, QPointF, Qt
+    from PySide6.QtGui import QColor, QPainter, QPixmap
+    from PySide6.QtWidgets import (
+        QGraphicsDropShadowEffect,
+        QGraphicsPixmapItem,
+        QGraphicsScene,
+    )
+
+    if alpha <= 0.001:
+        return pixmap
+
+    output = QPixmap(pixmap.size())
+    output.fill(Qt.GlobalColor.transparent)
+    scene = QGraphicsScene()
+    source_rect = QRectF(0.0, 0.0, float(pixmap.width()), float(pixmap.height()))
+    scene.setSceneRect(source_rect)
+    item = QGraphicsPixmapItem(pixmap)
+    effect = QGraphicsDropShadowEffect()
+    effect_color = QColor(color)
+    effect_color.setAlphaF(max(0.0, min(1.0, float(alpha))))
+    effect.setColor(effect_color)
+    effect.setBlurRadius(max(0.5, float(blur_radius) * 2.0))
+    effect.setOffset(QPointF(float(offset), float(offset)))
+    item.setGraphicsEffect(effect)
+    scene.addItem(item)
+
+    painter = QPainter(output)
+    scene.render(painter, source_rect, source_rect)
+    painter.end()
+    return output
+
+
 def render_native_motion_pixmap(
     plan: ScenePreviewPlan,
     assignments: tuple[AnimationAssignment, ...],
@@ -214,6 +256,38 @@ def render_native_motion_pixmap(
                 duration_seconds=plan.duration_seconds,
             )
             scaled = _rotate_pixmap_same_size(scaled, rotation_degrees)
+
+            glow = native_visual_preview_glow(
+                assignment,
+                time_seconds=time_seconds,
+                duration_seconds=plan.duration_seconds,
+                canvas_width=width,
+                canvas_height=height,
+                animation_keyframe_contract=animation_keyframe_contract,
+            )
+            scaled = _drop_shadow_pixmap_approx(
+                scaled,
+                color="#FFFFFF",
+                alpha=glow.alpha,
+                blur_radius=glow.sigma,
+                offset=0.0,
+            )
+            shadow = native_visual_preview_shadow(
+                assignment,
+                time_seconds=time_seconds,
+                duration_seconds=plan.duration_seconds,
+                canvas_width=width,
+                canvas_height=height,
+                animation_keyframe_contract=animation_keyframe_contract,
+            )
+            scaled = _drop_shadow_pixmap_approx(
+                scaled,
+                color="#000000",
+                alpha=shadow.alpha,
+                blur_radius=shadow.sigma,
+                offset=shadow.offset,
+            )
+
             offset_x = width * offset.x
             offset_y = height * offset.y
 
