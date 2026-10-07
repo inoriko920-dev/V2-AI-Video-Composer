@@ -11,17 +11,8 @@ from aavc.presentation.dialogs.asset_motion import NATIVE_MOTION_CHOICES
 
 
 def test_native_effect_choices_share_one_ordered_source() -> None:
-    assert native_visual_effect_names() == (
-        "Fade",
-        "Pop",
-        "Breathe",
-        "Stomp",
-        "Tumble",
-        "Tectonic",
-        "Rise",
-        "Pan",
-        "Drift",
-    )
+    assert native_visual_effect_names() == effect_names()
+    assert len(native_visual_effect_names()) == 21
     assert native_visual_effect_names() == NATIVE_MOTION_CHOICES
     assert frozenset(NATIVE_MOTION_CHOICES) == NATIVE_VISUAL_EFFECTS
 

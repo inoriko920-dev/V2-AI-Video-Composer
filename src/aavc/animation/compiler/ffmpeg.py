@@ -9,15 +9,27 @@ from aavc.domain.animation import AnimationKeyframeTrack
 from aavc.domain.project.models import AnimationAssignment
 
 _NATIVE_VISUAL_EFFECT_CAPABILITIES = (
-    ("Fade", frozenset({"alpha"})),
-    ("Pop", frozenset({"alpha", "scale"})),
-    ("Breathe", frozenset({"scale"})),
-    ("Stomp", frozenset({"alpha", "scale"})),
-    ("Tumble", frozenset({"rotation"})),
-    ("Tectonic", frozenset({"motion"})),
     ("Rise", frozenset({"motion"})),
     ("Pan", frozenset({"motion"})),
+    ("Fade", frozenset({"alpha"})),
+    ("Pop", frozenset({"alpha", "scale"})),
+    ("Wipe", frozenset({"alpha", "motion"})),
+    ("Blur", frozenset({"alpha", "scale"})),
+    ("Succession", frozenset({"alpha", "motion"})),
+    ("Breathe", frozenset({"scale"})),
+    ("Baseline", frozenset({"alpha", "motion"})),
     ("Drift", frozenset({"motion"})),
+    ("Tectonic", frozenset({"motion"})),
+    ("Tumble", frozenset({"rotation"})),
+    ("Neon", frozenset({"alpha", "scale"})),
+    ("Scrapbook", frozenset({"alpha", "scale", "rotation"})),
+    ("Stomp", frozenset({"alpha", "scale"})),
+    ("Brush", frozenset({"alpha", "motion"})),
+    ("Ink", frozenset({"alpha", "scale"})),
+    ("Digital", frozenset({"alpha", "motion"})),
+    ("Spray Paint", frozenset({"alpha", "scale", "motion"})),
+    ("Sketch", frozenset({"alpha", "rotation"})),
+    ("Gradient", frozenset({"alpha", "motion"})),
 )
 
 NATIVE_VISUAL_EFFECT_NAMES = tuple(
@@ -250,11 +262,17 @@ def compile_keyframe_value_expression(
 
 
 def _scale_floor(effect: str) -> float | None:
-    if effect in {"Pop", "Stomp"}:
-        return 0.85
-    if effect == "Breathe":
-        return 0.98
-    return None
+    floors = {
+        "Pop": 0.85,
+        "Stomp": 0.85,
+        "Breathe": 0.98,
+        "Blur": 1.06,
+        "Neon": 0.96,
+        "Scrapbook": 0.92,
+        "Ink": 0.90,
+        "Spray Paint": 0.94,
+    }
+    return floors.get(effect)
 
 
 def _enter_scale_expression(effect: str, window: str) -> str | None:
@@ -262,15 +280,15 @@ def _enter_scale_expression(effect: str, window: str) -> str | None:
     if floor is None:
         return None
     excursion = 1.0 - floor
-    return f"{floor:.2f}+{excursion:.2f}*t/{window}"
+    return f"{floor:.2f}{excursion:+.2f}*t/{window}"
 
 
 def _exit_scale_expression(effect: str, exit_start: str, window: str) -> str | None:
     floor = _scale_floor(effect)
     if floor is None:
         return None
-    excursion = 1.0 - floor
-    return f"1-{excursion:.2f}*(t-{exit_start})/{window}"
+    change = floor - 1.0
+    return f"1{change:+.2f}*(t-{exit_start})/{window}"
 
 
 def _native_scale_factor(
@@ -339,11 +357,16 @@ def _rotation_term(
     window_seconds: float,
     intensity: float,
 ) -> str | None:
-    if effect != "Tumble":
+    degrees = {
+        "Tumble": 12.0,
+        "Scrapbook": 8.0,
+        "Sketch": 4.0,
+    }.get(effect)
+    if degrees is None:
         return None
 
     window = f"{window_seconds:.6f}"
-    max_angle = 0.209440 * intensity
+    max_angle = degrees * 0.017453293 * intensity
     if entering:
         return f"if(lt(t,{window}),-(1-t/{window})*{max_angle:.6f},0)"
 
@@ -357,7 +380,7 @@ def compile_native_rotation_filter(
     *,
     duration_seconds: float,
 ) -> str | None:
-    """Compile frame-evaluated Tumble rotation without changing base layout size."""
+    """Compile frame-evaluated native rotation without changing base layout size."""
 
     if not assignment_has_native_rotation(assignment) or assignment is None:
         return None
@@ -404,13 +427,20 @@ def _motion_term(
     intensity: float,
 ) -> tuple[str, str] | None:
     window = f"{window_seconds:.6f}"
-    if effect == "Tectonic":
-        distance = 0.012 * intensity
-        phase = "18.849556"
+
+    oscillating = {
+        "Tectonic": ("x", "W", 0.012, "18.849556"),
+        "Digital": ("x", "W", 0.020, "25.132741"),
+        "Spray Paint": ("y", "H", 0.015, "12.566371"),
+    }.get(effect)
+    if oscillating is not None:
+        axis, dimension, base_distance, phase = oscillating
+        distance = base_distance * intensity
         if entering:
             expression = (
                 f"if(lt(t,{window}),"
-                f"cos((t/{window})*{phase})*(1-t/{window})*W*{distance:.6f},0)"
+                f"cos((t/{window})*{phase})*(1-t/{window})*"
+                f"{dimension}*{distance:.6f},0)"
             )
         else:
             exit_start = max(0.0, duration_seconds - window_seconds)
@@ -418,22 +448,29 @@ def _motion_term(
             expression = (
                 f"if(gt(t,{start}),"
                 f"cos(((t-{start})/{window})*{phase})*"
-                f"((t-{start})/{window})*W*{distance:.6f},0)"
+                f"((t-{start})/{window})*{dimension}*{distance:.6f},0)"
             )
-        return "x", expression
+        return axis, expression
 
-    if effect == "Rise":
-        dimension = "H"
-        distance = 0.08 * intensity
-        axis = "y"
-    elif effect in {"Pan", "Drift"}:
-        dimension = "W"
-        distance = 0.06 * intensity
-        axis = "x"
-    else:
+    simple_motion = {
+        "Rise": ("y", "H", 0.080),
+        "Pan": ("x", "W", 0.060),
+        "Drift": ("x", "W", 0.060),
+        "Wipe": ("x", "W", 0.100),
+        "Succession": ("y", "H", 0.045),
+        "Baseline": ("y", "H", -0.030),
+        "Brush": ("x", "W", -0.080),
+        "Gradient": ("x", "W", 0.030),
+    }.get(effect)
+    if simple_motion is None:
         return None
 
-    distance_expr = f"{dimension}*{distance:.6f}"
+    axis, dimension, base_distance = simple_motion
+    distance = base_distance * intensity
+    if distance < 0:
+        distance_expr = f"-{dimension}*{abs(distance):.6f}"
+    else:
+        distance_expr = f"{dimension}*{distance:.6f}"
     if entering:
         expression = f"if(lt(t,{window}),(1-t/{window})*{distance_expr},0)"
     else:

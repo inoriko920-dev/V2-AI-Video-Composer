@@ -22,8 +22,8 @@ def _unsupported_assignment(project, *, intensity: float) -> AnimationAssignment
     return AnimationAssignment(
         scene_number=scene.scene_number,
         asset_id=scene.asset_ids[0],
-        enter_effect="Wipe",
-        exit_effect="Blur",
+        enter_effect="Legacy Wipe",
+        exit_effect="Legacy Blur",
         intensity=intensity,
     )
 
@@ -71,5 +71,5 @@ def test_active_unsupported_assignment_still_warns_in_both_validation_paths(
     ]
 
     assert len(project_fallback) == 1
-    assert any("Wipe" in issue.message for issue in render_fallback)
-    assert any("Blur" in issue.message for issue in render_fallback)
+    assert any("Legacy Wipe" in issue.message for issue in render_fallback)
+    assert any("Legacy Blur" in issue.message for issue in render_fallback)
