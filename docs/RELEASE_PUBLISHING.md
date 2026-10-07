@@ -1,4 +1,25 @@
-# GitHub Release Publishing — AAVC 0.1.x
+# GitHub Release Publishing — AAVC 0.2.x
+
+## V2 0.2.0 publication
+
+Status: **FINAL GATE IN PROGRESS**
+
+Canonical final target:
+- Version: `0.2.0`
+- Git tag: `v0.2.0`
+- Workflow: `.github/workflows/v2-final-0.2.0.yml`
+- Accepted RC technical suite: 630 PASS
+- Real 21-effect FFmpeg render: PASS
+- Real Selection In/Out render: PASS
+- Packaged EXE UI launch: PASS
+
+The V2 final workflow is guarded and may not overwrite an existing `v0.2.0`
+tag or release. Publication occurs only after its own Windows final gate and CodeQL
+job both pass. Historical `v0.1.0` and `v0.1.1` remain immutable.
+
+---
+
+# Historical GitHub Release Publishing — AAVC 0.1.x
 
 ## Current publication status
 
