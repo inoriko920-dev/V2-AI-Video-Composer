@@ -173,7 +173,7 @@ def test_preflight_keeps_v3_opacity_dormant_and_activates_it_only_in_v4(
     assert advanced_report.ok
 
 
-def test_active_v4_still_fails_closed_for_unimplemented_k6_interpolation(
+def test_active_v4_accepts_k6_bezier_interpolation(
     tmp_path: Path,
 ) -> None:
     project = _project()
@@ -201,11 +201,11 @@ def test_active_v4_still_fails_closed_for_unimplemented_k6_interpolation(
         build_render_plan(advanced, tmp_path / "advanced-mask-bezier.mp4")
     )
 
-    assert any(
+    assert not any(
         issue.code == "ADVANCED_BACKEND_UNAVAILABLE"
         for issue in report.issues
     )
-    assert not report.ok
+    assert report.ok
 
 
 def test_first_v3_to_v4_overwrite_creates_non_clobbering_backup(
