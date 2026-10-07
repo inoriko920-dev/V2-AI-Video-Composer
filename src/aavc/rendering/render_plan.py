@@ -3,6 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from aavc.animation.contract import (
+    LEGACY_SCHEMA_VERSION,
+    ResolvedAnimationKeyframeContract,
+    validate_project_animation_contract,
+)
 from aavc.domain.layout import Placement, solve_layout
 from aavc.domain.project.models import (
     AnimationAssignment,
@@ -30,6 +35,8 @@ class RenderPlan:
     subtitle_ass: str | None
     output_path: str
     quality: RenderQualitySettings
+    project_schema_version: int = LEGACY_SCHEMA_VERSION
+    animation_keyframe_contract: ResolvedAnimationKeyframeContract = "legacy-v3"
 
     @property
     def duration_seconds(self) -> float:
@@ -41,6 +48,7 @@ def build_render_plan(
     output_path: str | Path,
     subtitle_ass: str | None = None,
 ) -> RenderPlan:
+    contract = validate_project_animation_contract(project)
     by_id = {binding.asset_id: binding for binding in project.bindings}
     animations_by_key = {
         (assignment.scene_number, assignment.asset_id): assignment
@@ -76,4 +84,6 @@ def build_render_plan(
         subtitle_ass=subtitle_ass,
         output_path=str(Path(output_path)),
         quality=project.render_quality,
+        project_schema_version=project.schema_version,
+        animation_keyframe_contract=contract,
     )
