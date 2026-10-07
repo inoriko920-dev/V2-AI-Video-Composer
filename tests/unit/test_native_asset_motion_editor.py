@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 
+from aavc.animation.registry import effect_names
 from aavc.application.commands import (
     RandomizeAnimationAssignments,
     RemoveAnimationAssignment,
@@ -30,17 +31,8 @@ def _project():
 
 
 def test_native_motion_choices_match_render_backed_contract() -> None:
-    assert NATIVE_MOTION_CHOICES == (
-        "Fade",
-        "Pop",
-        "Breathe",
-        "Stomp",
-        "Tumble",
-        "Tectonic",
-        "Rise",
-        "Pan",
-        "Drift",
-    )
+    assert NATIVE_MOTION_CHOICES == effect_names()
+    assert len(NATIVE_MOTION_CHOICES) == 21
 
 
 def test_find_asset_motion_assignment_is_target_specific() -> None:
