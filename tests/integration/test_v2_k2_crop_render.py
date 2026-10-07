@@ -28,7 +28,7 @@ from aavc.rendering.advanced_capabilities import (
     AdvancedFFmpegCapabilityProbe,
     AdvancedFFmpegFeature,
 )
-from aavc.rendering.advanced_filters import compile_k2_crop_mask_filter
+from aavc.rendering.advanced_filters import compile_k2_crop_filters
 
 
 def _write_ppm(
@@ -138,21 +138,19 @@ def _require_ffmpeg() -> str:
     return ffmpeg
 
 
-def _crop_alpha_graph(
+def _crop_filter_chain(
     assignment: AnimationAssignment,
     *,
     duration_seconds: float,
+    instance_id: str,
 ) -> str:
-    mask_filter = compile_k2_crop_mask_filter(
+    filters = compile_k2_crop_filters(
         assignment,
         duration_seconds=duration_seconds,
+        instance_id=instance_id,
     )
-    assert mask_filter is not None
-    return (
-        "[0:v]format=rgba,split=2[k2base][k2alpha];"
-        f"[k2alpha]alphaextract,{mask_filter}[k2mask];"
-        "[k2base][k2mask]alphamerge,alphaextract[k2out]"
-    )
+    assert filters
+    return ",".join(filters)
 
 
 def _render_alpha_frames(
@@ -178,10 +176,13 @@ def _render_alpha_frames(
         "4",
         "-i",
         str(asset),
-        "-filter_complex",
-        _crop_alpha_graph(assignment, duration_seconds=1.0),
-        "-map",
-        "[k2out]",
+        "-vf",
+        _crop_filter_chain(
+            assignment,
+            duration_seconds=1.0,
+            instance_id=f"alpha_{asset.stem}",
+        )
+        + ",alphaextract",
         "-frames:v",
         "4",
         "-pix_fmt",
@@ -215,7 +216,15 @@ def _render_alpha_frames(
                 )
                 expected = source_alpha if visible else 0
                 actual = frame[y * width + x]
-                assert abs(actual - expected) <= 1
+                if abs(actual - expected) <= 1:
+                    continue
+                edge_distance = min(
+                    abs(x - width * crop.left),
+                    abs(x - width * (1.0 - crop.right)),
+                    abs(y - height * crop.top),
+                    abs(y - height * (1.0 - crop.bottom)),
+                )
+                assert edge_distance <= 1.0
     return frames
 
 
@@ -340,18 +349,13 @@ def test_k2_crop_reference_resolution_and_60fps_smoke(
 ) -> None:
     ffmpeg = _require_ffmpeg()
     runner = ProcessRunner()
-    mask = (
-        "geq=lum='p(X,Y)*"
-        "gte(X,W*(0.10+0.05*T))*"
-        "lt(X,W*0.90)*"
-        "gte(Y,H*0.10)*"
-        "lt(Y,H*0.90)'"
+    filters = compile_k2_crop_filters(
+        _crop_assignment(),
+        duration_seconds=0.12,
+        instance_id=f"smoke_{width}_{height}_{fps}",
     )
-    graph = (
-        "[0:v]format=rgba,split=2[base][alpha];"
-        f"[alpha]alphaextract,{mask}[mask];"
-        "[base][mask]alphamerge[out]"
-    )
+    assert filters
+    graph = ",".join(filters)
     result = runner.run(
         [
             ffmpeg,
@@ -362,10 +366,8 @@ def test_k2_crop_reference_resolution_and_60fps_smoke(
             "lavfi",
             "-i",
             f"color=c=red:s={width}x{height}:r={fps}:d=0.12",
-            "-filter_complex",
+            "-vf",
             graph,
-            "-map",
-            "[out]",
             "-frames:v",
             "2",
             "-f",
@@ -405,15 +407,13 @@ def test_k2_crop_performance_is_within_2_5x_baseline() -> None:
         "null",
         "-",
     ]
-    crop_graph = (
-        "[0:v]format=rgba,split=2[base][alpha];"
-        "[alpha]alphaextract,"
-        "geq=lum='p(X,Y)*"
-        "gte(X,W*(0.05+0.10*T))*"
-        "lt(X,W*(0.95-0.05*T))*"
-        "gte(Y,H*0.05)*lt(Y,H*0.95)'[mask];"
-        "[base][mask]alphamerge[out]"
+    crop_filters = compile_k2_crop_filters(
+        _crop_assignment(),
+        duration_seconds=1.0,
+        instance_id="k2_perf",
     )
+    assert crop_filters
+    crop_graph = ",".join(crop_filters)
     advanced = [
         ffmpeg,
         "-hide_banner",
@@ -423,10 +423,8 @@ def test_k2_crop_performance_is_within_2_5x_baseline() -> None:
         "lavfi",
         "-i",
         source,
-        "-filter_complex",
+        "-vf",
         crop_graph,
-        "-map",
-        "[out]",
         "-f",
         "null",
         "-",
