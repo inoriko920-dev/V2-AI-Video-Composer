@@ -23,7 +23,10 @@ from aavc.rendering.advanced_capabilities import (
     AdvancedFFmpegCapabilityProbe,
     AdvancedFFmpegFeature,
 )
-from aavc.rendering.advanced_filters import render_plan_requires_k1_opacity
+from aavc.rendering.advanced_filters import (
+    render_plan_requires_k1_opacity,
+    render_plan_requires_k2_crop,
+)
 from aavc.rendering.render_plan import RenderPlan
 from aavc.subtitles import compile_srt_to_ass
 
@@ -54,7 +57,12 @@ def ensure_advanced_render_capabilities(
     ffmpeg_path: str,
     runner: ProcessRunner | None = None,
 ) -> None:
-    if not render_plan_requires_k1_opacity(plan):
+    required: set[AdvancedFFmpegFeature] = set()
+    if render_plan_requires_k1_opacity(plan):
+        required.add(AdvancedFFmpegFeature.OPACITY_RUNTIME_ALPHA)
+    if render_plan_requires_k2_crop(plan):
+        required.add(AdvancedFFmpegFeature.DYNAMIC_SPATIAL_ALPHA)
+    if not required:
         return
 
     capabilities = AdvancedFFmpegCapabilityProbe(
@@ -65,13 +73,15 @@ def ensure_advanced_render_capabilities(
             source="render",
         ),
     ).probe()
-    if capabilities.supports(AdvancedFFmpegFeature.OPACITY_RUNTIME_ALPHA):
+    missing = capabilities.missing(frozenset(required))
+    if not missing:
         return
 
-    detail = "; ".join(capabilities.diagnostics) or "runtime alpha tidak didukung"
+    missing_names = ", ".join(sorted(feature.value for feature in missing))
+    detail = "; ".join(capabilities.diagnostics) or "capability probe gagal"
     raise RenderError(
-        "ADVANCED_BACKEND_UNAVAILABLE: backend opacity advanced-v1 tidak siap: "
-        + detail
+        "ADVANCED_BACKEND_UNAVAILABLE: capability advanced-v1 tidak siap "
+        f"({missing_names}): {detail}"
     )
 
 
