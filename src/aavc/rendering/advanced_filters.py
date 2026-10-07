@@ -14,12 +14,8 @@ from aavc.domain.project.models import AnimationAssignment
 if TYPE_CHECKING:
     from .render_plan import RenderPlan
 
-
 K1_ACTIVE_RENDER_PROPERTIES = frozenset({"opacity"})
 K2_ACTIVE_RENDER_PROPERTIES = frozenset(CROP_PROPERTIES)
-
-
-
 
 def _easing_expression(easing: str, fraction: str) -> str:
     if easing == "ease_in":
@@ -33,7 +29,6 @@ def _easing_expression(easing: str, fraction: str) -> str:
             f"1-pow(-2*({fraction})+2,2)/2)"
         )
     return fraction
-
 
 def _advanced_time_expression(
     assignment: AnimationAssignment | None,
@@ -83,7 +78,6 @@ def _advanced_time_expression(
         f"({expression})))"
     )
 
-
 def _normalize_crop_pair(first: str, second: str) -> tuple[str, str]:
     total = f"(({first})+({second}))"
     normalized_first = (
@@ -96,16 +90,13 @@ def _normalize_crop_pair(first: str, second: str) -> tuple[str, str]:
     )
     return normalized_first, normalized_second
 
-
-def compile_k2_crop_filters(
+def _crop_gate_expression(
     assignment: AnimationAssignment | None,
     *,
     duration_seconds: float,
-) -> tuple[str, ...]:
-    """Compile four-side crop as a fixed-size spatial alpha gate."""
-
+) -> str | None:
     if not assignment_has_supported_crop(assignment):
-        return ()
+        return None
 
     left = _advanced_time_expression(
         assignment,
@@ -129,23 +120,27 @@ def compile_k2_crop_filters(
     )
     left, right = _normalize_crop_pair(left, right)
     top, bottom = _normalize_crop_pair(top, bottom)
-
-    gate = (
+    return (
         f"gte(X,W*({left}))*"
         f"lt(X,W*(1-({right})))*"
         f"gte(Y,H*({top}))*"
         f"lt(Y,H*(1-({bottom})))"
     )
-    return (
-        "format=rgba",
-        (
-            "geq="
-            "r='r(X,Y)':"
-            "g='g(X,Y)':"
-            "b='b(X,Y)':"
-            f"a='alpha(X,Y)*({gate})'"
-        ),
+
+def compile_k2_crop_mask_filter(
+    assignment: AnimationAssignment | None,
+    *,
+    duration_seconds: float,
+) -> str | None:
+    """Compile the alpha-plane crop gate while keeping RGB untouched."""
+
+    gate = _crop_gate_expression(
+        assignment,
+        duration_seconds=duration_seconds,
     )
+    if gate is None:
+        return None
+    return f"geq=lum='p(X,Y)*({gate})'"
 
 def assignment_has_k1_opacity(
     assignment: AnimationAssignment | None,
@@ -153,10 +148,8 @@ def assignment_has_k1_opacity(
     track = find_keyframe_track(assignment, "opacity")
     return track is not None and is_supported_advanced_keyframe_track(track)
 
-
 def _number(value: float) -> str:
     return f"{float(value):.6f}"
-
 
 def _eased_ti_expression(easing: str) -> str:
     if easing == "ease_in":
@@ -169,7 +162,6 @@ def _eased_ti_expression(easing: str) -> str:
         tail = f"(1-abs({x}))"
         return f"0.5+sgn({x})*(1-({tail})*({tail}))/2"
     return "TI"
-
 
 def _segment_gain_expression(
     start_value: float,
@@ -185,7 +177,6 @@ def _segment_gain_expression(
     eased = _eased_ti_expression(easing)
     delta = end - start
     return f"{_number(start)}+({_number(delta)})*({eased})"
-
 
 def compile_k1_opacity_filters(
     assignment: AnimationAssignment | None,
@@ -254,8 +245,6 @@ def compile_k1_opacity_filters(
         f"{target}=aa={_number(initial)}",
     )
 
-
-
 def render_plan_requires_k1_opacity(plan: RenderPlan) -> bool:
     if plan.animation_keyframe_contract != "advanced-v1":
         return False
@@ -264,8 +253,6 @@ def render_plan_requires_k1_opacity(plan: RenderPlan) -> bool:
         for scene in plan.scenes
         for assignment in scene.animations
     )
-
-
 
 def render_plan_requires_k2_crop(plan: RenderPlan) -> bool:
     if plan.animation_keyframe_contract != "advanced-v1":
