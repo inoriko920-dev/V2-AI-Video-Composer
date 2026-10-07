@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from aavc.animation.compiler import native_visual_effect_names
 from aavc.animation.contract import track_requires_advanced
 from aavc.domain.animation import (
     AnimationKeyframe,
     AnimationKeyframeTrack,
+    KeyframeEasing,
+    KeyframeInterpolation,
     TransformProperty,
 )
 from aavc.domain.project.models import AnimationAssignment, Scene
@@ -543,8 +545,14 @@ def show_asset_motion_dialog(
             inline_status.setText("Time keyframe harus unik dalam satu track.")
             return
 
-        interpolation = str(interpolation_combo.currentData())
-        easing = str(easing_combo.currentData())
+        interpolation = cast(
+            KeyframeInterpolation,
+            str(interpolation_combo.currentData()),
+        )
+        easing = cast(
+            KeyframeEasing,
+            str(easing_combo.currentData()),
+        )
         has_outgoing = index < len(track.keyframes) - 1
         is_bezier = has_outgoing and interpolation == "bezier"
         spec = keyframe_property_spec(property_name)
