@@ -26,6 +26,7 @@ from aavc.rendering.advanced_capabilities import (
 from aavc.rendering.advanced_filters import (
     render_plan_requires_k1_opacity,
     render_plan_requires_k2_crop,
+    render_plan_requires_k3_blur,
 )
 from aavc.rendering.render_plan import RenderPlan
 from aavc.subtitles import compile_srt_to_ass
@@ -62,6 +63,14 @@ def ensure_advanced_render_capabilities(
         required.add(AdvancedFFmpegFeature.OPACITY_RUNTIME_ALPHA)
     if render_plan_requires_k2_crop(plan):
         required.add(AdvancedFFmpegFeature.DYNAMIC_SPATIAL_ALPHA)
+    if render_plan_requires_k3_blur(plan):
+        required.update(
+            {
+                AdvancedFFmpegFeature.NAMED_GBLUR,
+                AdvancedFFmpegFeature.SENDCMD_RUNTIME_SIGMA,
+                AdvancedFFmpegFeature.PREMULTIPLY_ALPHA,
+            }
+        )
     if not required:
         return
 
