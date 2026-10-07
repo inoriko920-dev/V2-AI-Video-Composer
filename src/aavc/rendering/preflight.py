@@ -5,8 +5,8 @@ from enum import StrEnum
 from pathlib import Path
 
 from aavc.animation import keyframe_track_support_reason
-from aavc.animation.contract import track_requires_advanced
 from aavc.animation.compiler import is_native_visual_effect
+from aavc.animation.contract import track_requires_advanced
 
 from .render_plan import RenderPlan
 
