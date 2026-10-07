@@ -1,5 +1,44 @@
 # GitHub Release Publishing — AAVC 0.2.x
 
+## V2 0.2.1 publication
+
+Status: **PUBLISHED / VERIFIED**
+
+Canonical release:
+- Version: `0.2.1`
+- Git tag: `v0.2.1`
+- Release commit: `eb94efebf142ba8203dfc3ae3c5fa861222a0926`
+- GitHub Release ID: `405901186`
+- Publication PR: `#29`
+- Final workflow run: `37643499394` — **PASS**
+- Main CI: `37643499386` — **PASS**
+- Main CodeQL: `37643499315` — **PASS**
+- Full technical Windows suite: **761 PASS**
+- FFmpeg 9.0.2: **PASS**
+- 10/100/500 Scene benchmark: **PASS**
+- 8 STEP09 UI screenshots: **PASS**
+- Windows portable / packaged EXE launch: **PASS**
+- Windows ZIP SHA-256:
+  `172f392e5d2e555a1fe9968498cfcca17cc21889014685353ba5c9aea6de5503`
+- Source ZIP SHA-256:
+  `1b856f455ffff64e08d5abf6c6ae1995d66b97ee9062d9f8d9ac6d78a118495c`
+- Final candidate artifact: `11492589609`
+- Final candidate digest:
+  `sha256:c4f3e3d5e33eed6ccd9e617ad3b8ac6da709f9a8d932d316d300d5811b232c11`
+- Final UI evidence artifact: `11492889346`
+- Final UI evidence digest:
+  `sha256:eae909864cffd226acfa498646a339e9b1c432a422796c1dde4e3b398f0d417a`
+
+The guarded final workflow re-verified the exact release commit, release bundle checksums,
+BUILD_INFO version/channel/schema/advanced contract, immutable-tag guard, GitHub Release
+creation, and final tag target. The release is neither draft nor prerelease.
+
+Published `v0.2.1` is immutable. Do not move or overwrite its tag or release. Any
+correction must use a newly planned version. Published `v0.2.0` remains immutable and
+unchanged.
+
+---
+
 ## V2 0.2.0 publication
 
 Status: **PUBLISHED / VERIFIED**
