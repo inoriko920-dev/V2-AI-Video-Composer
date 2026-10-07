@@ -13,9 +13,12 @@ from aavc.animation.contract import ResolvedAnimationKeyframeContract
 from aavc.domain.project.models import AnimationAssignment
 
 from .advanced_filters import (
+    assignment_has_k4_glow,
+    assignment_has_k4_shadow,
     compile_k1_opacity_filters,
     compile_k2_crop_filters,
     compile_k3_blur_filters,
+    compile_k4_shadow_glow_clauses,
 )
 from .render_plan import RenderPlan, SceneRenderPlan
 
@@ -108,6 +111,31 @@ def _scaled_asset_clause(
     )
     if rotation_filter is not None:
         base += "," + rotation_filter
+
+    if (
+        animation_keyframe_contract == "advanced-v1"
+        and (
+            assignment_has_k4_shadow(assignment)
+            or assignment_has_k4_glow(assignment)
+        )
+    ):
+        pre_k4 = f"{output_name}_pre_k4"
+        post_k4 = f"{output_name}_post_k4"
+        clauses.append(f"{base},format=rgba[{pre_k4}]")
+        clauses.extend(
+            compile_k4_shadow_glow_clauses(
+                pre_k4,
+                post_k4,
+                assignment,
+                duration_seconds=duration_seconds,
+                fps=fps,
+                canvas_width=canvas_width,
+                canvas_height=canvas_height,
+                instance_id=f"k4_{opacity_instance_id}",
+            )
+        )
+        base = f"[{post_k4}]"
+
     alpha_filters = compile_native_alpha_filters(
         assignment,
         duration_seconds=duration_seconds,
