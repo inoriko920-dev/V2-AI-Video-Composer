@@ -47,4 +47,5 @@ jobs:
             exit 0
           fi
           git commit -m "docs(v2): generate 0.2.2 STEP 00 DOCX"
-          git push origin HEAD:v2/0.2.2-planning
+          git pull --rebase origin main
+          git push origin HEAD:main
