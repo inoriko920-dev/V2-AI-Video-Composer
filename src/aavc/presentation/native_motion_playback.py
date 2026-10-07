@@ -11,6 +11,7 @@ from aavc.animation.contract import (
 from aavc.domain.project.models import AnimationAssignment, ProjectState
 from aavc.presentation.motion_preview import (
     native_motion_preview_offset,
+    native_visual_preview_blur_sigma,
     native_visual_preview_crop,
     native_visual_preview_opacity,
     native_visual_preview_rotation,
@@ -93,6 +94,35 @@ def _clip_pixmap_visibility(pixmap: Any, crop: Any) -> Any:
     return clipped
 
 
+def _blur_pixmap_approx(pixmap: Any, sigma: float) -> Any:
+    from PySide6.QtCore import QRectF, Qt
+    from PySide6.QtGui import QPainter, QPixmap
+    from PySide6.QtWidgets import (
+        QGraphicsBlurEffect,
+        QGraphicsPixmapItem,
+        QGraphicsScene,
+    )
+
+    if sigma <= 0.01:
+        return pixmap
+
+    output = QPixmap(pixmap.size())
+    output.fill(Qt.GlobalColor.transparent)
+    scene = QGraphicsScene()
+    source_rect = QRectF(0.0, 0.0, float(pixmap.width()), float(pixmap.height()))
+    scene.setSceneRect(source_rect)
+    item = QGraphicsPixmapItem(pixmap)
+    effect = QGraphicsBlurEffect()
+    effect.setBlurRadius(max(0.5, float(sigma) * 2.0))
+    item.setGraphicsEffect(effect)
+    scene.addItem(item)
+
+    painter = QPainter(output)
+    scene.render(painter, source_rect, source_rect)
+    painter.end()
+    return output
+
+
 def render_native_motion_pixmap(
     plan: ScenePreviewPlan,
     assignments: tuple[AnimationAssignment, ...],
@@ -151,6 +181,15 @@ def render_native_motion_pixmap(
                 animation_keyframe_contract=animation_keyframe_contract,
             )
             scaled = _clip_pixmap_visibility(scaled, crop)
+            blur_sigma = native_visual_preview_blur_sigma(
+                assignment,
+                time_seconds=time_seconds,
+                duration_seconds=plan.duration_seconds,
+                canvas_width=width,
+                canvas_height=height,
+                animation_keyframe_contract=animation_keyframe_contract,
+            )
+            scaled = _blur_pixmap_approx(scaled, blur_sigma)
             opacity = native_visual_preview_opacity(
                 assignment,
                 time_seconds=time_seconds,
