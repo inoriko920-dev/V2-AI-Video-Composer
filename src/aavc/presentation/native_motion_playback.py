@@ -14,6 +14,7 @@ from aavc.presentation.motion_preview import (
     native_visual_preview_blur_sigma,
     native_visual_preview_crop,
     native_visual_preview_glow,
+    native_visual_preview_mask_progress,
     native_visual_preview_opacity,
     native_visual_preview_rotation,
     native_visual_preview_scale,
@@ -94,6 +95,33 @@ def _clip_pixmap_visibility(pixmap: Any, crop: Any) -> Any:
     painter.drawPixmap(0, 0, pixmap)
     painter.end()
     return clipped
+
+
+def _mask_pixmap_progress(pixmap: Any, progress: float) -> Any:
+    from PySide6.QtCore import QRectF, Qt
+    from PySide6.QtGui import QPainter, QPixmap
+
+    value = max(0.0, min(1.0, float(progress)))
+    if value >= 0.999999:
+        return pixmap
+
+    masked = QPixmap(pixmap.size())
+    masked.fill(Qt.GlobalColor.transparent)
+    if value <= 0.000001:
+        return masked
+
+    painter = QPainter(masked)
+    painter.setClipRect(
+        QRectF(
+            0.0,
+            0.0,
+            float(pixmap.width()) * value,
+            float(pixmap.height()),
+        )
+    )
+    painter.drawPixmap(0, 0, pixmap)
+    painter.end()
+    return masked
 
 
 def _blur_pixmap_approx(pixmap: Any, sigma: float) -> Any:
@@ -256,6 +284,13 @@ def render_native_motion_pixmap(
                 duration_seconds=plan.duration_seconds,
             )
             scaled = _rotate_pixmap_same_size(scaled, rotation_degrees)
+            mask_progress = native_visual_preview_mask_progress(
+                assignment,
+                time_seconds=time_seconds,
+                duration_seconds=plan.duration_seconds,
+                animation_keyframe_contract=animation_keyframe_contract,
+            )
+            scaled = _mask_pixmap_progress(scaled, mask_progress)
 
             glow = native_visual_preview_glow(
                 assignment,
