@@ -19,6 +19,7 @@ from .advanced_filters import (
     compile_k2_crop_filters,
     compile_k3_blur_filters,
     compile_k4_shadow_glow_clauses,
+    compile_k5_mask_filters,
 )
 from .render_plan import RenderPlan, SceneRenderPlan
 
@@ -111,6 +112,15 @@ def _scaled_asset_clause(
     )
     if rotation_filter is not None:
         base += "," + rotation_filter
+
+    if animation_keyframe_contract == "advanced-v1":
+        mask_filters = compile_k5_mask_filters(
+            assignment,
+            duration_seconds=duration_seconds,
+            instance_id=f"mask_{opacity_instance_id}",
+        )
+        if mask_filters:
+            base += "," + ",".join(mask_filters)
 
     if (
         animation_keyframe_contract == "advanced-v1"
