@@ -10,6 +10,7 @@ from aavc.application.commands import (
 )
 from aavc.application.services.project_session import ProjectSession
 from aavc.application.services.vertical_slice import create_project_state
+from aavc.domain.animation import AnimationKeyframe, AnimationKeyframeTrack
 from aavc.domain.project.models import AnimationAssignment
 from aavc.persistence.project_repository import ProjectRepository
 from aavc.presentation.dialogs.asset_motion import (
@@ -71,6 +72,37 @@ def test_build_asset_motion_assignment_maps_lock_state() -> None:
     assert assignment.exit_effect == "Pan"
     assert assignment.intensity == 1.25
     assert assignment.locked
+
+
+def test_preset_builder_preserves_existing_keyframe_tracks() -> None:
+    track = AnimationKeyframeTrack(
+        property_name="scale",
+        keyframes=(
+            AnimationKeyframe(time=0.0, value=1.0),
+            AnimationKeyframe(time=1.0, value=1.2),
+        ),
+    )
+    existing = AnimationAssignment(
+        scene_number=7,
+        asset_id="A007",
+        enter_effect="Fade",
+        exit_effect="Fade",
+        keyframe_tracks=(track,),
+    )
+
+    changed = build_asset_motion_assignment(
+        scene_number=7,
+        asset_id="A007",
+        enter_effect="Pan",
+        exit_effect="Rise",
+        intensity=1.1,
+        locked=False,
+        existing_assignment=existing,
+    )
+
+    assert changed.keyframe_tracks == (track,)
+    assert changed.enter_effect == "Pan"
+    assert changed.exit_effect == "Rise"
 
 
 def test_apply_remove_and_undo_native_motion_reaches_ffmpeg(tmp_path: Path) -> None:

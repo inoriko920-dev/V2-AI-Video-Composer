@@ -15,7 +15,7 @@ if ($smoke -notmatch "AAVC_FOUNDATION_SMOKE_OK") { throw "Foundation smoke token
 
 $requiredNames = @(
   "project.schema.json",
-  "RELEASE_NOTES_0.2.0.md",
+  "RELEASE_NOTES_0.2.1.md",
   "USER_GUIDE.md",
   "MAINTENANCE.md",
   "BACKUP_AND_RECOVERY.md"

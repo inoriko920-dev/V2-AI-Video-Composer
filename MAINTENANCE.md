@@ -1,7 +1,7 @@
 # Maintenance Policy — AAVC 0.2.x
 
 ## Stable line
-`0.2.x` is the current maintained V2 Windows desktop line. Patch releases must preserve project schema v3 compatibility unless a documented migration is added. Published `0.1.0` and `0.1.1` remain frozen historical releases and are never moved or overwritten.
+`0.2.x` is the current maintained V2 Windows desktop line. Version 0.2.1 can read schema v3 and v4; schema v4 is activated only by explicit advanced edits and uses `animation_keyframe_contract=advanced-v1`. Published `v0.2.0`, `v0.1.1`, and `v0.1.0` remain frozen and are never moved or overwritten.
 
 ## Change classes
 - Patch (`0.2.x`): bug fixes, UI collision fixes, provider compatibility, security hardening, packaging fixes.
@@ -31,3 +31,11 @@ Never request users to commit API keys. Reproduction bundles must use redacted d
 
 ## Project files
 Keep versioned JSON migrations additive when possible. Never silently rewrite an unknown future schema version.
+
+For the 0.2.1 line:
+- schema v3 remains the legacy-compatible default until an advanced edit is committed;
+- schema v4 requires `animation_keyframe_contract=advanced-v1`;
+- no open/preview/render/normal-save path may implicitly promote v3;
+- normal Save must not downgrade v4 to v3;
+- the first successful v3→v4 overwrite creates a non-clobbering `.pre-schema-v4.bak`;
+- future schema or schema/marker mismatches must fail closed before live-session mutation.

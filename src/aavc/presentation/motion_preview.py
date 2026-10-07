@@ -2,13 +2,25 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from aavc.animation import evaluate_assignment_keyframe, evaluate_effect
+from aavc.animation import (
+    CropVisibility,
+    GlowState,
+    ShadowState,
+    evaluate_assignment_advanced_keyframe,
+    evaluate_assignment_blur,
+    evaluate_assignment_crop_visibility,
+    evaluate_assignment_glow,
+    evaluate_assignment_keyframe_with_contract,
+    evaluate_assignment_shadow,
+    evaluate_effect,
+)
 from aavc.animation.compiler import (
     is_native_visual_alpha_effect,
     is_native_visual_motion_effect,
     is_native_visual_rotation_effect,
     is_native_visual_scale_effect,
 )
+from aavc.animation.contract import ResolvedAnimationKeyframeContract
 from aavc.domain.project.models import AnimationAssignment
 
 
@@ -92,10 +104,11 @@ def native_visual_preview_opacity(
     *,
     time_seconds: float,
     duration_seconds: float,
+    animation_keyframe_contract: ResolvedAnimationKeyframeContract = "legacy-v3",
 ) -> float:
-    """Evaluate native alpha using the same timing window as FFmpeg."""
+    """Evaluate legacy alpha plus K1 opacity using scene-local timing."""
 
-    if assignment is None or assignment.intensity <= 0:
+    if assignment is None:
         return 1.0
 
     duration = max(0.001, float(duration_seconds))
@@ -103,20 +116,147 @@ def native_visual_preview_opacity(
     window = min(0.25, duration / 2.0)
     opacity = 1.0
 
-    for effect, entering in (
-        (assignment.enter_effect, True),
-        (assignment.exit_effect, False),
-    ):
-        if not is_native_visual_alpha_effect(effect):
-            continue
-        if entering:
-            progress = current / window
-        else:
-            exit_start = max(0.0, duration - window)
-            progress = (current - exit_start) / window
-        opacity *= evaluate_effect(effect, progress, entering=entering).opacity
+    if assignment.intensity > 0:
+        for effect, entering in (
+            (assignment.enter_effect, True),
+            (assignment.exit_effect, False),
+        ):
+            if not is_native_visual_alpha_effect(effect):
+                continue
+            if entering:
+                progress = current / window
+            else:
+                exit_start = max(0.0, duration - window)
+                progress = (current - exit_start) / window
+            opacity *= evaluate_effect(effect, progress, entering=entering).opacity
+
+    if animation_keyframe_contract == "advanced-v1":
+        keyframe_opacity = evaluate_assignment_advanced_keyframe(
+            assignment,
+            "opacity",
+            current / duration,
+        )
+        if keyframe_opacity is not None:
+            opacity *= keyframe_opacity
 
     return max(0.0, min(1.0, opacity))
+
+
+def native_visual_preview_crop(
+    assignment: AnimationAssignment | None,
+    *,
+    time_seconds: float,
+    duration_seconds: float,
+    animation_keyframe_contract: ResolvedAnimationKeyframeContract = "legacy-v3",
+) -> CropVisibility:
+    """Evaluate K2 crop without changing the asset canvas geometry."""
+
+    if assignment is None or animation_keyframe_contract != "advanced-v1":
+        return CropVisibility()
+
+    duration = max(0.001, float(duration_seconds))
+    current = max(0.0, min(float(time_seconds), duration))
+    return evaluate_assignment_crop_visibility(
+        assignment,
+        current / duration,
+    )
+
+
+def native_visual_preview_blur_sigma(
+    assignment: AnimationAssignment | None,
+    *,
+    time_seconds: float,
+    duration_seconds: float,
+    canvas_width: int,
+    canvas_height: int,
+    animation_keyframe_contract: ResolvedAnimationKeyframeContract = "legacy-v3",
+) -> float:
+    """Evaluate K3 Blur sigma for responsive Qt Approx preview."""
+
+    if assignment is None or animation_keyframe_contract != "advanced-v1":
+        return 0.0
+
+    duration = max(0.001, float(duration_seconds))
+    current = max(0.0, min(float(time_seconds), duration))
+    state = evaluate_assignment_blur(
+        assignment,
+        current / duration,
+        canvas_width=canvas_width,
+        canvas_height=canvas_height,
+    )
+    return state.sigma
+
+
+def native_visual_preview_mask_progress(
+    assignment: AnimationAssignment | None,
+    *,
+    time_seconds: float,
+    duration_seconds: float,
+    animation_keyframe_contract: ResolvedAnimationKeyframeContract = "legacy-v3",
+) -> float:
+    """Evaluate K5 hard-edge left-to-right reveal progress."""
+
+    if assignment is None or animation_keyframe_contract != "advanced-v1":
+        return 1.0
+
+    duration = max(0.001, float(duration_seconds))
+    current = max(0.0, min(float(time_seconds), duration))
+    value = evaluate_assignment_advanced_keyframe(
+        assignment,
+        "mask_progress",
+        current / duration,
+    )
+    if value is None:
+        return 1.0
+    return max(0.0, min(1.0, float(value)))
+
+
+def native_visual_preview_shadow(
+    assignment: AnimationAssignment | None,
+    *,
+    time_seconds: float,
+    duration_seconds: float,
+    canvas_width: int,
+    canvas_height: int,
+    animation_keyframe_contract: ResolvedAnimationKeyframeContract = "legacy-v3",
+) -> ShadowState:
+    """Evaluate K4 Shadow state for responsive Qt Approx preview."""
+
+    if assignment is None or animation_keyframe_contract != "advanced-v1":
+        return ShadowState()
+
+    duration = max(0.001, float(duration_seconds))
+    current = max(0.0, min(float(time_seconds), duration))
+    return evaluate_assignment_shadow(
+        assignment,
+        current / duration,
+        canvas_width=canvas_width,
+        canvas_height=canvas_height,
+    )
+
+
+def native_visual_preview_glow(
+    assignment: AnimationAssignment | None,
+    *,
+    time_seconds: float,
+    duration_seconds: float,
+    canvas_width: int,
+    canvas_height: int,
+    animation_keyframe_contract: ResolvedAnimationKeyframeContract = "legacy-v3",
+) -> GlowState:
+    """Evaluate K4 Glow state for responsive Qt Approx preview."""
+
+    if assignment is None or animation_keyframe_contract != "advanced-v1":
+        return GlowState()
+
+    duration = max(0.001, float(duration_seconds))
+    current = max(0.0, min(float(time_seconds), duration))
+    return evaluate_assignment_glow(
+        assignment,
+        current / duration,
+        canvas_width=canvas_width,
+        canvas_height=canvas_height,
+    )
 
 
 def native_visual_preview_scale(
@@ -124,6 +264,7 @@ def native_visual_preview_scale(
     *,
     time_seconds: float,
     duration_seconds: float,
+    animation_keyframe_contract: ResolvedAnimationKeyframeContract = "legacy-v3",
 ) -> float:
     """Evaluate native scale using the same timing window as FFmpeg."""
 
@@ -149,10 +290,11 @@ def native_visual_preview_scale(
                 progress = (current - exit_start) / window
             scale *= evaluate_effect(effect, progress, entering=entering).scale
 
-    keyframe_scale = evaluate_assignment_keyframe(
+    keyframe_scale = evaluate_assignment_keyframe_with_contract(
         assignment,
         "scale",
         current / duration,
+        advanced_semantics=animation_keyframe_contract == "advanced-v1",
     )
     if keyframe_scale is not None:
         scale *= keyframe_scale
@@ -164,6 +306,7 @@ def native_visual_preview_rotation(
     *,
     time_seconds: float,
     duration_seconds: float,
+    animation_keyframe_contract: ResolvedAnimationKeyframeContract = "legacy-v3",
 ) -> float:
     """Evaluate native Tumble rotation using the same timing window as FFmpeg."""
 
@@ -193,10 +336,11 @@ def native_visual_preview_rotation(
                 * intensity
             )
 
-    keyframe_rotation = evaluate_assignment_keyframe(
+    keyframe_rotation = evaluate_assignment_keyframe_with_contract(
         assignment,
         "rotation_degrees",
         current / duration,
+        advanced_semantics=animation_keyframe_contract == "advanced-v1",
     )
     if keyframe_rotation is not None:
         rotation += keyframe_rotation
@@ -208,6 +352,7 @@ def native_motion_preview_offset(
     *,
     time_seconds: float,
     duration_seconds: float,
+    animation_keyframe_contract: ResolvedAnimationKeyframeContract = "legacy-v3",
 ) -> PreviewMotionOffset:
     """Evaluate native motion using the same 0.25s timing contract as FFmpeg."""
 
@@ -238,15 +383,18 @@ def native_motion_preview_offset(
             offset_y += delta.offset_y * intensity
 
     normalized_time = current / duration
-    keyframe_x = evaluate_assignment_keyframe(
+    advanced_semantics = animation_keyframe_contract == "advanced-v1"
+    keyframe_x = evaluate_assignment_keyframe_with_contract(
         assignment,
         "position_x",
         normalized_time,
+        advanced_semantics=advanced_semantics,
     )
-    keyframe_y = evaluate_assignment_keyframe(
+    keyframe_y = evaluate_assignment_keyframe_with_contract(
         assignment,
         "position_y",
         normalized_time,
+        advanced_semantics=advanced_semantics,
     )
     if keyframe_x is not None:
         offset_x += keyframe_x

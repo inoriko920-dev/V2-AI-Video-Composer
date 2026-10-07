@@ -3,9 +3,10 @@ from __future__ import annotations
 from typing import Any
 
 from aavc.application.commands import (
+    AdvancedAnimationActivationRequired,
+    ApplyAnimationKeyframeEdit,
     RandomizeAnimationAssignments,
     RemoveAnimationAssignment,
-    SetAnimationAssignment,
     SetProjectTitle,
 )
 from aavc.bootstrap.composition_root import FoundationServices
@@ -192,6 +193,52 @@ class NativeMotionMainWindow(GuardedMainWindow):
             8000,
         )
 
+    def _confirm_advanced_animation_activation(
+        self,
+        error: AdvancedAnimationActivationRequired,
+    ) -> tuple[bool, bool]:
+        from PySide6.QtWidgets import QCheckBox, QMessageBox
+
+        box = QMessageBox(self.window)
+        box.setIcon(QMessageBox.Icon.Warning)
+        box.setWindowTitle("Aktifkan Advanced Animation?")
+        changed = ", ".join(error.changed_properties)
+        message = (
+            "Edit ini membutuhkan schema v4 / advanced-v1. "
+            "Project yang sudah disimpan sebagai v4 tidak dapat dibuka oleh v0.2.0. "
+            "Pada overwrite v3→v4 pertama, aplikasi membuat backup "
+            ".pre-schema-v4.bak.\n\n"
+            f"Property yang akan diaktifkan: {changed}."
+        )
+        if error.dormant_locations:
+            message += (
+                f"\nDitemukan {len(error.dormant_locations)} track advanced dormant "
+                "di project yang ikut menjadi aktif setelah aktivasi."
+            )
+        box.setText(message)
+        acknowledge: QCheckBox | None = None
+        if error.requires_dormant_acknowledgement:
+            acknowledge = QCheckBox(
+                "Saya memahami track advanced dormant lain juga akan menjadi aktif."
+            )
+            box.setCheckBox(acknowledge)
+        box.setStandardButtons(
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel
+        )
+        yes_button = box.button(QMessageBox.StandardButton.Yes)
+        if yes_button is not None:
+            yes_button.setText("Aktifkan & Terapkan")
+
+        if box.exec() != QMessageBox.StandardButton.Yes:
+            return False, False
+        if acknowledge is not None and not acknowledge.isChecked():
+            self._show_project_notice(
+                "Aktivasi belum diterapkan",
+                "Centang konfirmasi track dormant sebelum mengaktifkan Advanced Animation.",
+            )
+            return False, False
+        return True, acknowledge.isChecked() if acknowledge is not None else True
+
     def open_asset_motion_editor(self) -> None:
         session = self.services.project_session
         project = session.current
@@ -225,6 +272,7 @@ class NativeMotionMainWindow(GuardedMainWindow):
             self.window,
             scene,
             project.animations,
+            project_schema_version=project.schema_version,
         )
         if result is None:
             return
@@ -233,10 +281,33 @@ class NativeMotionMainWindow(GuardedMainWindow):
             if result.action == "apply":
                 if result.assignment is None:
                     raise ValueError("Assignment animasi tidak tersedia")
-                session.execute(SetAnimationAssignment(result.assignment))
+                was_legacy = project.schema_version < 4
+                try:
+                    changed = session.execute(
+                        ApplyAnimationKeyframeEdit(result.assignment)
+                    )
+                except AdvancedAnimationActivationRequired as activation:
+                    confirmed, acknowledged = (
+                        self._confirm_advanced_animation_activation(activation)
+                    )
+                    if not confirmed:
+                        return
+                    changed = session.execute(
+                        ApplyAnimationKeyframeEdit(
+                            result.assignment,
+                            activate_advanced=True,
+                            acknowledge_dormant=acknowledged,
+                        )
+                    )
+                promoted = was_legacy and changed.schema_version >= 4
+                promotion_text = (
+                    " Advanced Animation v4 telah diaktifkan."
+                    if promoted
+                    else ""
+                )
                 message = (
-                    f"Animasi {result.asset_id} diterapkan pada Scene {scene_number:02d}. "
-                    "Klik Simpan untuk menyimpan perubahan."
+                    f"Animasi {result.asset_id} diterapkan pada Scene {scene_number:02d}."
+                    f"{promotion_text} Klik Simpan untuk menyimpan perubahan."
                 )
             else:
                 session.execute(
