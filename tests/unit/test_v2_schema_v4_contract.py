@@ -179,7 +179,7 @@ def test_active_v4_still_fails_closed_for_unimplemented_advanced_property(
     project = _project()
     scene = project.scenes[0]
     crop_track = AnimationKeyframeTrack(
-        property_name="blur",
+        property_name="shadow",
         keyframes=(
             AnimationKeyframe(time=0.0, value=0.0),
             AnimationKeyframe(time=1.0, value=0.2),
@@ -194,7 +194,7 @@ def test_active_v4_still_fails_closed_for_unimplemented_advanced_property(
     advanced = _promote(replace(project, animations=(assignment,)))
 
     report = validate_render_plan(
-        build_render_plan(advanced, tmp_path / "advanced-blur.mp4")
+        build_render_plan(advanced, tmp_path / "advanced-shadow.mp4")
     )
 
     assert any(
