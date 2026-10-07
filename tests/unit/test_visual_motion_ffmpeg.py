@@ -297,6 +297,7 @@ def test_promoted_wipe_and_blur_are_render_backed_without_fallback(tmp_path: Pat
     ]
     assert not fallback_messages
 
+
 def test_preflight_rejects_nonempty_animation_slot_mismatch(tmp_path: Path) -> None:
     project = _project()
     plan = build_render_plan(project, tmp_path / "out.mp4")
