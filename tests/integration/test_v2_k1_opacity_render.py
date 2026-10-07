@@ -3,7 +3,6 @@ from __future__ import annotations
 import shutil
 import statistics
 import time
-from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -39,9 +38,7 @@ from aavc.rendering.advanced_filters import compile_k1_opacity_filters
 
 
 def _write_ppm(path: Path, rgb: tuple[int, int, int] = (240, 32, 32)) -> None:
-    path.write_bytes(
-        b"P6\n1 1\n255\n" + bytes(rgb)
-    )
+    path.write_bytes(b"P6\n1 1\n255\n" + bytes(rgb))
 
 
 def _write_pam_rgba(
@@ -316,7 +313,7 @@ def test_k1_opacity_performance_is_within_2_5x_baseline() -> None:
         (
             "format=rgba,"
             "sendcmd=c='0-1.5 [expr] "
-            "colorchannelmixer@k1_perf aa TI/1.5',"
+            "colorchannelmixer@k1_perf aa TI',"
             "colorchannelmixer@k1_perf=aa=0"
         ),
         "-f",
