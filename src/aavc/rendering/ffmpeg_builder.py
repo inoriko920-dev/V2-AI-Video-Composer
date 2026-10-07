@@ -12,7 +12,11 @@ from aavc.animation.compiler import (
 from aavc.animation.contract import ResolvedAnimationKeyframeContract
 from aavc.domain.project.models import AnimationAssignment
 
-from .advanced_filters import compile_k1_opacity_filters, compile_k2_crop_filters
+from .advanced_filters import (
+    compile_k1_opacity_filters,
+    compile_k2_crop_filters,
+    compile_k3_blur_filters,
+)
 from .render_plan import RenderPlan, SceneRenderPlan
 
 
@@ -52,6 +56,9 @@ def _scaled_asset_clause(
     scale_flags: str,
     assignment: AnimationAssignment | None,
     duration_seconds: float,
+    fps: int,
+    canvas_width: int,
+    canvas_height: int,
     animation_keyframe_contract: ResolvedAnimationKeyframeContract,
     opacity_instance_id: str,
 ) -> str:
@@ -61,6 +68,7 @@ def _scaled_asset_clause(
         "setpts=PTS-STARTPTS"
     )
     clauses: list[str] = []
+    crop_filters: tuple[str, ...] = ()
     if animation_keyframe_contract == "advanced-v1":
         crop_filters = compile_k2_crop_filters(
             assignment,
@@ -69,6 +77,24 @@ def _scaled_asset_clause(
         )
         if crop_filters:
             base += "," + ",".join(crop_filters)
+
+        blur_filters = compile_k3_blur_filters(
+            assignment,
+            duration_seconds=duration_seconds,
+            fps=fps,
+            canvas_width=canvas_width,
+            canvas_height=canvas_height,
+            instance_id=f"blur_{opacity_instance_id}",
+        )
+        if blur_filters:
+            base += "," + ",".join(blur_filters)
+            if crop_filters:
+                post_crop_filters = compile_k2_crop_filters(
+                    assignment,
+                    duration_seconds=duration_seconds,
+                    instance_id=f"crop_post_{opacity_instance_id}",
+                )
+                base += "," + ",".join(post_crop_filters)
 
     scale_filter = compile_native_scale_filter(
         assignment,
@@ -161,6 +187,9 @@ def build_ffmpeg_command(plan: RenderPlan, ffmpeg: str = "ffmpeg") -> list[str]:
                     scale_flags=scale_flags,
                     assignment=assignment,
                     duration_seconds=duration,
+                    fps=plan.fps,
+                    canvas_width=plan.width,
+                    canvas_height=plan.height,
                     animation_keyframe_contract=plan.animation_keyframe_contract,
                     opacity_instance_id=f"opacity_{sidx}_0",
                 )
