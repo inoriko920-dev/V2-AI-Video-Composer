@@ -79,7 +79,7 @@ for raw in lines:
     if line.startswith("## "):
         flush(); doc.add_heading(clean_inline(line[3:]), level=1); continue
     if re.match(r"^\d+\.\s+", line):
-        flush(); doc.add_paragraph(re.sub(r"^\d+\.\s+", "", line), style="List Number"); continue
+        flush(); doc.add_paragraph(clean_inline(re.sub(r"^\d+\.\s+", "", line)), style="List Number"); continue
     if line.startswith("- "):
         flush(); doc.add_paragraph(clean_inline(line[2:]), style="List Bullet"); continue
     if line.startswith("**") and line.endswith("**"):
