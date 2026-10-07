@@ -100,15 +100,18 @@ def _scaled_asset_clause(
                 )
                 base += "," + ",".join(post_crop_filters)
 
+    advanced_semantics = animation_keyframe_contract == "advanced-v1"
     scale_filter = compile_native_scale_filter(
         assignment,
         duration_seconds=duration_seconds,
+        advanced_semantics=advanced_semantics,
     )
     if scale_filter is not None:
         base += "," + scale_filter
     rotation_filter = compile_native_rotation_filter(
         assignment,
         duration_seconds=duration_seconds,
+        advanced_semantics=advanced_semantics,
     )
     if rotation_filter is not None:
         base += "," + rotation_filter
@@ -170,14 +173,20 @@ def _overlay_clause(
     base_y: str,
     assignment: AnimationAssignment | None,
     duration_seconds: float,
+    animation_keyframe_contract: ResolvedAnimationKeyframeContract,
 ) -> str:
-    if not assignment_has_native_motion(assignment):
+    advanced_semantics = animation_keyframe_contract == "advanced-v1"
+    if not assignment_has_native_motion(
+        assignment,
+        advanced_semantics=advanced_semantics,
+    ):
         return f"overlay=x={base_x}:y={base_y}:shortest=1"
     x_expr, y_expr = compile_motion_overlay_position(
         base_x=base_x,
         base_y=base_y,
         assignment=assignment,
         duration_seconds=duration_seconds,
+        advanced_semantics=advanced_semantics,
     )
     return f"overlay=x='{x_expr}':y='{y_expr}':shortest=1"
 
@@ -239,6 +248,7 @@ def build_ffmpeg_command(plan: RenderPlan, ffmpeg: str = "ffmpeg") -> list[str]:
                 base_y="(H-h)/2",
                 assignment=assignment,
                 duration_seconds=duration,
+                animation_keyframe_contract=plan.animation_keyframe_contract,
             )
             filters.append(
                 f"[{bg}][{scaled}]{overlay},"
@@ -274,6 +284,7 @@ def build_ffmpeg_command(plan: RenderPlan, ffmpeg: str = "ffmpeg") -> list[str]:
                 base_y="(H-h)/2",
                 assignment=_animation_at(scene, 0),
                 duration_seconds=duration,
+                animation_keyframe_contract=plan.animation_keyframe_contract,
             )
             filters.append(
                 f"[{bg}][{scaled_names[0]}]{first_overlay}[{tmp}]"
@@ -284,6 +295,7 @@ def build_ffmpeg_command(plan: RenderPlan, ffmpeg: str = "ffmpeg") -> list[str]:
                 base_y="(H-h)/2",
                 assignment=_animation_at(scene, 1),
                 duration_seconds=duration,
+                animation_keyframe_contract=plan.animation_keyframe_contract,
             )
             filters.append(
                 f"[{tmp}][{scaled_names[1]}]{second_overlay},"
