@@ -1,10 +1,10 @@
-# Maintenance Policy — AAVC 0.1.x
+# Maintenance Policy — AAVC 0.2.x
 
 ## Stable line
-`0.1.x` is the first maintained Windows desktop line. Patch releases must preserve project schema compatibility unless a documented migration is added.
+`0.2.x` is the current maintained V2 Windows desktop line. Patch releases must preserve project schema v3 compatibility unless a documented migration is added. Published `0.1.0` and `0.1.1` remain frozen historical releases and are never moved or overwritten.
 
 ## Change classes
-- Patch (`0.1.x`): bug fixes, UI collision fixes, provider compatibility, security hardening, packaging fixes.
+- Patch (`0.2.x`): bug fixes, UI collision fixes, provider compatibility, security hardening, packaging fixes.
 - Minor (`0.x.0`): new user-visible capability or compatible schema expansion.
 - Major (`x.0.0`): intentional breaking project/schema/workflow change.
 
