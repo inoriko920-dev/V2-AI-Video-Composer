@@ -166,7 +166,7 @@ Third-party dependencies retain their own licenses. FFmpeg/ffprobe are external 
 - Wave G: **COMPLETE** — Gemini background cancellation/progress and secret-free key-pool health diagnostics passed CI.
 - Wave H: **COMPLETE** — frozen-reference UI parity, truthful action state, and focus/disabled interaction polish passed CI + screenshot gates.
 - Wave I: **COMPLETE** — PyAV Windows feasibility spike passed; no optional backend was promoted into runtime.
-- Wave J: **NEXT** — full regression, Windows packaging, user-test build, release candidate, and final release gate.
+- Wave J: **ACTIVE / REFRESHED RC USER TEST PENDING** — all 21 canonical animation effects now have native preview/FFmpeg capability coverage; final v0.2.0 remains blocked on user acceptance.
 
 
 ## Wave I dependency gate
@@ -195,3 +195,13 @@ blocked until user-test acceptance.
 Automated RC gates are **PASS** and PR #12 is merged. The Windows portable
 `0.2.0rc1` build is ready for user testing. Final `v0.2.0` is intentionally not
 published until user acceptance confirms there is no blocker.
+
+
+### 21-effect animation blocker closure
+PR #13 is merged. The canonical 21-effect registry is now fully included in the native
+preview/FFmpeg capability matrix. The refreshed 0.2.0rc1 gate passed Windows CI,
+CodeQL, 627 regression tests (1 deselected), all 8 STEP09 screenshots, PyInstaller
+onedir packaging, portable smoke/content/secret verification, and RC artifact upload.
+Use refreshed user-test artifact ID `11459479975`; the earlier RC artifact is superseded
+for animation testing. Advanced opacity/crop/blur/shadow/glow/mask keyframe tracks and
+bezier/velocity/overshoot remain explicitly outside the production-ready keyframe set.
