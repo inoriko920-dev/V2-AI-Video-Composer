@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from aavc.animation import (
     CropVisibility,
+    evaluate_assignment_blur,
     evaluate_assignment_advanced_keyframe,
     evaluate_assignment_crop_visibility,
     evaluate_assignment_keyframe,
@@ -155,6 +156,31 @@ def native_visual_preview_crop(
         assignment,
         current / duration,
     )
+
+
+def native_visual_preview_blur_sigma(
+    assignment: AnimationAssignment | None,
+    *,
+    time_seconds: float,
+    duration_seconds: float,
+    canvas_width: int,
+    canvas_height: int,
+    animation_keyframe_contract: ResolvedAnimationKeyframeContract = "legacy-v3",
+) -> float:
+    """Evaluate K3 Blur sigma for responsive Qt Approx preview."""
+
+    if assignment is None or animation_keyframe_contract != "advanced-v1":
+        return 0.0
+
+    duration = max(0.001, float(duration_seconds))
+    current = max(0.0, min(float(time_seconds), duration))
+    state = evaluate_assignment_blur(
+        assignment,
+        current / duration,
+        canvas_width=canvas_width,
+        canvas_height=canvas_height,
+    )
+    return state.sigma
 
 
 def native_visual_preview_scale(
