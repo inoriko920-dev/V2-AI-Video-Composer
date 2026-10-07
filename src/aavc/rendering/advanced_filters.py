@@ -465,19 +465,22 @@ def _k4_branch_commands(
     alpha_scale: float,
     blur_target: str,
     gain_target: str,
-) -> tuple[str, ...]:
-    commands: list[str] = []
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    sigma_commands: list[str] = []
+    alpha_commands: list[str] = []
     for seconds, intensity in samples[1:]:
         sigma = round(sigma_scale * intensity, 2)
         alpha = round(alpha_scale * intensity, 4)
-        commands.extend(
+        sigma_commands.extend(
             (
                 f"{_number(seconds)} {blur_target} sigma {sigma:.2f}",
                 f"{_number(seconds)} {blur_target} sigmaV {sigma:.2f}",
-                f"{_number(seconds)} {gain_target} aa {alpha:.4f}",
             )
         )
-    return tuple(commands)
+        alpha_commands.append(
+            f"{_number(seconds)} {gain_target} aa {alpha:.4f}"
+        )
+    return tuple(sigma_commands), tuple(alpha_commands)
 
 
 def compile_k4_shadow_glow_clauses(
@@ -532,7 +535,7 @@ def compile_k4_shadow_glow_clauses(
         alpha_scale = 0.65
         blur_target = f"gblur@{instance_id}_glow_blur"
         gain_target = f"colorchannelmixer@{instance_id}_glow_gain"
-        commands = _k4_branch_commands(
+        sigma_commands, alpha_commands = _k4_branch_commands(
             samples,
             sigma_scale=sigma_scale,
             alpha_scale=alpha_scale,
@@ -550,8 +553,8 @@ def compile_k4_shadow_glow_clauses(
             f"[{glow_color_src}][{glow_alpha_src}]"
         )
         alpha_chain = f"[{glow_alpha_src}]alphaextract"
-        if commands:
-            alpha_chain += ",sendcmd=c='" + ";".join(commands) + "'"
+        if sigma_commands:
+            alpha_chain += ",sendcmd=c='" + ";".join(sigma_commands) + "'"
         alpha_chain += (
             f",{blur_target}=sigma={sigma_scale * initial:.2f}:"
             f"sigmaV={sigma_scale * initial:.2f}:steps=2"
@@ -564,10 +567,14 @@ def compile_k4_shadow_glow_clauses(
         clauses.append(
             f"[{glow_color}][{glow_mask}]alphamerge[{glow_merged}]"
         )
-        clauses.append(
-            f"[{glow_merged}]{gain_target}=aa={alpha_scale * initial:.4f}"
+        gain_chain = f"[{glow_merged}]"
+        if alpha_commands:
+            gain_chain += "sendcmd=c='" + ";".join(alpha_commands) + "',"
+        gain_chain += (
+            f"{gain_target}=aa={alpha_scale * initial:.4f}"
             f"[{glow_layer}]"
         )
+        clauses.append(gain_chain)
         layers.append((glow_layer, "0", "0"))
 
     if shadow:
@@ -600,8 +607,8 @@ def compile_k4_shadow_glow_clauses(
             f"[{shadow_color_src}][{shadow_alpha_src}]"
         )
         alpha_chain = f"[{shadow_alpha_src}]alphaextract"
-        if commands:
-            alpha_chain += ",sendcmd=c='" + ";".join(commands) + "'"
+        if sigma_commands:
+            alpha_chain += ",sendcmd=c='" + ";".join(sigma_commands) + "'"
         alpha_chain += (
             f",{blur_target}=sigma={sigma_scale * initial:.2f}:"
             f"sigmaV={sigma_scale * initial:.2f}:steps=2"
@@ -614,10 +621,14 @@ def compile_k4_shadow_glow_clauses(
         clauses.append(
             f"[{shadow_color}][{shadow_mask}]alphamerge[{shadow_merged}]"
         )
-        clauses.append(
-            f"[{shadow_merged}]{gain_target}=aa={alpha_scale * initial:.4f}"
+        gain_chain = f"[{shadow_merged}]"
+        if alpha_commands:
+            gain_chain += "sendcmd=c='" + ";".join(alpha_commands) + "',"
+        gain_chain += (
+            f"{gain_target}=aa={alpha_scale * initial:.4f}"
             f"[{shadow_layer}]"
         )
+        clauses.append(gain_chain)
         intensity_expr = _advanced_time_expression(
             assignment,
             "shadow",
