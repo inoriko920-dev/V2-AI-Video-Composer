@@ -273,12 +273,9 @@ def test_double_scene_partial_motion_changes_only_assigned_overlay(tmp_path: Pat
     assert "if(gt(t,2.750000)" in command
 
 
-def test_unsupported_effect_keeps_default_motion_and_warns(tmp_path: Path) -> None:
+def test_promoted_wipe_and_blur_are_render_backed_without_fallback(tmp_path: Path) -> None:
     project = _project()
     scene = project.scenes[0]
-    baseline = " ".join(
-        build_ffmpeg_command(build_render_plan(project, tmp_path / "out.mp4"))
-    )
     assignment = AnimationAssignment(
         scene_number=scene.scene_number,
         asset_id=scene.asset_ids[0],
@@ -288,18 +285,17 @@ def test_unsupported_effect_keeps_default_motion_and_warns(tmp_path: Path) -> No
     )
     project = replace(project, animations=(assignment,))
     plan = build_render_plan(project, tmp_path / "out.mp4")
+    graph = " ".join(build_ffmpeg_command(plan))
 
-    assert " ".join(build_ffmpeg_command(plan)) == baseline
-    report = validate_render_plan(plan)
+    assert "format=rgba,fade=t=in:st=0:d=0.250000:alpha=1" in graph
+    assert "1+0.06*(t-" in graph
+    assert "W*0.100000" in graph
     fallback_messages = [
         issue.message
-        for issue in report.issues
+        for issue in validate_render_plan(plan).issues
         if issue.code == "VISUAL_EFFECT_FALLBACK"
     ]
-    assert any("Wipe" in message for message in fallback_messages)
-    assert any("Blur" in message for message in fallback_messages)
-    assert report.ok
-
+    assert not fallback_messages
 
 def test_preflight_rejects_nonempty_animation_slot_mismatch(tmp_path: Path) -> None:
     project = _project()
