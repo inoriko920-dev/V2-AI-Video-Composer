@@ -514,7 +514,7 @@ def compile_k5_mask_filters(
     if commands:
         filters.append("sendcmd=c='" + ";".join(commands) + "'")
     filters.append(
-        f"{target}=x=iw*{initial:.6f}:y=0:w=iw:h=ih:"
+        f"{target}=x=ceil(iw*{initial:.6f}):y=0:w=iw:h=ih:"
         "color=black@0:t=fill:replace=1"
     )
     return tuple(filters)
