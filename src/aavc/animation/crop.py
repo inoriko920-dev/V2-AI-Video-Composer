@@ -118,3 +118,30 @@ def crop_assignment_has_clamped_keyframes(
         ):
             return True
     return False
+
+
+
+def crop_assignment_has_pair_normalization(
+    assignment: AnimationAssignment | None,
+) -> bool:
+    if assignment is None or not assignment_has_supported_crop(assignment):
+        return False
+
+    sample_times = {0.0, 1.0}
+    for property_name in CROP_PROPERTIES:
+        track = find_keyframe_track(assignment, property_name)
+        if track is not None:
+            sample_times.update(keyframe.time for keyframe in track.keyframes)
+
+    ordered = sorted(sample_times)
+    midpoints = {
+        (start + end) / 2.0
+        for start, end in zip(ordered, ordered[1:], strict=False)
+    }
+    for normalized_time in sorted(sample_times | midpoints):
+        if evaluate_assignment_crop_visibility(
+            assignment,
+            normalized_time,
+        ).normalized:
+            return True
+    return False
