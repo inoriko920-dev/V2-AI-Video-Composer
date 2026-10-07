@@ -1,19 +1,27 @@
-# STEP 05 — UI State Inventory & Image-Prompt Package
+# SUPERSEDED — STEP 05 UI State Inventory & Image-Prompt Package
 
-Status: **SUPERSEDED BY STEP 05C**
+Status: **SUPERSEDED / NON-AUTHORITATIVE**
 
-This document is retained only as historical planning context.
+This document is retained only as historical trace.
 
-The previous requirement to generate UI-043 through UI-052 is **withdrawn** because it conflicted with the user's original requirement that the V2 application reuse/copy the UI from the copied repository.
+## Superseded by
+`05C_UI_SOURCE_OF_TRUTH_CORRECTION_AND_GATE_RESET.md`
 
-Authoritative correction:
-`docs/v2_0_2_1_planning/05C_UI_SOURCE_OF_TRUTH_CORRECTION_AND_GATE_RESET.md`
+The user clarified that V2 must copy/reuse the UI already present in the copied repository. Therefore the former requirements to generate UI-043 through UI-052, wait for user-created images, review those images, and compile a new UI-reference DOCX are cancelled.
 
-Correct source of truth:
-- existing frozen UI-001 through UI-042;
+## Do not use this file to block implementation
+- UI-043–UI-052: **NOT REQUIRED**
+- new image prompt package: **NOT REQUIRED**
+- UI_REFERENCE_WAIT hard stop: **CANCELLED**
+- new user-generated UI references: **NOT REQUIRED**
+
+## Current UI source of truth
+Use:
+- copied Qt presentation code in this repository;
 - `docs/UI_FREEZE.md`;
 - `resources/ui_reference/final/README.md`;
-- the copied repository's real Qt UI implementation.
+- STEP 05C correction;
+- STEP 04 only for behavioral decisions compatible with the copied UI.
 
-The former UI_REFERENCE_WAIT hard stop is cancelled.
-The prompt ZIP `V2_0.2.1_STEP05_UI_PROMPTS_UI-043_UI-052.zip` is obsolete/non-authoritative and must not block planning or implementation.
+For current implementation status and read order, use:
+`IMPLEMENTATION_READINESS_INDEX.md`.
