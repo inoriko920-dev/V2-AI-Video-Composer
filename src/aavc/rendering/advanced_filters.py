@@ -17,8 +17,10 @@ if TYPE_CHECKING:
 K1_ACTIVE_RENDER_PROPERTIES = frozenset({"opacity"})
 K2_ACTIVE_RENDER_PROPERTIES = frozenset(CROP_PROPERTIES)
 
+
 def _number(value: float) -> str:
     return f"{float(value):.6f}"
+
 
 def _easing_expression(easing: str, fraction: str) -> str:
     if easing == "ease_in":
@@ -32,6 +34,7 @@ def _easing_expression(easing: str, fraction: str) -> str:
             f"1-pow(-2*({fraction})+2,2)/2)"
         )
     return fraction
+
 
 def _advanced_time_expression(
     assignment: AnimationAssignment | None,
@@ -81,6 +84,7 @@ def _advanced_time_expression(
         f"({expression})))"
     )
 
+
 def _normalize_crop_pair(first: str, second: str) -> tuple[str, str]:
     total = f"(({first})+({second}))"
     normalized_first = (
@@ -92,6 +96,7 @@ def _normalize_crop_pair(first: str, second: str) -> tuple[str, str]:
         f"0.900000*({second})/{total},({second}))"
     )
     return normalized_first, normalized_second
+
 
 def _crop_gate_expression(
     assignment: AnimationAssignment | None,
@@ -130,6 +135,7 @@ def _crop_gate_expression(
         f"lt(Y,H*(1-({bottom})))"
     )
 
+
 def compile_k2_crop_mask_filter(
     assignment: AnimationAssignment | None,
     *,
@@ -145,11 +151,13 @@ def compile_k2_crop_mask_filter(
         return None
     return f"geq=lum='p(X,Y)*({gate})'"
 
+
 def assignment_has_k1_opacity(
     assignment: AnimationAssignment | None,
 ) -> bool:
     track = find_keyframe_track(assignment, "opacity")
     return track is not None and is_supported_advanced_keyframe_track(track)
+
 
 def _eased_ti_expression(easing: str) -> str:
     if easing == "ease_in":
@@ -162,6 +170,7 @@ def _eased_ti_expression(easing: str) -> str:
         tail = f"(1-abs({x}))"
         return f"0.5+sgn({x})*(1-({tail})*({tail}))/2"
     return "TI"
+
 
 def _segment_gain_expression(
     start_value: float,
@@ -177,6 +186,7 @@ def _segment_gain_expression(
     eased = _eased_ti_expression(easing)
     delta = end - start
     return f"{_number(start)}+({_number(delta)})*({eased})"
+
 
 def compile_k1_opacity_filters(
     assignment: AnimationAssignment | None,
@@ -245,6 +255,7 @@ def compile_k1_opacity_filters(
         f"{target}=aa={_number(initial)}",
     )
 
+
 def render_plan_requires_k1_opacity(plan: RenderPlan) -> bool:
     if plan.animation_keyframe_contract != "advanced-v1":
         return False
@@ -253,6 +264,7 @@ def render_plan_requires_k1_opacity(plan: RenderPlan) -> bool:
         for scene in plan.scenes
         for assignment in scene.animations
     )
+
 
 def render_plan_requires_k2_crop(plan: RenderPlan) -> bool:
     if plan.animation_keyframe_contract != "advanced-v1":
