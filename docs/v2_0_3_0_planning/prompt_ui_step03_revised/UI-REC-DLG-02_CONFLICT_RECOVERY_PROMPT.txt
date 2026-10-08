@@ -1,0 +1,21 @@
+VISUAL REFERENCE ONLY • V2 AI VIDEO COMPOSER • STEP03-R • 8 Oktober 2026 WIB
+HARD STOP: no Qt production implementation, no STEP04 until 3 visual references are reviewed and one image-filled final reference DOCX is approved and committed.
+SOURCE DESIGN: existing actual Windows Qt UI screenshot UI-013_ACTUAL.png from STEP09 UI capture run 37734080472, not UI-002 (UI-002 is HOME). Preserve inherited desktop app shell 100% unchanged.
+RESOLUTION: 1920x1080. ONE screenshot per dialog concept, not a collage or marketing poster.
+LANGUAGE: every visible UI label in Bahasa Indonesia.
+STYLE: actual Windows 11/PySide6 native desktop UI, restrained white and blue, thin gray borders, dark gray text, small but readable. The existing menu strip, tool bar, left asset grid, video preview, right properties panel and bottom timeline must retain their exact existing geometry and content. Only add ONE modest centered modal of approx 600-670px width, and a subtle scrim. No extra controls in background.
+DO NOT CHANGE app name, project data, panel arrangement, timeline media, assets or layout. No generic new editor imitation.
+NO bogus time/disk sizes or absolute filesystem paths; no user credential fields, watermark, dark mode, neon, English buttons, invented branding, cloud backup guarantees or automatic data overwrite.
+CANCEL: safe default focused; Esc cancels with zero disk and current-session changes. Modal keyboard navigation order stable. Simulated UI references are NOT production screens.
+
+TITLE: Cadangan Perlu Diperiksa
+Scenario: uncertain old metadata, legacy snapshot, or changed original project baseline. Need a warning and a second explicit confirmation WITHIN SAME COMPONENT FLOW.
+Main dialog centered on ORIGINAL screen:
+"Cadangan Perlu Diperiksa"
+"Versi proyek tersimpan mungkin berbeda dari versi saat cadangan dibuat."
+Warning strip: "Pemulihan hanya dilakukan setelah Anda menyetujuinya. Proyek tersimpan akan dicadangkan terlebih dahulu."
+EXACT three buttons: "Periksa dan Pulihkan" (warning accented outline), "Gunakan Proyek Tersimpan" (neutral outline), "Batal" (safe default focused).
+The secondary confirmation occurs only AFTER clicking the first button, represented as a documented variation of THIS dialog, not new fourth dialog:
+"Yakin ingin memulihkan cadangan meskipun data proyek berbeda?" with "Ya, Pulihkan Cadangan" and "Batal" (safe default).
+A changed snapshot hash between prompt and confirm yields "Data proyek berubah. Periksa ulang." and never commits a stale choice.
+No invented "snapshot is newer" claim based on timestamps, no "verified" badge, no destructive one-click restore.
