@@ -30,8 +30,8 @@ try {
   if ($LASTEXITCODE -ne 0 -or $priorTag -ne "eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef") {
     throw "Immutable v0.2.2 release tag changed"
   }
-  git show-ref --verify --quiet "refs/tags/v0.3.0"
-  if ($LASTEXITCODE -eq 0) {
+  $existing = @(git tag --list "v0.3.0")
+  if ($existing -contains "v0.3.0") {
     throw "v0.3.0 already tagged: RC builder must not overwrite/publicize it"
   }
 
