@@ -35,22 +35,24 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Gate commit, prior tag, and absent new tag/release
+      - name: Gate exact source, immutable old tag and existing draft ownership
         shell: bash
         run: |
           set -Eeuo pipefail
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
           test "$(gh api "repos/$GITHUB_REPOSITORY/branches/main" --jq '.commit.sha')" = "$SOURCE_SHA"
           test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v0.2.2" --jq '.object.sha')" = "$PREVIOUS_SHA"
-          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" >/dev/null 2>&1; then
-            echo "::error::v0.3.0 tag already exists: refusing to overwrite"
-            exit 1
-          fi
-          if gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" >/dev/null 2>&1; then
-            echo "::error::v0.3.0 GitHub Release already exists: refusing duplicate"
-            exit 1
-          fi
-          echo "PRE_PUBLICATION_GATES_PASS"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq '.object.sha')" = "$SOURCE_SHA"
+          gh api "repos/$GITHUB_REPOSITORY/releases/406788270" > existing-draft.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          x = json.loads(Path('existing-draft.json').read_text())
+          assert x['id'] == 406788270
+          assert x['tag_name'] == 'v0.3.0' and x['draft'] is True
+          assert x['prerelease'] is False and len(x['assets']) == 9
+          print('OWNED_DRAFT_AND_FROZEN_SOURCE_PASS')
+          PY
 
       - name: Download final Windows-verified artifact from frozen source
         shell: bash
@@ -128,23 +130,19 @@ jobs:
           print('EXACT_MAIN_SOURCE_AND_NINE_RELEASE_ASSETS_PASS')
           PY
 
-      - name: Create immutable stable tag and upload verified assets to a draft release
+      - name: Verify existing stable tag and draft without creating duplicates
         shell: bash
         run: |
           set -Eeuo pipefail
-          gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$RELEASE_TAG" -f sha="$SOURCE_SHA" >/dev/null
           test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq '.object.sha')" = "$SOURCE_SHA"
-          gh release create "$RELEASE_TAG" release-upload/* \
-            --repo "$GITHUB_REPOSITORY" --verify-tag --draft \
-            --title "AI Automatic Video Composer v0.3.0" \
-            --notes-file release-upload/RELEASE_NOTES_0.3.0.md
-          echo "TAG_AND_DRAFT_WITH_ASSETS_CREATED"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/406788270" --jq '.draft')" = "true"
+          echo "EXISTING_TAG_AND_DRAFT_VERIFIED"
 
       - name: Verify all draft asset bytes, checksums and tag before public promotion
         shell: bash
         run: |
           set -Eeuo pipefail
-          gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" > draft-release.json
+          gh api "repos/$GITHUB_REPOSITORY/releases/406788270" > draft-release.json
           python - <<'PY'
           from pathlib import Path
           import hashlib
@@ -172,8 +170,16 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease=false --latest
-          echo "GITHUB_RELEASE_PUBLICATION_REQUESTED"
+          gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/406788270" \
+            -F draft=false -F prerelease=false -f make_latest=true > promotion-result.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          x = json.loads(Path('promotion-result.json').read_text())
+          assert x['id'] == 406788270 and x['draft'] is False
+          assert x['tag_name'] == 'v0.3.0' and len(x['assets']) == 9
+          print('GITHUB_RELEASE_PUBLICATION_CONFIRMED', x['html_url'])
+          PY
 
       - name: Verify published release and independently redownload all nine assets
         shell: bash
