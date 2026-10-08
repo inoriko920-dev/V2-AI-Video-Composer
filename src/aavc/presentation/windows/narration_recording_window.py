@@ -23,7 +23,7 @@ def ensure_wav_suffix(path: str | Path) -> Path:
     """Normalize a narration recording destination to a .wav file."""
 
     candidate = Path(path).expanduser()
-    if candidate.suffix.lower() != ".wav":
+    if candidate.suffix != ".wav":
         candidate = candidate.with_suffix(".wav")
     return candidate.resolve()
 
