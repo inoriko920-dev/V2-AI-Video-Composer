@@ -113,7 +113,7 @@ jobs:
         env:
           FFMPEG_REFERENCE: '9.0.2'
         run: |
-          ./scripts/build_v2_0_3_0_candidate.ps1 -Channel w06d
+          ./scripts/build_v2_0_3_0_candidate.ps1 -Channel rc
           Copy-Item release_candidate_0_3_0/BUILD_INFO.txt artifacts/user_acceptance/BUILD_INFO.txt
           Copy-Item release_candidate_0_3_0/SHA256SUMS.txt artifacts/user_acceptance/SHA256SUMS.txt
 
