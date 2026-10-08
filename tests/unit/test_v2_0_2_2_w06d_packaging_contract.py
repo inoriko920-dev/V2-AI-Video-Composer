@@ -28,8 +28,8 @@ def test_w06d_packaging_disables_opportunistic_upx() -> None:
 
 def test_w06d_artifact_scan_is_mandatory_in_packaging_and_verification() -> None:
     assert (ROOT / "scripts/verify_artifact_security.py").is_file()
-    assert "verify_artifact_security.py" in _read("scripts/package.ps1")
-    assert "verify_artifact_security.py" in _read("scripts/verify_portable.ps1")
+    assert "scripts.verify_artifact_security" in _read("scripts/package.ps1")
+    assert "scripts.verify_artifact_security" in _read("scripts/verify_portable.ps1")
 
 
 def test_w06d_ffmpeg_reference_is_enforced_not_silently_upgraded() -> None:
