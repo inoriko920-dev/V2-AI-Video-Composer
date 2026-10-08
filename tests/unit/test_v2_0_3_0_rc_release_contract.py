@@ -57,12 +57,31 @@ def test_rc_03_candidate_workflow_is_read_only_and_never_publishes() -> None:
     assert not re.search(r"(?m)^\s*(gh release create|git push --tags|git tag -f)\b", workflow)
 
 
-def test_rc_04_active_windows_acceptance_uses_new_version() -> None:
+def test_rc_04_active_windows_acceptance_verifies_published_stable() -> None:
+    """After public release, acceptance must verify it, not rebuild a retired RC."""
     workflow = read(".github/workflows/v2-user-acceptance.yml")
     assert '"0.3.0"' in workflow
-    assert "build_v2_0_3_0_candidate.ps1 -Channel rc" in workflow
-    assert "release_candidate_0_3_0" in workflow
-    assert "FFMPEG_REFERENCE" in workflow
+    assert "Verify immutable public v0.3.0" in workflow
+    assert "refs/tags/v0.3.0^{commit}" in workflow
+    assert "d5a085fe239763e469ad30e91f526179fe8b2595" in workflow
+    assert "refs/tags/v0.2.2^{commit}" in workflow
+    assert "eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef" in workflow
+    assert "releases/tags/v0.3.0" in workflow
+    assert "@($release.assets).Count -ne 9" in workflow
+    for token in (
+        "AI-Automatic-Video-Composer-0.3.0-win64.zip",
+        "AI-Automatic-Video-Composer-0.3.0-source.zip",
+        "066312fe6c983c797939fccf5682f5f4867c6ba528a099d18e67f33a8e1c7681",
+        "063c3fa88c03972fdcadcf6c3a7d7c7b183df07b146710cd209a59cbb11ca9df",
+        "gh release download v0.3.0",
+        "BUILD_INFO.txt",
+        "SHA256SUMS.txt",
+        "FFMPEG_REFERENCE",
+        "POST_RELEASE_STABLE_IDENTITY_AND_ASSETS_PASS",
+    ):
+        assert token in workflow
+    assert "build_v2_0_3_0_candidate.ps1 -Channel rc" not in workflow
+    assert "release_candidate_0_3_0" not in workflow
     assert "0.2.2 package and runtime identity" not in workflow
 
 

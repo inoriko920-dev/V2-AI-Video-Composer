@@ -1,5 +1,18 @@
 # V2 AI Video Composer
 
+## Current stable release — v0.3.0 (8 October 2026)
+
+**v0.3.0 is published and independently verified.** [Download the official Windows 11 x64 portable ZIP](https://github.com/inoriko920-dev/V2-AI-Video-Composer/releases/download/v0.3.0/AI-Automatic-Video-Composer-0.3.0-win64.zip) or [open the stable Release and its checksum assets](https://github.com/inoriko920-dev/V2-AI-Video-Composer/releases/tag/v0.3.0).
+
+- Frozen published source/tag: `d5a085fe239763e469ad30e91f526179fe8b2595`; all nine public assets checked, including both ZIP SHA-256 values.
+- Version 0.3.0 adds guarded **local autosave and project recovery** for projects that have been manually saved at least once. The existing white/blue editor and approved UI references remain unchanged.
+- Windows exact-source verification, **907 tests**, portable EXE launch, five-path matrix, FFmpeg modes and CodeQL: PASS.
+- **FFmpeg/ffprobe are external dependencies**. Follow the portable package instructions to install them beside the EXE or on PATH.
+- Historical `v0.2.2` and older releases remain available; do not replace their tags or assets.
+- Publication evidence and the remaining **manual-on-Windows** acceptance checklist: [post-release closure](docs/v2_0_3_0_planning/10_POST_RELEASE_PUBLICATION_CLOSURE.md).
+
+The earlier version/wave details below are retained as **historical snapshots**, not authoritative current release status.
+
 This repository is the **only writable development target for V2**.
 
 - Legacy repository: `inoriko920-dev/AI-Automatic-Video-Composer` — **read-only reference; do not modify**.
@@ -37,9 +50,9 @@ Windows desktop application for composing narrative/infographic videos from scen
 - STEP 14: **PASS / Release Candidate Ready**
 - STEP 15: **PASS / Final Release Ready**
 
-Current stable V2 release: **0.2.1**. Historical `v0.2.0`, `v0.1.1`, and `v0.1.0` remain frozen.
+Historical v0.2.1 checkpoint (superseded by v0.3.0): **0.2.1**. Earlier `v0.2.0`, `v0.1.1`, and `v0.1.0` remain frozen.
 
-Latest stable release line: **0.2.1 published / verified** at `eb94efebf142ba8203dfc3ae3c5fa861222a0926`.
+Archived 0.2.1 release line: **0.2.1 published / verified** at `eb94efebf142ba8203dfc3ae3c5fa861222a0926` (not the latest release).
 
 - Stability-hardened runtime source: `9ce7d3c3125947c69e7dcf357f6ecbbc6707fee7`
 - Post-merge CI run `37429362040`: **PASS**
@@ -149,9 +162,9 @@ For release evidence, publication, rollback rules and maintenance policy, see:
 - `BACKUP_AND_RECOVERY.md`
 - `docs/`
 
-Current stable line is **0.2.x**. The 0.2.1 final source adds advanced-v1 while published `v0.2.0` remains immutable.
+Historical 0.2.x note: the 0.2.1 final source added advanced-v1; published `v0.2.0` remains immutable. The current stable release is **v0.3.0**.
 
-Current release state: **v0.2.1 published / verified; Windows final gate, CI, CodeQL, portable packaging, packaged-EXE launch, checksum verification, and guarded publication PASS**.
+Archived v0.2.1 release state: **published / verified; Windows final gate, CI, CodeQL, portable packaging, packaged-EXE launch, checksum verification, and guarded publication PASS**. Current v0.3.0 evidence is linked above.
 
 
 ## License
