@@ -1,0 +1,88 @@
+name: V2 0.2.2 Candidate Verification (NO PUBLISH)
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_channel:
+        description: "Build candidate evidence only (never publish)"
+        required: true
+        type: choice
+        default: rc
+        options:
+          - rc
+          - final-verification
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v2-0-2-2-candidate-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  candidate-check:
+    runs-on: windows-latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12.10'
+          cache: 'pip'
+      - name: Ensure new v0.2.2 version and no existing release publication
+        shell: pwsh
+        run: |
+          if ((Select-String -Path pyproject.toml -Pattern '^version = "0.2.2"$').Count -ne 1) { throw "Wrong release version" }
+          if (Test-Path "release_candidate_0_2_2") { throw "Dirty candidate folder" }
+          Write-Host "V2_0_2_2_NON_PUBLISHING=PASS"
+      - name: Reject source secrets
+        run: python scripts/check_no_secrets.py
+      - name: Install pinned dependencies
+        run: |
+          python -m pip install "pip==26.2.1"
+          python -m pip install -r requirements.lock
+          python -m pip install -e .
+          python -m pip check
+      - name: Enforce exact reference FFmpeg (not latest)
+        shell: pwsh
+        env:
+          FFMPEG_REFERENCE: '9.0.2'
+        run: |
+          if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+            choco install ffmpeg --version=9.0.2 -y --no-progress
+            if ($LASTEXITCODE -ne 0) { throw "Reference FFmpeg installation failed" }
+          }
+          ./scripts/verify_ffmpeg_reference.ps1 -Mode system
+      - name: Compile Ruff and mypy
+        run: |
+          python -m compileall -q src
+          python -m ruff check src tests
+          python -m mypy src/aavc
+      - name: Full technical and real FFmpeg tests
+        run: python -m pytest -m "not visual" -q
+      - name: Build onedir and scan distributable
+        shell: pwsh
+        run: ./scripts/package.ps1
+      - name: Verify packaged EXE
+        shell: pwsh
+        run: ./scripts/verify_portable.ps1
+      - name: Prove PATH and temporary app-local FFmpeg precedence
+        shell: pwsh
+        env:
+          FFMPEG_REFERENCE: '9.0.2'
+        run: ./scripts/verify_ffmpeg_reference.ps1 -Mode both
+      - name: Assemble non-published candidate and verify hashes
+        shell: pwsh
+        env:
+          FFMPEG_REFERENCE: '9.0.2'
+        run: ./scripts/build_v2_0_2_2_candidate.ps1 -Channel "${{ inputs.candidate_channel }}"
+      - name: Upload non-published candidate evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: AAVC-0.2.2-candidate-NOT-PUBLISHED
+          path: release_candidate_0_2_2/*
+          if-no-files-found: error
+          retention-days: 30

@@ -23,7 +23,8 @@ Read in this order:
 - STEP 06 / W06-A: PASS / COMPLETE
 - STEP 06 / W06-B: PASS / COMPLETE
 - STEP 06 / W06-C: PASS / COMPLETE
-- STEP 06 / W06-D: NEXT / AUTHORIZED
+- STEP 06 / W06-D: PASS / COMPLETE
+- STEP 06 / W06-E: NEXT / AUTHORIZED
 - application coding: AUTHORIZED ONLY FOR STEP 06 WAVES
 - UI redesign: BLOCKED / not planned
 - schema change: BLOCKED
@@ -33,7 +34,7 @@ Read in this order:
 ## Handoff
 Another AI must not infer v0.2.2 scope from old Wave J or v0.2.1 implementation branches.
 Read STEP 00–05 in order. The canonical base is current post-release `main`.
-Start the next implementation turn only with W06-D. W06-A, W06-B and W06-C are complete. Complete one W06 wave per user turn.
+Start the next implementation turn only with W06-E. W06-A, W06-B, W06-C and W06-D are complete. Complete one W06 wave per user turn.
 Do not implement deferred GAP-03A runtime autosave/recovery UI integration.
 No new UI-image prompt step is required unless implementation unexpectedly changes the visual design.
 
@@ -66,3 +67,13 @@ No new UI-image prompt step is required unless implementation unexpectedly chang
 - Windows user acceptance: 37721187651 PASS (portable and EXE launch)
 - W06-D is the only authorized next implementation wave; no UI/schema/dependency/release changes made in W06-C
 - GAP-03A autosave/recovery runtime/UI integration remains deferred
+
+## W06-D result
+- source: docs/v2_0_2_2_planning/W06_D_IMPLEMENTATION_RESULT.md
+- failing-before 7 packaging contract failures: CI 37722279886
+- final application-code CI 37722775010 PASS — 750 passed, 45 deselected
+- final application-code CodeQL 37722775058 PASS
+- backend spike 37722775062 PASS
+- Windows acceptance 37722774954 PASS — 795 passed, portable EXE, app-local/PATH FFmpeg 9.0.2, artifact security scan and candidate SHA-256
+- 0.2.2 is PRE-RELEASE ONLY; no tag or GitHub Release created; v0.2.1 immutable
+- W06-E consolidated implementation closure is the next and only authorized wave

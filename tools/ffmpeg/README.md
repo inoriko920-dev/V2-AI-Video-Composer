@@ -1,6 +1,6 @@
-# FFmpeg tool slot — Final Release 0.1.0
+# FFmpeg tool slot — V2 0.2.2
 
-AAVC 0.1.0 does **not** redistribute an FFmpeg/ffprobe binary inside the repository or release ZIP.
+AAVC v0.2.2 does **not** redistribute an FFmpeg/ffprobe binary inside the repository or release ZIP.
 
 Reason: the exact FFmpeg build determines codec availability and license obligations. The application keeps that decision explicit instead of silently shipping an unknown third-party binary.
 
@@ -19,3 +19,5 @@ Before using a build for redistribution, record:
 - license profile and corresponding NOTICE/source obligations.
 
 Minimum functional capability expected by the current render pipeline includes H.264 video encoding, AAC audio, scale/overlay/concat/unsharp filters, and ASS/libass subtitle rendering.
+
+For v0.2.2 automated Windows acceptance, the reference is **FFmpeg/ffprobe 9.0.2** (gyan.dev essentials build, as verified by v0.2.1 evidence). Both executables must report 9.0.2 in the first `-version` line; record their SHA-256 fingerprints with the acceptance evidence. The approved binary remains external to the public ZIP. An absent/mismatched version fails acceptance; do not auto-upgrade to another version.

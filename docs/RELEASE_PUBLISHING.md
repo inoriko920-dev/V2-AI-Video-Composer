@@ -1,3 +1,9 @@
+# V2 0.2.2 — NOT PUBLISHED
+
+W06-D produces only a versioned, verified portable/source candidate. No v0.2.2 tag or GitHub Release has been created. The new v2-0.2.2-rc-final.yml workflow is manual, read-only and non-publishing. W06-E and STEP 07 remain required before publication. Historical v0.2.1 and v0.2.0 tags/releases are immutable.
+
+---
+
 # GitHub Release Publishing — AAVC 0.2.x
 
 ## V2 0.2.1 publication
