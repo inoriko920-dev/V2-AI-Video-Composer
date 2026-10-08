@@ -5,6 +5,7 @@ Intentionally landed before production changes to capture FB-03B / FB-03C.
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
 import pytest
@@ -185,3 +186,46 @@ def test_failed_recovery_replace_preserves_project_snapshot_and_cleans_temp(
     assert path.read_bytes() == original
     assert manager.recovery_path_for(path).read_bytes() == snapshot
     _assert_no_owned_temp(path)
+
+
+
+def test_backup_copy_failure_keeps_project_and_cleans_partial_backup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = save_project(_project(), tmp_path / "backup-copy-failure.aavcproj")
+    manager = RecoveryManager()
+    original = path.read_bytes()
+    recovery_bytes = _put_snapshot(manager, path, "not-restored")
+    first_backup = path.with_suffix(path.suffix + ".pre-recovery.bak")
+    first_backup.write_bytes(b"older-backup")
+
+    def inject_partial_copy(source, output) -> None:
+        output.write(b"incomplete-copy")
+        raise OSError("injected backup copy failure")
+
+    monkeypatch.setattr(shutil, "copyfileobj", inject_partial_copy)
+    with pytest.raises(OSError, match="injected backup copy failure"):
+        manager.restore_snapshot(path)
+
+    assert path.read_bytes() == original
+    assert manager.recovery_path_for(path).read_bytes() == recovery_bytes
+    assert first_backup.read_bytes() == b"older-backup"
+    assert not path.with_suffix(path.suffix + ".pre-recovery.1.bak").exists()
+    _assert_no_owned_temp(path)
+
+
+def test_corrupt_autosave_may_be_replaced_explicitly_without_project_backup(
+    tmp_path: Path,
+) -> None:
+    path = save_project(_project(), tmp_path / "autosave-project.aavcproj")
+    original = path.read_bytes()
+    manager = RecoveryManager()
+    autosave = manager.recovery_path_for(path)
+    autosave.write_bytes(b"broken previous snapshot")
+
+    manager.write_snapshot(_project(), path)
+
+    assert manager.load_snapshot(path).title == "w06c-project"
+    assert path.read_bytes() == original
+    assert not autosave.with_suffix(autosave.suffix + ".pre-schema-v4.bak").exists()
+    _assert_no_owned_temp(autosave)
