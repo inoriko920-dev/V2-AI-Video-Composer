@@ -1,3 +1,11 @@
+# ACTIVE V2 v0.3.0 HANDOFF — STEP05 DoR / NO CODING (8 OCT 2026 WIB)
+
+The three revised STEP03-R dialog PNGs and one final image-filled DOCX are approved and in main via PR #54; STEP04 testing Markdown + Word are in main via PR #55. Latest user `lanjutkan` grants only STEP05 planning. Read `05_IMPLEMENTATION_READINESS_AND_SOL_WAVE_AUTHORIZATION_PLAN.md` and the matching Word for required source-of-truth inventory, five W06-A..E wave scopes, test-first RED/GREEN gates and final implementation-authorization conditions.
+
+DoR requires all docs STEP00–05 and approved UI resources in main, plus final-head CI/CodeQL/Windows/backend PASS, docs-only changes and merge. Do **not** infer STEP06 authority from wording such as 'ready'; a separate future user turn is required to begin W06-A. All prior 13-image planning is superseded by the 3-dialog approval. Preserve v0.2.2 stable release, schema-v4 and exact 42-screen editor UI.
+
+---
+
 # ACTIVE HANDOFF — STEP04 TEST-FIRST PLANNING (8 OCT 2026 WIB)
 
 The previous STEP03-R UI gate is **COMPLETE/PASS** after PR #54 merged: three approved PNGs, original editor screenshot, and one final image-filled reference DOCX are authoritative. The user's new `lanjutkan` authorizes **STEP04 planning only**. Read `04_RECOVERY_FAILURE_INJECTION_WINDOWS_TEST_PLAN.md` and the matching DOCX after STEP01/STEP02 safety contracts and before planning STEP05. Matrix IDs: RCV-01..24, SCH-01..12, AT-01..20, UI-01..12, COMP-01..10. Treat all as proposed future tests, **not executed tests**.
