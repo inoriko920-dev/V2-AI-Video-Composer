@@ -29,6 +29,8 @@ def test_ensure_wav_suffix_normalizes_destination(tmp_path: Path) -> None:
     assert ensure_wav_suffix(tmp_path / "take") == expected
     assert ensure_wav_suffix(tmp_path / "take.MP3") == expected
     assert ensure_wav_suffix(tmp_path / "take.WAV") == expected
+    assert ensure_wav_suffix(tmp_path / "take.WaV") == expected
+    assert ensure_wav_suffix(tmp_path / "take.wav") == expected
 
 
 def test_default_recording_path_prefers_project_directory(tmp_path: Path) -> None:
