@@ -1,0 +1,75 @@
+name: One-shot V2 0.3.0 STEP00 DOCX on planning branch only
+
+on:
+  push:
+    branches:
+      - v2/0.3.0-planning-step00
+    paths:
+      - .github/workflows/v2-0.3.0-step00-docx-one-shot.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: v2-0-3-0-step00-one-shot-docx-branch
+  cancel-in-progress: false
+
+jobs:
+  generate-and-stage:
+    if: github.repository == 'inoriko920-dev/V2-AI-Video-Composer'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout only dedicated STEP00 planning branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+          ref: v2/0.3.0-planning-step00
+      - name: Enforce write scope before installing dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/v2/0.3.0-planning-step00"
+          test "$(git symbolic-ref --short HEAD)" = "v2/0.3.0-planning-step00"
+          test -f docs/v2_0_3_0_planning/00_PRODUCT_GAP_AUDIT_AND_RECOVERY_SCOPE.md
+          test -f docs/v2_0_3_0_planning/_generator/generate_step00_docx.py
+          test ! -e docs/v2_0_3_0_planning/docx/00_V2_0.3.0_PRODUCT_GAP_AUDIT_AND_RECOVERY_SCOPE.docx
+      - name: Python 3.12
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12'
+      - name: Generate detailed DOCX (no runtime imports)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check "python-docx==1.2.0"
+          python docs/v2_0_3_0_planning/_generator/generate_step00_docx.py
+          DOCX=docs/v2_0_3_0_planning/docx/00_V2_0.3.0_PRODUCT_GAP_AUDIT_AND_RECOVERY_SCOPE.docx
+          test -s "$DOCX"
+          unzip -t "$DOCX" | tail -n 2
+          python - <<'PY'
+          from docx import Document
+          from pathlib import Path
+          p=Path('docs/v2_0_3_0_planning/docx/00_V2_0.3.0_PRODUCT_GAP_AUDIT_AND_RECOVERY_SCOPE.docx')
+          doc=Document(p)
+          assert len(doc.paragraphs)>65 and len(doc.tables)>=4
+          s='\n'.join(t.text for t in doc.paragraphs)
+          assert 'GAP-03A' in s and 'STEP 00' in s
+          print('DOCX_STRUCTURE_PASS',len(doc.paragraphs),len(doc.tables),p.stat().st_size)
+          PY
+      - name: Stage ONLY generated DOCX and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git symbolic-ref --short HEAD)" = "v2/0.3.0-planning-step00"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/v2_0_3_0_planning/docx/00_V2_0.3.0_PRODUCT_GAP_AUDIT_AND_RECOVERY_SCOPE.docx
+          git rm .github/workflows/v2-0.3.0-step00-docx-one-shot.yml
+          git diff --cached --name-only
+          git diff --cached --name-only | grep -Fx "docs/v2_0_3_0_planning/docx/00_V2_0.3.0_PRODUCT_GAP_AUDIT_AND_RECOVERY_SCOPE.docx"
+          git diff --cached --name-only | grep -Fx ".github/workflows/v2-0.3.0-step00-docx-one-shot.yml"
+          test "$(git diff --cached --name-only | wc -l)" -eq 2
+          git commit -m "docs(v2): add audited STEP00 DOCX and retire one-shot branch generator"
+          git push origin HEAD:refs/heads/v2/0.3.0-planning-step00
