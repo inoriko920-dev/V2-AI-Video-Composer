@@ -1,6 +1,6 @@
 # V2 0.3.0 — New Planning / AI Handoff Index
 
-**Authority:** New ASTRA planning cycle for user-visible autosave/recovery completion. No SOL coding or release publication authorized.
+**Authority:** New ASTRA planning cycle; STEP00 PASS. STEP01 functional spec is the ONLY current work. No SOL coding or release publication authorized.
 
 ## Mandatory reading order for any later AI
 1. `AGENTS.md`
@@ -10,11 +10,13 @@
 5. `docs/v2_0_3_0_planning/docx/00_V2_0.3.0_PRODUCT_GAP_AUDIT_AND_RECOVERY_SCOPE.docx`
 6. `docs/v2_0_2_2_planning/03_SCHEMA_V4_PERSISTENCE_RECOVERY_STRESS_PLAN.md`
 7. `docs/ARCHITECTURE.md`, `docs/CODE_CONSTITUTION.md`, `docs/PROJECT_STATE.md`, `docs/UI_FREEZE.md`
-8. STEP 01–05 and final UI reference DOCX, once those actually exist and are accepted
+8. docs/v2_0_3_0_planning/01_AUTOSAVE_RECOVERY_FUNCTIONAL_LIFECYCLE_SPEC.md
+9. docs/v2_0_3_0_planning/docx/01_V2_0.3.0_AUTOSAVE_RECOVERY_FUNCTIONAL_LIFECYCLE_SPEC.docx (must exist in repo before STEP01 PASS)
+10. STEP02–05 and final UI reference DOCX, once those actually exist and are accepted
 
 ## Current authority and hard gates
 - STEP 00 product audit and scope: **PASS / COMPLETE after PR #48 CI/CodeQL/Windows checks and merge**.
-- STEP 01 functional flow planning: **NOT STARTED**.
+- STEP 01 functional flow planning: **DOCX PASS / PR-head CI/CodeQL/Windows and merge PENDING**.
 - STEP 02 architecture/error policy planning: **NOT STARTED**.
 - STEP 03 **UI prompt hard stop**: **NOT STARTED**; special user approval and one final UI reference DOCX mandatory.
 - STEP 04 testing plan: **NOT STARTED**.
@@ -43,3 +45,20 @@
 - Visual QA: rendered 5 pages; tables legible, repeated headers, no extra/orphan page.
 - One-shot write-capable workflow removed itself without writing to main. Review workflow removed before merge.
 - Only next authorized action after CI/CodeQL and merge: STEP01 functional recovery lifecycle planning.
+
+## STEP01 specific handoff
+- Contract uses existing RecoveryManager and ProjectSession; no second project serializer/history engine.
+- User's unsaved-current-project guard resolves BEFORE inspecting/opening the target's recovery candidate.
+- Verified valid candidate -> Restore / Discard / Cancel; metadata-free or changed-disk candidate -> conflict warning with extra explicit Restore acknowledgement.
+- Timer cadence proposed: 20s debounce, maximum 120s dirty lag, 60s poll and bounded errors.
+- Functional 24-case matrix and coordinator state transition contract are the source for STEP02 architecture and STEP04 test plans.
+- STEP03 image prompt phase must STOP pending approved final UI images and one committed final UI reference DOCX, even after bare 'lanjutkan'.
+- Current gate: DOCX committed and 9-page visual QA PASS; PR checks and merge outstanding. STEP02 not authorized until STEP01 PASS.
+
+## STEP01 planning-document audit
+- Source spec: docs/v2_0_3_0_planning/01_AUTOSAVE_RECOVERY_FUNCTIONAL_LIFECYCLE_SPEC.md.
+- Detailed DOCX: docs/v2_0_3_0_planning/docx/01_V2_0.3.0_AUTOSAVE_RECOVERY_FUNCTIONAL_LIFECYCLE_SPEC.docx (52,688 bytes, 9 pages, readable and rendered).
+- Deterministic generator: docs/v2_0_3_0_planning/_generator/generate_step01_docx.py.
+- GitHub Action DOCX creation: 37730728343 PASS; ephemeral writer deleted itself from dedicated branch.
+- Tests and feature implementation still NOT AUTHORIZED. All referenced RCV-01 to RCV-24 are *planned*, not passing automated runtime tests.
+- UI STEP03 hard stop and all planning DOCX prerequisites unchanged.
