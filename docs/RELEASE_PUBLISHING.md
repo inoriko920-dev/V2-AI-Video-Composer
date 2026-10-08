@@ -1,6 +1,10 @@
-# V2 0.2.2 — NOT PUBLISHED
+# V2 0.2.2 — RC VERIFIED / FINAL PUBLISHING GATE PENDING
 
-W06-D produces only a versioned, verified portable/source candidate. No v0.2.2 tag or GitHub Release has been created. The new v2-0.2.2-rc-final.yml workflow is manual, read-only and non-publishing. W06-E and STEP 07 remain required before publication. Historical v0.2.1 and v0.2.0 tags/releases are immutable.
+The exact frozen RC source `607fb5b59f6788892b60027d736cf99b8898c6a7` passed run [37725077066](https://github.com/inoriko920-dev/V2-AI-Video-Composer/actions/runs/37725077066): 795 tests and 5 Windows extracted-portable path cases, credential scan, FFmpeg 9.0.2 real render, EXE smoke/UI and SHA-256 PASS.
+
+The RC evidence is **not** a GitHub Release and is not itself the final-source commit. Final documentation is being promoted separately, after which a guarded final workflow must build from the exact new final-source SHA, repeat technical/CodeQL checks and verify release/tag absence before creating `v0.2.2`. Never move `v0.2.1` (`eb94efebf142ba8203dfc3ae3c5fa861222a0926`).
+
+See `docs/v2_0_2_2_planning/STEP07_RC_FINAL_RELEASE_GATE.md` for immutable sources, gates and evidence.
 
 ---
 
