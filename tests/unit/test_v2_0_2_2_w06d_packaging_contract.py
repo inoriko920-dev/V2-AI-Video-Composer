@@ -12,11 +12,14 @@ def _read(relative: str) -> str:
 
 
 def test_w06d_version_identity_and_release_notes() -> None:
-    assert 'version = "0.2.2"' in _read("pyproject.toml")
-    assert '__version__ = "0.2.2"' in _read("src/aavc/__init__.py")
+    # Current RC identity must match; the previous stable 0.2.2
+    # release notes and candidate workflow remain immutable in the repo.
+    assert 'version = "0.3.0"' in _read("pyproject.toml")
+    assert '__version__ = "0.3.0"' in _read("src/aavc/__init__.py")
+    assert (ROOT / "RELEASE_NOTES_0.3.0.md").is_file()
     assert (ROOT / "RELEASE_NOTES_0.2.2.md").is_file()
-    assert "RELEASE_NOTES_0.2.2.md" in _read("aavc.spec")
-    assert "RELEASE_NOTES_0.2.2.md" in _read("scripts/verify_portable.ps1")
+    assert "RELEASE_NOTES_0.3.0.md" in _read("aavc.spec")
+    assert "RELEASE_NOTES_0.3.0.md" in _read("scripts/verify_portable.ps1")
     assert "RELEASE_NOTES_0.2.1.md" not in _read("aavc.spec")
 
 
