@@ -506,3 +506,81 @@ def test_restore_fault_after_backup_preserves_disk_and_backup(tmp_path: Path) ->
     assert s.path.read_bytes() == before
     assert s.path.with_suffix(s.path.suffix + ".pre-recovery.bak").read_bytes() == before
     assert store.snapshot_path(s.path).exists()
+
+
+def test_at_12_concurrent_restore_one_winner_one_conflict(tmp_path: Path) -> None:
+    from threading import Barrier, Thread
+
+    s = session(tmp_path)
+    assert s.path is not None
+    path = s.path
+    store = ProvenanceStore()
+    snapshot(s, store)
+    tx = RecoveryTransactions(s, store=store)
+    plan = tx.probe_open(path)
+    barrier = Barrier(3)
+    outcomes: list[str] = []
+
+    def worker() -> None:
+        barrier.wait()
+        try:
+            tx.restore(plan)
+        except RecoveryRaceChanged:
+            outcomes.append("RACE_CHANGED")
+        else:
+            outcomes.append("SUCCESS")
+
+    threads = [Thread(target=worker) for _ in range(2)]
+    for thread in threads:
+        thread.start()
+    barrier.wait()
+    for thread in threads:
+        thread.join(timeout=10)
+        assert not thread.is_alive()
+    assert sorted(outcomes) == ["RACE_CHANGED", "SUCCESS"]
+    assert len(list(tmp_path.glob("*.pre-recovery.bak"))) == 1
+    assert load_project(path).title == "recovery"
+
+
+def test_at_19_save_cleanup_failure_reports_committed_disk_and_preserves_quarantine(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    s = session(tmp_path)
+    assert s.path is not None
+    store = ProvenanceStore()
+    snapshot(s, store)
+    original = s.path.read_bytes()
+    s.execute(SetSceneDuration(1, 8))
+
+    def fail_retire(_held: object) -> None:
+        raise PermissionError("injected post-save cleanup failure")
+
+    monkeypatch.setattr(store, "retire_quarantine", fail_retire)
+    with pytest.raises(RecoveryCommitPartial, match="SAVE_CLEANUP_PARTIAL"):
+        RecoveryTransactions(s, store=store).save()
+    assert not s.is_dirty
+    assert s.path.read_bytes() != original
+    assert not store.snapshot_path(s.path).exists()
+    assert len(list(tmp_path.glob(".*.quarantine-*"))) >= 1
+
+
+def test_at_17_quarantine_rollback_collision_never_overwrites_other_writer(
+    tmp_path: Path,
+) -> None:
+    s = session(tmp_path)
+    assert s.path is not None
+    store = ProvenanceStore()
+    snapshot(s, store)
+    before = s.path.read_bytes()
+
+    def fault(phase: str) -> None:
+        if phase == "before_disk_adoption":
+            store.snapshot_path(s.path).write_bytes(b"other-writer-owned")
+            raise OSError("synthetic adoption failed")
+
+    tx = RecoveryTransactions(s, store=store, fault_hook=fault)
+    with pytest.raises(RecoveryCommitPartial, match="DISCARD_ROLLBACK_PARTIAL"):
+        tx.use_saved(tx.probe_open(s.path))
+    assert store.snapshot_path(s.path).read_bytes() == b"other-writer-owned"
+    assert s.path.read_bytes() == before
+    assert len(list(tmp_path.glob(".*.quarantine-*"))) >= 1
