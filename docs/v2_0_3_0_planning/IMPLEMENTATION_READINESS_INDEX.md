@@ -1,3 +1,12 @@
+# V2 0.3.0 — HANDOFF ON STEP03 HARD STOP
+
+**STOP — STEP03 PROMPTS ONLY COMPLETE; ALL 13 UI IMAGES UNGENERATED/UNAPPROVED.** Main authority is `docs/v2_0_3_0_planning/03_UI_PROMPT_COMPLETION_AND_APPROVAL_GATE.md` and `03_PROMPT_GAMBAR_UI_RECOVERY_MASTER.md`.
+
+The **DOCX in `docx/03_V2_0.3.0_STEP03_UI_IMAGE_PROMPTS_ONLY.docx` is a prompt book, not final UI artwork approval.** Each `prompt_ui_step03/UI-REC-XX_*.txt` is one independently generated PNG assignment. Wait for all 13 image results, user review/revisions and ONE actually image-filled, approved `03_V2_0.3.0_APPROVED_FINAL_UI_IMAGE_REFERENCES.docx` to be committed before resuming factory STEP04. No coding, UI Qt, project schema/version, release tag or old repo mutations.
+
+Next bare "lanjutkan" **does not allow bypassing** the visual gate. Explicit image generation/review instructions are permitted, but do not start STEP04 from that request.
+
+---
 # ACTIVE HANDOFF — STEP03 UI IMAGE PROMPT HARD STOP
 
 Read `docs/v2_0_3_0_planning/03_PROMPT_GAMBAR_UI_RECOVERY_MASTER.md` followed by its detailed DOCX `docs/v2_0_3_0_planning/docx/03_V2_0.3.0_STEP03_UI_IMAGE_PROMPTS_ONLY.docx`; individual ready-to-run prompts live in `docs/v2_0_3_0_planning/prompt_ui_step03/UI-REC-01_*.txt` through `UI-REC-13_*.txt`.
