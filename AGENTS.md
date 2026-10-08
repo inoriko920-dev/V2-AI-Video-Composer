@@ -2,7 +2,7 @@
 
 The user explicitly authorized publishing v0.3.0, and public release `v0.3.0` **is now published and verified**. Tag/source `d5a085fe239763e469ad30e91f526179fe8b2595`; previous stable `v0.2.2` remains `eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef`. Public release contains 9 verified assets. Read `docs/v2_0_3_0_planning/10_POST_RELEASE_PUBLICATION_CLOSURE.md` and the GitHub Release API for current status. All following headings containing "NO PUBLISH", "HARD STOP" or earlier wave authorization describe **historical, now-completed stages**; they must not be interpreted as the active v0.3.0 publication gate.
 
-**Current allowed maintenance:** docs-only release closure. **Current next product gate:** manual Windows 11 owner acceptance remains PENDING; preserve the frozen editor UI, 3 approved recovery dialogs, schema v3/v4, external FFmpeg model and published source/release integrity. New code, release version, UI redesign or publication requires a new scoped plan and authorization. Never overwrite published tags/assets or modify the legacy original repository.
+**Current allowed maintenance:** documentation release closure plus correcting the now-obsolete pre-publication RC invocation inside the Windows PR acceptance workflow; do not change the RC builder safety guards. **Current next product gate:** manual Windows 11 owner acceptance remains PENDING; preserve the frozen editor UI, 3 approved recovery dialogs, schema v3/v4, external FFmpeg model and published source/release integrity. New code, release version, UI redesign or publication requires a new scoped plan and authorization. Never overwrite published tags/assets or modify the legacy original repository.
 
 ---
 
