@@ -1,10 +1,19 @@
-# V2 0.2.2 — RC VERIFIED / FINAL PUBLISHING GATE PENDING
+# V2 0.2.2 — PUBLISHED / VERIFIED
 
-The exact frozen RC source `607fb5b59f6788892b60027d736cf99b8898c6a7` passed run [37725077066](https://github.com/inoriko920-dev/V2-AI-Video-Composer/actions/runs/37725077066): 795 tests and 5 Windows extracted-portable path cases, credential scan, FFmpeg 9.0.2 real render, EXE smoke/UI and SHA-256 PASS.
+Canonical GitHub Release: https://github.com/inoriko920-dev/V2-AI-Video-Composer/releases/tag/v0.2.2
 
-The RC evidence is **not** a GitHub Release and is not itself the final-source commit. Final documentation is being promoted separately, after which a guarded final workflow must build from the exact new final-source SHA, repeat technical/CodeQL checks and verify release/tag absence before creating `v0.2.2`. Never move `v0.2.1` (`eb94efebf142ba8203dfc3ae3c5fa861222a0926`).
+- Version: `0.2.2`; stable tag: `v0.2.2`.
+- Exact published tag/source commit: `eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef`.
+- GitHub Release ID: `406412413`; published `2026-10-08T04:28:44Z`; not draft/prerelease.
+- Final publication workflow run `37727140284`: PASS for CodeQL, full Windows technical candidate and guarded publisher.
+- Final suite: **795 PASS**; 21 native effects/real FFmpeg 9.0.2 rendering; scanned portable Windows EXE; 5 special-path smoke cases PASS; checksums reverified by publisher.
+- Windows ZIP SHA256: `80232a96deedff0ee382c42e377999a8f9c5434e075b99c415a41a2e538d07e7`.
+- Exact-source ZIP SHA256: `ec03dfe339fbc71a4bf199784de9e0a4ff5cb0d69b38399c179c1bc178f30183`.
+- Final candidate artifact ID `11528825413`; archive digest `sha256:82665ec39bf8c8f101d6ccaebc256a8c529d5b4ad4ce8d40ea209592a3c6a819`.
+- Published prior v0.2.1 tag remains unchanged at `eb94efebf142ba8203dfc3ae3c5fa861222a0926`.
+- Detailed closure: `docs/v2_0_2_2_planning/STEP07_FINAL_RELEASE_CLOSURE.md`.
 
-See `docs/v2_0_2_2_planning/STEP07_RC_FINAL_RELEASE_GATE.md` for immutable sources, gates and evidence.
+**Publication is closed. Do not rerun an active publish-once branch with a new version source or try to overwrite/move `v0.2.2`.** Future corrections require a new planned release.
 
 ---
 
