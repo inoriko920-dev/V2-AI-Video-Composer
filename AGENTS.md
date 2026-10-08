@@ -1,3 +1,9 @@
+# ACTIVE V2 STEP07 — 0.3.0 RC PREP ONLY (8 OCT 2026 WIB)
+
+W06-A..E technically merged and PASS. User's latest `lanjutkan` permits **non-published** release candidate preparation, version alignment, Windows 11 x64 acceptance, source/portable ZIPs, SHA-256 and handoff. No public v0.3.0 release, no new tag, no `contents:write` workflow permitted. Follow `docs/v2_0_3_0_planning/07_V0_3_0_RC_PREPARATION_AND_RELEASE_GATE.md`, existing release workflows and 3 approved STEP03-R UI PNGs/DOCX. Immutable previous stable `v0.2.2` at `eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef`. One ProjectSession, schema v3/v4 and `advanced-v1`, 21 native effects, external FFmpeg 9.0.2 and Gemini model preserved. Do not mark RC PASS until final-head CI/CodeQL/backend/Windows/RC artifact and main merge are verified. Public release only with later explicit instruction.
+
+---
+
 # ACTIVE V2 v0.3.0 — W06-E FINAL ACCEPTANCE ONLY (8 OCT 2026 WIB)
 
 The user's latest `lanjutkan` authorizes W06-E cross-wave tests/bug fixes and release-readiness evidence, **NOT a public release**. W06-A/B/C/D already in main. Fix repeated recovery conflict prompt after a successful Restore when on-disk and snapshot bytes match, preserve forensic sidecars; remove worker thread reads of live canonical Qt session. Read `docs/v2_0_3_0_planning/06_W06_E_FINAL_ACCEPTANCE_AND_RELEASE_READINESS_EVIDENCE.md`. Test-first RED `37762298469`; GREEN 10 targeted tests `37762488770`. Keep one ProjectSession, unchanged 42 frozen UI references, three user-approved recovery PNGs, v0.2.2 stable tag and external FFmpeg. W06-E PASS only after final-head CI/CodeQL/backend/Windows acceptance and main merge. Any release or version bump requires another explicit instruction.
