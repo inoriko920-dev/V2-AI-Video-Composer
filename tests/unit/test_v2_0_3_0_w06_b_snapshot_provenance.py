@@ -269,3 +269,30 @@ def test_write_cannot_replace_existing_symlink_snapshot(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="PATH_ALIAS_UNSAFE"):
         capture(store, path, h)
     assert target.read_text("utf-8") == "untouched"
+
+
+def test_revalidate_rejects_mutated_but_well_formed_metadata(tmp_path: Path) -> None:
+    path, digest = baseline(tmp_path)
+    store = ProvenanceStore()
+    capture(store, path, digest)
+    original = store.inspect(path)
+    assert original.status == "VERIFIED" and original.metadata_sha256 is not None
+    data = json.loads(store.metadata_path(path).read_text("utf-8"))
+    data["write_generation"] = "f" * 32
+    store.metadata_path(path).write_text(json.dumps(data), encoding="utf-8")
+    assert store.inspect(path).status == "VERIFIED"
+    with pytest.raises(RecoveryRaceChanged, match="RECOVERY_RACE_CHANGED"):
+        store.revalidate(path, original)
+    with pytest.raises(RecoveryRaceChanged):
+        store.quarantine_candidate(path, original)
+
+
+def test_descriptor_not_published_when_snapshot_rejected(tmp_path: Path) -> None:
+    path, digest = baseline(tmp_path)
+    store = ProvenanceStore()
+    capture(store, path, digest)
+    before = store.metadata_path(path).read_bytes()
+    path.write_bytes(path.read_bytes() + b" changed")
+    with pytest.raises(RecoveryRaceChanged, match="BASELINE_CHANGED"):
+        capture(store, path, digest, "changed")
+    assert store.metadata_path(path).read_bytes() == before
