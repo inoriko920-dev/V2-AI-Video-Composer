@@ -2,7 +2,7 @@
 
 Date: 8 October 2026, WIB (UTC+7)  
 Scope: `inoriko920-dev/V2-AI-Video-Composer` **only**.  
-Type: **historical evidence for an already-published release**; documentation-only post-release housekeeping, not a source-code change and not approval to publish another version.
+Type: **historical evidence for an already-published release**, documentation synchronization and a narrowly scoped postrelease CI workflow repair. No application source-code change and no approval to publish another version.
 
 ## Final outcome
 
@@ -50,6 +50,10 @@ Early publisher runs #37774513572 and #37774604355 failed safely at the ZIP/sour
 
 The one-time publishing workflow is an operational audit artifact on a dedicated `publish/v0.3.0-approved-20261008` branch, **not** the runtime or the default branch. Treat it as spent; do not push to it or trigger/re-run it for a new version. Do not force-update `v0.3.0`, `v0.2.2` or existing published asset bytes.
 
+## Postrelease Windows workflow repair (not product code)
+
+After publication, a docs-only PR revealed a latent check failure in `.github/workflows/v2-user-acceptance.yml`: its last packaging step called `scripts/build_v2_0_3_0_candidate.ps1 -Channel rc`, whose intentional safety gate rejects any already-existing stable `v0.3.0` tag. This is correct behavior for an **unpublished release-candidate builder**, but is incorrect for post-publication PR acceptance. The workflow is changed to **verify** that the existing public `v0.3.0` tag and `v0.2.2` historical tag remain at the exact approved commits, check nine public assets and both immutable ZIP digests, redownload published `BUILD_INFO.txt` / `SHA256SUMS.txt`, and retain all preceding Windows builds, FFmpeg and regression checks. The RC builder itself is untouched and continues to reject tag reuse. Failed initial postrelease run [#37777918540](https://github.com/inoriko920-dev/V2-AI-Video-Composer/actions/runs/37777918540) is explained by this retired RC check; final repaired PR-head workflow proof is required before merge.
+
 ## Actual-user Windows acceptance (not yet demonstrated)
 
 Automated CI acceptance is **not** a substitute for manual use on the owner's Windows 11 PC. The next meaningful milestone is one real-world test and user bug report, not another speculative implementation wave.
@@ -66,7 +70,7 @@ Automated CI acceptance is **not** a substitute for manual use on the owner's Wi
 ## Next-version gate
 
 - v0.3.0 release closure: **PASS** (public presence, checksum/source, historic tag, CI).
-- Postrelease documentation synchronization: complete only after this docs-only PR passes checks and merges.
+- Postrelease documentation and narrow Windows CI acceptance repair: complete only after the final PR-head checks PASS and the PR merges.
 - User acceptance on physical Windows device: **PENDING**.
 - Any v0.3.1 bug fix or new v0.4.0 feature must start as a new user-approved scoped plan; search existing implementations first, retain the 42 UI references, approved recovery dialogs, schema v3/v4, external FFmpeg model, and immutable published releases.
 - Do not change the legacy original `AI-Automatic-Video-Composer` repository.
