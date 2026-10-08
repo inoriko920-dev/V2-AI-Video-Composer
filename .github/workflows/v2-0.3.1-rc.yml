@@ -124,6 +124,15 @@ jobs:
           FFMPEG_REFERENCE: '9.0.2'
         run: ./scripts/build_v2_0_3_1_candidate.ps1 -Channel rc
 
+      - name: Independent ZIP integrity, SHA-256 and negative-path QA
+        shell: pwsh
+        run: |
+          $sourceCommit = (git rev-parse HEAD).Trim()
+          python -m scripts.verify_v2_0_3_1_rc_bundle release_candidate_0_3_1 --expected-sha $sourceCommit
+          if ($LASTEXITCODE -ne 0) { throw "Independent RC bundle audit failed" }
+          python -m pytest tests/unit/test_v2_0_3_1_step04_rc_integrity.py -q
+          if ($LASTEXITCODE -ne 0) { throw "Negative-path QA tests failed" }
+
       - name: Verify exact candidate commit hashes and unchanged v0.3.0 assets
         shell: pwsh
         env:
