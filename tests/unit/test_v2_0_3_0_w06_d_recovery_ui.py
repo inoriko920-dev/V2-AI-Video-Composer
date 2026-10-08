@@ -11,7 +11,6 @@ from pathlib import Path
 import pytest
 
 pytest.importorskip("PySide6")
-from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
 
 from aavc.application.commands import SetSceneDuration
@@ -200,5 +199,133 @@ def test_qt_05_manual_save_fences_stale_snapshot_and_clears_dirty(
     assert services.project_session.path is not None
     assert load_project(services.project_session.path).scenes[0].duration_seconds == 5
     window.shutdown_recovery()
+    window.window.deleteLater()
+    services.jobs.shutdown(wait=False)
+
+
+def test_ui_02_second_stage_cancel_is_safe(app: QApplication) -> None:
+    dialog = RecoveryChoiceDialog("UNCERTAIN", "suez.aavcproj")
+    dialog.restore_button.click()
+    assert dialog.conflict_confirmation_visible
+    assert dialog.cancel_button.isDefault()
+    dialog.cancel_button.click()
+    assert dialog.result_action == "cancel"
+    dialog.deleteLater()
+
+
+def test_qt_06_dirty_guard_blocks_probe_before_modal(
+    app: QApplication, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    target, store = target_with_snapshot(tmp_path)
+    services = build_foundation_services()
+    services.project_session.create(project("Active"), tmp_path / "active.aavcproj")
+    services.project_session.execute(SetSceneDuration(1, 5))
+    window = RecoveryMainWindow(services)
+    before = (services.project_session.path, services.project_session.current)
+    bytes_snapshot = store.snapshot_path(target).read_bytes()
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda *a, **k: (str(target), ""))
+    monkeypatch.setattr(window, "_confirm_unsaved_changes", lambda _: False)
+
+    def wrong_choice(*_args: object) -> None:
+        raise AssertionError("Recovery UI displayed before unsaved-session guard")
+
+    monkeypatch.setattr(
+        "aavc.presentation.windows.recovery_main_window.choose_recovery", wrong_choice
+    )
+    window.open_project()
+    assert (services.project_session.path, services.project_session.current) == before
+    assert store.snapshot_path(target).read_bytes() == bytes_snapshot
+    assert services.project_session.is_dirty
+    window.shutdown_recovery()
+    window.window.deleteLater()
+    services.jobs.shutdown(wait=False)
+
+
+def test_qt_07_invalid_snapshot_saved_open_preserves_bad_candidate(
+    app: QApplication, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    target, store = target_with_snapshot(tmp_path)
+    store.snapshot_path(target).write_bytes(b"corrupt but owned by user")
+    existing = store.snapshot_path(target).read_bytes()
+    services = build_foundation_services()
+    window = RecoveryMainWindow(services)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda *a, **k: (str(target), ""))
+    monkeypatch.setattr(
+        "aavc.presentation.windows.recovery_main_window.choose_recovery",
+        lambda *_a: "saved",
+    )
+    window.open_project()
+    assert services.project_session.current is not None
+    assert services.project_session.current.title == "Suez"
+    assert store.snapshot_path(target).read_bytes() == existing
+    window.shutdown_recovery()
+    window.window.deleteLater()
+    services.jobs.shutdown(wait=False)
+
+
+def test_qt_08_save_as_collision_does_not_rebind_active_path(
+    app: QApplication, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    services = build_foundation_services()
+    services.project_session.create(project(), tmp_path / "active.aavcproj")
+    window = RecoveryMainWindow(services)
+    old = services.project_session.path
+    candidate = tmp_path / "foreign.aavcproj"
+    candidate.write_bytes(b"another user project")
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", lambda *a, **k: (str(candidate), ""))
+    errors: list[bool] = []
+    monkeypatch.setattr(window, "_show_recovery_failure", lambda partial=False: errors.append(partial))
+    window.save_project_as()
+    assert errors == [False]
+    assert services.project_session.path == old
+    assert candidate.read_bytes() == b"another user project"
+    window.shutdown_recovery()
+    window.window.deleteLater()
+    services.jobs.shutdown(wait=False)
+
+
+def test_qt_09_manual_save_after_completed_autosave_retires_only_verified(
+    app: QApplication, tmp_path: Path,
+) -> None:
+    services = build_foundation_services()
+    services.project_session.create(project(), tmp_path / "active.aavcproj")
+    clock = [0.0]
+    window = RecoveryMainWindow(services)
+    window._recovery_coordinator._clock = lambda: clock[0]
+    services.project_session.execute(SetSceneDuration(1, 6))
+    window._recovery_poll()
+    clock[0] = 20.0
+    window._recovery_poll()
+    worker = window._recovery_future
+    assert worker is not None
+    worker.result(timeout=15)
+    window._recovery_poll()
+    path = services.project_session.path
+    assert path is not None and services.project_session.is_dirty
+    store = ProvenanceStore()
+    assert store.snapshot_path(path).exists()
+    window.save_project()
+    assert not services.project_session.is_dirty
+    assert not store.snapshot_path(path).exists()
+    assert not store.metadata_path(path).exists()
+    assert load_project(path).scenes[0].duration_seconds == 6
+    window.shutdown_recovery()
+    window.window.deleteLater()
+    services.jobs.shutdown(wait=False)
+
+
+def test_qt_10_shutdown_stops_timer_and_rejects_new_work(
+    app: QApplication, tmp_path: Path,
+) -> None:
+    services = build_foundation_services()
+    services.project_session.create(project(), tmp_path / "active.aavcproj")
+    window = RecoveryMainWindow(services)
+    window.shutdown_recovery()
+    window.shutdown_recovery()
+    services.project_session.execute(SetSceneDuration(1, 5))
+    window._recovery_poll()
+    assert not window._recovery_timer.isActive()
+    assert window._recovery_future is None
+    assert window._recovery_coordinator.inflight is None
     window.window.deleteLater()
     services.jobs.shutdown(wait=False)
