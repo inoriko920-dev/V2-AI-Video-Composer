@@ -4,7 +4,7 @@ datas = [
     ('resources', 'resources'),
     ('schemas', 'schemas'),
     ('LICENSES', 'LICENSES'),
-    ('RELEASE_NOTES_0.3.0.md', '.'),
+    ('RELEASE_NOTES_0.3.1.md', '.'),
     ('docs/USER_GUIDE.md', '.'),
     ('MAINTENANCE.md', '.'),
     ('BACKUP_AND_RECOVERY.md', '.'),
