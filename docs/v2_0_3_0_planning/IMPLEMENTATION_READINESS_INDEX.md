@@ -1,6 +1,6 @@
 # CURRENT READINESS — v0.3.0 STEP02
 
-**STEP00 PASS / STEP01 PASS / STEP02 PENDING Word+PR gate / STEP03 NOT STARTED.** Planning only; no SOL code or UI is authorized.
+**STEP00 PASS / STEP01 PASS / STEP02 DOCX QA PASS + PR gates PENDING / STEP03 NOT STARTED.** Planning only; no SOL code or UI is authorized.
 
 Read after STEP01: `docs/v2_0_3_0_planning/02_RECOVERY_ARCHITECTURE_ATOMICITY_SCHEDULER_PLAN.md` and its actual repository DOCX `docs/v2_0_3_0_planning/docx/02_V2_0.3.0_RECOVERY_ARCHITECTURE_ATOMICITY_SCHEDULER_PLAN.docx`.
 
@@ -75,3 +75,10 @@ STEP02 source-of-truth architecture: RecoveryCoordinator is application-only; ex
 - GitHub Action DOCX creation: 37730728343 PASS; ephemeral writer deleted itself from dedicated branch.
 - Tests and feature implementation still NOT AUTHORIZED. All referenced RCV-01 to RCV-24 are *planned*, not passing automated runtime tests.
 - UI STEP03 hard stop and all planning DOCX prerequisites unchanged.
+
+## STEP02 Word verification
+- Canonical Markdown: docs/v2_0_3_0_planning/02_RECOVERY_ARCHITECTURE_ATOMICITY_SCHEDULER_PLAN.md.
+- Actual native DOCX committed: docs/v2_0_3_0_planning/docx/02_V2_0.3.0_RECOVERY_ARCHITECTURE_ATOMICITY_SCHEDULER_PLAN.docx (52,472 bytes, 8 visually reviewed pages, 92 paragraphs and 6 tables).
+- Generator: docs/v2_0_3_0_planning/_generator/generate_step02_docx.py.
+- GitHub Actions run 37732412706 PASS; first run 37732349474 exposed an incorrect QA assertion that ignored table content and was fixed without app changes.
+- Complete only after final PR-head CI/CodeQL/Windows acceptance and merge to main.
