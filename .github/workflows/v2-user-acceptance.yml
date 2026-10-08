@@ -108,14 +108,53 @@ jobs:
           FFMPEG_REFERENCE: '9.0.2'
         run: ./scripts/verify_ffmpeg_reference.ps1 -Mode both
 
-      - name: Assemble exact-source 0.3.0 non-published candidate
+      - name: Verify immutable public v0.3.0 instead of rebuilding retired RC
         shell: pwsh
         env:
-          FFMPEG_REFERENCE: '9.0.2'
+          GH_TOKEN: ${{ github.token }}
         run: |
-          ./scripts/build_v2_0_3_0_candidate.ps1 -Channel rc
-          Copy-Item release_candidate_0_3_0/BUILD_INFO.txt artifacts/user_acceptance/BUILD_INFO.txt
-          Copy-Item release_candidate_0_3_0/SHA256SUMS.txt artifacts/user_acceptance/SHA256SUMS.txt
+          $ErrorActionPreference = "Stop"
+          $expectedSource = "d5a085fe239763e469ad30e91f526179fe8b2595"
+          $expectedPrevious = "eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef"
+          $stableTag = (git rev-parse "refs/tags/v0.3.0^{commit}").Trim()
+          if ($LASTEXITCODE -ne 0 -or $stableTag -ne $expectedSource) {
+            throw "Published v0.3.0 tag does not match approved frozen source"
+          }
+          $previousTag = (git rev-parse "refs/tags/v0.2.2^{commit}").Trim()
+          if ($LASTEXITCODE -ne 0 -or $previousTag -ne $expectedPrevious) {
+            throw "Previous stable v0.2.2 tag changed"
+          }
+          $json = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/v0.3.0"
+          if ($LASTEXITCODE -ne 0) { throw "Public v0.3.0 GitHub Release is unavailable" }
+          $release = $json | ConvertFrom-Json
+          if ($release.draft -or $release.prerelease -or -not $release.published_at) {
+            throw "v0.3.0 is not an ordinary published stable release"
+          }
+          if (@($release.assets).Count -ne 9) {
+            throw "Expected exactly 9 published v0.3.0 assets"
+          }
+          $expected = @{
+            "AI-Automatic-Video-Composer-0.3.0-win64.zip" = "sha256:066312fe6c983c797939fccf5682f5f4867c6ba528a099d18e67f33a8e1c7681"
+            "AI-Automatic-Video-Composer-0.3.0-source.zip" = "sha256:063c3fa88c03972fdcadcf6c3a7d7c7b183df07b146710cd209a59cbb11ca9df"
+          }
+          foreach ($name in $expected.Keys) {
+            $asset = @($release.assets | Where-Object { $_.name -eq $name })
+            if ($asset.Count -ne 1 -or $asset[0].state -ne "uploaded" -or $asset[0].digest -ne $expected[$name]) {
+              throw "Immutable published asset digest/state mismatch: $name"
+            }
+          }
+          gh release download v0.3.0 --repo "$env:GITHUB_REPOSITORY" --pattern "BUILD_INFO.txt" --pattern "SHA256SUMS.txt" --dir "artifacts/user_acceptance"
+          if ($LASTEXITCODE -ne 0) { throw "Failed to redownload published release identity files" }
+          $info = Get-Content "artifacts/user_acceptance/BUILD_INFO.txt" -Raw
+          if (-not $info.Contains("release_commit=$expectedSource") -or -not $info.Contains("version=0.3.0")) {
+            throw "Public build identity is wrong"
+          }
+          $sums = Get-Content "artifacts/user_acceptance/SHA256SUMS.txt" -Raw
+          foreach ($name in $expected.Keys) {
+            $hash = $expected[$name].Substring(7)
+            if (-not $sums.Contains("$hash  $name")) { throw "Public SHA256SUMS mismatch: $name" }
+          }
+          Write-Host "POST_RELEASE_STABLE_IDENTITY_AND_ASSETS_PASS"
 
       - name: Write acceptance evidence
         shell: pwsh
