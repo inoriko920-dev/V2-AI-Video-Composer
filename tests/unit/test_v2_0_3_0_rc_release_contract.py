@@ -31,7 +31,7 @@ def test_rc_02_candidate_builder_preserves_exact_source_and_sha() -> None:
         "AI-Automatic-Video-Composer-0.3.0-source.zip",
         "git archive",
         "release_commit=",
-        "publication_status=NOT_PUBLISHED",
+        "publication_status=READY_FOR_PUBLICATION",
         "Get-FileHash",
         "SHA256SUMS.txt",
         "verify_artifact_security",
@@ -76,7 +76,7 @@ def test_rc_05_historical_release_assets_and_workflows_remain_available() -> Non
 
 def test_rc_06_manifest_enforces_nonpublishing_and_valid_scope() -> None:
     manifest = read("V2_FINAL_RELEASE_MANIFEST_0.3.0.md")
-    assert "NOT PUBLISHED" in manifest
+    assert "READY_FOR_PUBLICATION" in manifest
     assert "v0.2.2" in manifest
     assert "v0.3.0" in manifest
     assert "Windows 11" in manifest
