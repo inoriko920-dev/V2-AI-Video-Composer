@@ -103,7 +103,7 @@ class RecoveryMainWindow(BackgroundWorkMainWindow):
         self._recovery_request = None
         try:
             success = future.result()
-        except (OSError, ValueError, RecoveryRaceChanged, RuntimeError):
+        except (OSError, ValueError, RuntimeError):
             success = False
         accepted = self._recovery_coordinator.complete(request, success=success)
         if accepted:
@@ -162,7 +162,7 @@ class RecoveryMainWindow(BackgroundWorkMainWindow):
         except FutureTimeout:
             self._status("Cadangan otomatis masih berjalan; coba lagi setelah selesai")
             return False
-        except (OSError, ValueError, RecoveryRaceChanged, RuntimeError):
+        except (OSError, ValueError, RuntimeError):
             pass
         self._drain_snapshot()
         return True
