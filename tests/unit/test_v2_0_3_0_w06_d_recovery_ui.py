@@ -34,7 +34,8 @@ def project(title: str = "Suez") -> ProjectState:
         schema_version=3, title=title, source_docx="synthetic.docx",
         asset_directory="synthetic-assets",
         scenes=(Scene(1, ("asset",), ("fixture",), 3.0),),
-        bindings=(), metadata={"fixture": "W06-D"},
+        bindings=(AssetBinding("asset", "fixture", None, "MISSING"),),
+        metadata={"fixture": "W06-D"},
     )
 
 
