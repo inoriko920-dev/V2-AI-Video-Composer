@@ -1,3 +1,12 @@
+# CURRENT READINESS — v0.3.0 STEP02
+
+**STEP00 PASS / STEP01 PASS / STEP02 COMPLETE only after PR #51 green merge / STEP03 NEXT on subsequent explicit turn.** Planning only; no SOL code or UI is authorized.
+
+Read after STEP01: `docs/v2_0_3_0_planning/02_RECOVERY_ARCHITECTURE_ATOMICITY_SCHEDULER_PLAN.md` and its actual repository DOCX `docs/v2_0_3_0_planning/docx/02_V2_0.3.0_RECOVERY_ARCHITECTURE_ATOMICITY_SCHEDULER_PLAN.docx`.
+
+STEP02 source-of-truth architecture: RecoveryCoordinator is application-only; existing RecoveryManager/persistence serializer handles byte safety; single writer/path lease; Qt adapter is scheduling-only; sidecar SHA-256 is integrity check, not cryptographic authentication; two-file snapshot+metadata cannot be assumed atomic; stale tokens and Save As collisions fail closed. Current published v0.2.2 is immutable. STEP03 future UI prompt **HARD STOP** remains mandatory.
+
+---
 # CURRENT READINESS — V2 0.3.0
 
 **STEP00 PASS / STEP01 PASS / STEP02 NEXT.** STEP01 PR #49 merged. CI run 37730948284 PASS; CodeQL 37730948270 PASS; Windows acceptance 37730948312 PASS; backend 37730948224 PASS. No coding, UI image generation, schema/version changes or release publication authorized. Published v0.2.2 remains immutable. The future STEP03 UI image-prompt stop is mandatory.
@@ -21,7 +30,7 @@
 ## Current authority and hard gates
 - STEP 00 product audit and scope: **PASS / COMPLETE after PR #48 CI/CodeQL/Windows checks and merge**.
 - STEP 01 functional flow planning: **PASS / COMPLETE**.
-- STEP 02 architecture/error policy planning: **NOT STARTED**.
+- STEP 02 architecture/error policy planning: **CURRENT / Word and CI gate pending**.
 - STEP 03 **UI prompt hard stop**: **NOT STARTED**; special user approval and one final UI reference DOCX mandatory.
 - STEP 04 testing plan: **NOT STARTED**.
 - STEP 05 coding authorization: **NOT STARTED**.
@@ -66,3 +75,10 @@
 - GitHub Action DOCX creation: 37730728343 PASS; ephemeral writer deleted itself from dedicated branch.
 - Tests and feature implementation still NOT AUTHORIZED. All referenced RCV-01 to RCV-24 are *planned*, not passing automated runtime tests.
 - UI STEP03 hard stop and all planning DOCX prerequisites unchanged.
+
+## STEP02 Word verification
+- Canonical Markdown: docs/v2_0_3_0_planning/02_RECOVERY_ARCHITECTURE_ATOMICITY_SCHEDULER_PLAN.md.
+- Actual native DOCX committed: docs/v2_0_3_0_planning/docx/02_V2_0.3.0_RECOVERY_ARCHITECTURE_ATOMICITY_SCHEDULER_PLAN.docx (52,472 bytes, 8 visually reviewed pages, 92 paragraphs and 6 tables).
+- Generator: docs/v2_0_3_0_planning/_generator/generate_step02_docx.py.
+- GitHub Actions run 37732412706 PASS; first run 37732349474 exposed an incorrect QA assertion that ignored table content and was fixed without app changes.
+- After verified PR #51 final-head CI/CodeQL/Windows/backend PASS and merge to main, STEP02 is COMPLETE/PASS and STEP03 becomes the only next authorized planning STEP. Before merge, the gate remains HOLD.
