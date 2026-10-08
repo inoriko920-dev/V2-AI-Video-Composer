@@ -1,3 +1,11 @@
+# ACTIVE W06-E FINAL ACCEPTANCE HANDOFF (8 OCT 2026 WIB)
+
+W06-A/B/C/D are merged into V2 main (#57–#60). W06-E finishes cross-wave safety/regression tests, not public release. `RecoveryPreflight.equivalent_snapshot` + `RecoveryTransactions.open_identical_saved` prevent false repeated recovery after restored identical valid content, without touching retained forensic sidecars. The W06-D worker now writes only captured immutable state through W06-B store and does not read live session/coordinator from its worker thread. Test-first RED `37762298469`, GREEN 10 tests `37762488770`; details in `06_W06_E_FINAL_ACCEPTANCE_AND_RELEASE_READINESS_EVIDENCE.md`. Final PR-head CI, CodeQL, Windows acceptance and backend gates remain HOLD until verified.
+
+No v0.3.0 version/tag/installer/ZIP published, no UI redesign. Stop after merge; release needs separate user authorization.
+
+---
+
 # CURRENT SOL HANDOFF — STEP06 W06-D APPROVED UI + QT ONLY (8 OCT 2026 WIB)
 
 W06-A/B/C are merged and PASS (#57/#58/#59). W06-D adds precisely the three approved recovery dialog variants from STEP03-R and an application-owned QTimer/writer bridge over the unchanged Qt editor shell. `recovery_choice.py`, `recovery_main_window.py` and the startup leaf-factory change are authoritative; the existing `GuardedMainWindow` Save/Discard/Cancel still takes precedence. New `06_W06_D_QT_AUTOSAVE_UI_IMPLEMENTATION_EVIDENCE.md` documents RED→GREEN `37754531463`, user-facing error safety and remaining W06-E gates.

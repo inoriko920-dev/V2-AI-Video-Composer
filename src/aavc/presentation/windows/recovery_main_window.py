@@ -78,21 +78,16 @@ class RecoveryMainWindow(BackgroundWorkMainWindow):
 
     def _write_snapshot_task(self, request: SnapshotRequest, baseline: str) -> bool:
         """Worker thread: no access to QWidget/QObject and no Qt callbacks."""
-        with self._recovery_store.locked_transaction():
-            session = self.services.project_session
-            if (
-                self._recovery_coordinator.epoch != request.epoch
-                or session.path != request.path
-                or session.saved_disk_sha256 != baseline
-                or not session.is_dirty
-            ):
-                return False
-            self._recovery_store.write_snapshot(
-                request.project_state,
-                request.path,
-                saved_baseline_sha256=baseline,
-            )
-            return True
+        # W06-E: worker must never read ProjectSession or coordinator.
+        # Main thread captured immutable SnapshotRequest + baseline at dispatch.
+        # All UI-driven Save/Open/Restore waits for this one writer to finish.
+        # The persistence adapter independently rejects disk baseline changes.
+        self._recovery_store.write_snapshot(
+            request.project_state,
+            request.path,
+            saved_baseline_sha256=baseline,
+        )
+        return True
 
     def _drain_snapshot(self) -> bool:
         """Qt thread only: apply worker result to canonical scheduler."""
@@ -211,6 +206,13 @@ class RecoveryMainWindow(BackgroundWorkMainWindow):
             plan = self._recovery_transactions.probe_open(
                 chosen, guard_approved=True,
             )
+            if plan.equivalent_snapshot:
+                # No recoverable delta: never offer a redundant Restore,
+                # and never silently remove the user's forensic sidecar.
+                identical_project = self._recovery_transactions.open_identical_saved(plan)
+                self._status("Proyek tersimpan berhasil dibuka")
+                self._refresh_after_open(identical_project)
+                return
             choice = choose_recovery(
                 self.window, plan.candidate.status, Path(chosen).name
             )
