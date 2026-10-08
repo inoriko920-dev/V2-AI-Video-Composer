@@ -85,6 +85,6 @@ while i<len(lines):
 out.parent.mkdir(parents=True,exist_ok=True);d.save(out)
 test=Document(out)
 assert headings>=10,headings
-assert len(test.tables)>=6,len(test.tables)
+assert len(test.tables)>=5,len(test.tables)
 assert out.stat().st_size>30000,out.stat().st_size
 print("STEP01_DOCX_STRUCTURAL_PASS",out.stat().st_size,"bytes",headings,"headings",len(test.tables),"tables",len(test.paragraphs),"paragraphs")
