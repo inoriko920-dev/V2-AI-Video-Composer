@@ -38,6 +38,7 @@ class RecoveryCandidate:
     reason: str
     disk_sha256: str | None
     snapshot_sha256: str | None
+    metadata_sha256: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -203,7 +204,7 @@ class ProvenanceStore:
                 "write_generation": uuid4().hex,
             }
             self._publish_metadata(self.metadata_path(path), descriptor)
-            return RecoveryCandidate("VERIFIED", "MATCHING_BASELINE", disk_sha, snap_sha)
+            return RecoveryCandidate("VERIFIED", "MATCHING_BASELINE", disk_sha, snap_sha, _file_sha(self.metadata_path(path)))
 
     def inspect(self, project_path: str | Path) -> RecoveryCandidate:
         """Read-only classification; never delete or auto-restore a candidate."""
@@ -216,7 +217,7 @@ class ProvenanceStore:
                 disk_sha = _file_sha(path)
                 # Both project and snapshot must decode, with valid schemas.
                 load_project(path)
-            except (ValueError, OSError) as exc:
+            except (ValueError, OSError):
                 return RecoveryCandidate("INVALID", "PROJECT_UNREADABLE", None, None)
             if not snapshot.exists():
                 return RecoveryCandidate("ABSENT", "NO_SNAPSHOT", disk_sha, None)
@@ -228,19 +229,21 @@ class ProvenanceStore:
             if not metadata.is_file():
                 return RecoveryCandidate("UNCERTAIN", "AUTOSAVE_META_UNCERTAIN", disk_sha, snap_sha)
             try:
-                desc = _validate_descriptor(metadata.read_bytes())
+                raw_meta = metadata.read_bytes()
+                meta_sha = _digest(raw_meta)
+                desc = _validate_descriptor(raw_meta)
                 identity = _path_identity(path)
             except (ValueError, OSError):
-                return RecoveryCandidate("UNCERTAIN", "AUTOSAVE_META_UNCERTAIN", disk_sha, snap_sha)
+                return RecoveryCandidate("UNCERTAIN", "AUTOSAVE_META_UNCERTAIN", disk_sha, snap_sha, _file_sha(metadata))
             if desc["snapshot_sha256"] != snap_sha:
-                return RecoveryCandidate("UNCERTAIN", "SNAPSHOT_CHANGED", disk_sha, snap_sha)
+                return RecoveryCandidate("UNCERTAIN", "SNAPSHOT_CHANGED", disk_sha, snap_sha, meta_sha)
             if desc["project_path_identity"] != identity:
-                return RecoveryCandidate("UNCERTAIN", "PROJECT_IDENTITY_CHANGED", disk_sha, snap_sha)
+                return RecoveryCandidate("UNCERTAIN", "PROJECT_IDENTITY_CHANGED", disk_sha, snap_sha, meta_sha)
             if desc["schema_version"] != snap_project.schema_version:
-                return RecoveryCandidate("UNCERTAIN", "SCHEMA_MISMATCH", disk_sha, snap_sha)
+                return RecoveryCandidate("UNCERTAIN", "SCHEMA_MISMATCH", disk_sha, snap_sha, meta_sha)
             if desc["saved_baseline_sha256"] != disk_sha:
-                return RecoveryCandidate("UNCERTAIN", "BASELINE_CHANGED", disk_sha, snap_sha)
-            return RecoveryCandidate("VERIFIED", "MATCHING_BASELINE", disk_sha, snap_sha)
+                return RecoveryCandidate("UNCERTAIN", "BASELINE_CHANGED", disk_sha, snap_sha, meta_sha)
+            return RecoveryCandidate("VERIFIED", "MATCHING_BASELINE", disk_sha, snap_sha, meta_sha)
 
     def revalidate(self, project_path: str | Path, candidate: RecoveryCandidate) -> None:
         """Reject stale preflight tokens before W06-C destructive operations."""
@@ -249,6 +252,7 @@ class ProvenanceStore:
             current.status != candidate.status
             or current.disk_sha256 != candidate.disk_sha256
             or current.snapshot_sha256 != candidate.snapshot_sha256
+            or current.metadata_sha256 != candidate.metadata_sha256
             or current.reason != candidate.reason
             or candidate.status not in ("VERIFIED", "UNCERTAIN")
         ):
@@ -271,6 +275,12 @@ class ProvenanceStore:
                 else None
             )
             meta_sha = _file_sha(metadata) if metadata_copy is not None else None
+            if meta_sha != candidate.metadata_sha256:
+                raise RecoveryRaceChanged("RECOVERY_RACE_CHANGED")
+            if snapshot_copy.exists() or (
+                metadata_copy is not None and metadata_copy.exists()
+            ):
+                raise RecoveryRaceChanged("QUARANTINE_COLLISION")
             snapshot.rename(snapshot_copy)
             try:
                 self._fault("after_quarantine_snapshot")
