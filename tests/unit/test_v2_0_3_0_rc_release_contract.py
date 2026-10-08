@@ -60,7 +60,7 @@ def test_rc_03_candidate_workflow_is_read_only_and_never_publishes() -> None:
 def test_rc_04_active_windows_acceptance_uses_new_version() -> None:
     workflow = read(".github/workflows/v2-user-acceptance.yml")
     assert '"0.3.0"' in workflow
-    assert "build_v2_0_3_0_candidate.ps1" in workflow
+    assert "build_v2_0_3_0_candidate.ps1 -Channel rc" in workflow
     assert "release_candidate_0_3_0" in workflow
     assert "FFMPEG_REFERENCE" in workflow
     assert "0.2.2 package and runtime identity" not in workflow
