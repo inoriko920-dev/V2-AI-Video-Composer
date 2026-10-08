@@ -11,7 +11,7 @@ permissions:
 
 concurrency:
   group: v2-030-rc-validation
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   windows-release-candidate:
