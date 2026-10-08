@@ -43,10 +43,23 @@ jobs:
         shell: bash
         run: |
           python docs/v2_0_3_0_planning/_generator/_temporary_build_step03_approved_pngs.py
-          cd /mnt/data/V2_AI_Video_Composer_STEP03_R_UI_DRAFT_REVIEW
-          echo '3c8cae008c762f13539ba367dff332930993e4883f79d0411666bc465c1c9cf0  UI-REC-DLG-01.png' | sha256sum --check
-          echo 'c0fe7738e2af1c1b45f0acbe54b3d2aef83f8eb90daeaa29bc5e01c7b3bd4d01  UI-REC-DLG-02.png' | sha256sum --check
-          echo '84955b4cc9c2df8691905112c6fde8f7cde7599657836aed005b6a8840662cec  UI-REC-DLG-03.png' | sha256sum --check
+          python - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          import hashlib
+          root=Path('/mnt/data/V2_AI_Video_Composer_STEP03_R_UI_DRAFT_REVIEW')
+          expected={
+              'UI-REC-DLG-01.png':'8f2ac06da9202416486ea8a00d13f1ff61bed31d184b9adec02936c7f673dab1',
+              'UI-REC-DLG-02.png':'f33ac5f5b5babed100633c8ea84ca72757ddc0aa69d0e519e3c22eac18685d3e',
+              'UI-REC-DLG-03.png':'95612347a905fb3b46f51f209b010502c29c2115808ef261b97c084e1c5fe783',
+          }
+          for name,digest in expected.items():
+              with Image.open(root/name) as im:
+                  assert im.size==(1920,1080),(name,im.size)
+                  actual=hashlib.sha256(im.convert('RGB').tobytes()).hexdigest()
+              print(name,'CANONICAL_PIXEL_SHA256',actual,'EXPECTED',digest)
+              assert actual==digest,f'UI image pixels changed: {name}'
+          PY
       - name: Generate final real DOCX with three embedded approved PNGs
         shell: bash
         run: |
