@@ -1,5 +1,18 @@
 # Panduan Pengguna — AI Automatic Video Composer
 
+> **Versi:** Panduan ini diperbarui untuk **kandidat v0.3.0 yang BELUM dirilis publik**. Versi stabil yang sudah tersedia tetap `v0.2.2`. Teks historis v0.2.1 pada bagian berikutnya menjelaskan fitur yang sudah ada sebelumnya.
+
+## Pemulihan dan autosave lokal (kandidat 0.3.0)
+
+Setelah sebuah proyek pertama kali **disimpan manual** sebagai `.aavcproj`, perubahan berikutnya dapat membuat cadangan otomatis berupa `.aavcproj.autosave` dan metadata `.autosave.meta.json` di folder proyek. Timer memeriksa kelayakan berkala; cadangan biasanya dijadwalkan setelah jeda edit, **bukan** disimpan setiap saat dan **bukan** pengganti Simpan manual.
+
+Saat membuka proyek dengan cadangan, pilih secara sadar: **Pulihkan Cadangan**, **Gunakan Proyek Tersimpan**, atau **Batal**. Jika file berbeda/metadata tidak pasti, aplikasi meminta konfirmasi kedua sebelum pemulihan; jika file cadangan rusak, pemulihan cadangan tidak ditawarkan. Proses Restore menyimpan backup proyek lama dengan nama `.pre-recovery.bak` atau bernomor.
+
+Jika isi proyek tersimpan sudah sama persis dengan cadangan valid, aplikasi membuka proyek tanpa menampilkan konflik yang tidak perlu, tetapi tidak menghapus cadangan secara diam-diam. Jangan menghapus file backup setelah crash sebelum memeriksanya. Fitur tidak melindungi proyek yang belum pernah disimpan sama sekali, tidak membuat cloud backup, dan tidak menjamin pemulihan setelah listrik mati, media rusak, atau perubahan paksa oleh aplikasi lain.
+
+---
+
+
 Panduan ini menjelaskan cara memakai AI Automatic Video Composer (AAVC) berdasarkan kemampuan yang dapat dibuktikan pada source `main` saat ini.
 
 > **Batas versi:** panduan ini disiapkan untuk rilis stabil V2 `v0.2.1`. Rilis `v0.2.0`, `v0.1.1`, dan `v0.1.0` tetap frozen dan tidak diganti. Kemampuan yang dijelaskan di bawah telah masuk ke source final 0.2.1 dan melewati automated Windows acceptance serta final release gate.
