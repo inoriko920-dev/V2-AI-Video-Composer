@@ -4,7 +4,7 @@ datas = [
     ('resources', 'resources'),
     ('schemas', 'schemas'),
     ('LICENSES', 'LICENSES'),
-    ('RELEASE_NOTES_0.2.1.md', '.'),
+    ('RELEASE_NOTES_0.2.2.md', '.'),
     ('docs/USER_GUIDE.md', '.'),
     ('MAINTENANCE.md', '.'),
     ('BACKUP_AND_RECOVERY.md', '.'),
@@ -32,7 +32,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     console=False,
 )
 coll = COLLECT(
@@ -40,7 +40,7 @@ coll = COLLECT(
     a.binaries,
     a.datas,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     name='AI Automatic Video Composer',
 )
