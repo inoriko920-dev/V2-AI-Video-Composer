@@ -12,11 +12,11 @@ running filesystem write: physical IO ordering is a later mandatory gate.
 """
 from __future__ import annotations
 
+from collections.abc import Callable
 from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from time import monotonic
-from typing import Callable
 
 from aavc.application.services.project_session import ProjectSession
 from aavc.domain.project.models import ProjectState
