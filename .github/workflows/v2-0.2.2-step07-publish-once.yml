@@ -1,0 +1,293 @@
+name: STEP07 Final v0.2.2 Rebuild CodeQL and Guarded Publication
+
+on:
+  push:
+    branches:
+      - release/v0.2.2-step07-publication-guard
+
+permissions:
+  contents: read
+
+concurrency:
+  group: step07-v2-0-2-2-guarded-final-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  codeql-python:
+    name: final-codeql-python-0.2.2
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout exact frozen final release source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          ref: eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4
+        with:
+          languages: python
+      - name: Analyze final source
+        uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4
+        with:
+          category: /language:python-v0.2.2-final
+
+  candidate-check:
+    runs-on: windows-latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef
+      - name: Verify frozen source commit and immutable prior tag
+        shell: pwsh
+        run: |
+          $actual = (git rev-parse HEAD).Trim()
+          if ($actual -ne "eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef") {
+            throw "RC gate checkout mismatch $actual"
+          }
+          git fetch --no-tags origin "refs/tags/v0.2.1:refs/tags/v0.2.1"
+          if ($LASTEXITCODE -ne 0) { throw "Historical stable tag missing" }
+          $stable = (git rev-parse refs/tags/v0.2.1).Trim()
+          if ($stable -ne "eb94efebf142ba8203dfc3ae3c5fa861222a0926") {
+            throw "Historical stable tag changed"
+          }
+          $existing = (git ls-remote --tags origin refs/tags/v0.2.2)
+          if ($LASTEXITCODE -ne 0 -or $existing) { throw "v0.2.2 tag unexpectedly present; stop RC" }
+          Write-Host "STEP07_FINAL_FROZEN_SOURCE_PASS=$actual"
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12.10'
+          cache: 'pip'
+      - name: Ensure new v0.2.2 version and no existing release publication
+        shell: pwsh
+        run: |
+          if ((Select-String -Path pyproject.toml -Pattern '^version = "0.2.2"$').Count -ne 1) { throw "Wrong release version" }
+          if (Test-Path "release_candidate_0_2_2") { throw "Dirty candidate folder" }
+          Write-Host "V2_0_2_2_NON_PUBLISHING=PASS"
+      - name: Ensure candidate has not yet been published
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          gh release view v0.2.2 --json id 2>$null
+          if ($LASTEXITCODE -eq 0) { throw "v0.2.2 release unexpectedly exists" }
+          Write-Host "STEP07_FINAL_PREPUBLICATION_GUARD_PASS"
+          exit 0
+      - name: Final immutable source identity
+        shell: pwsh
+        run: |
+          $commit = (git rev-parse HEAD).Trim()
+          if ($commit -ne "eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef") { throw "Final publication source SHA changed" }
+          $expectedVersion = (python -c "from aavc import __version__; print(__version__)").Trim()
+          if ($expectedVersion -ne "0.2.2") { throw "Wrong v0.2.2 final version" }
+      - name: Reject source secrets
+        run: python scripts/check_no_secrets.py
+      - name: Install pinned dependencies
+        run: |
+          python -m pip install "pip==26.2.1"
+          python -m pip install -r requirements.lock
+          python -m pip install -e .
+          python -m pip check
+      - name: Enforce exact reference FFmpeg (not latest)
+        shell: pwsh
+        env:
+          FFMPEG_REFERENCE: '9.0.2'
+        run: |
+          if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+            choco install ffmpeg --version=9.0.2 -y --no-progress
+            if ($LASTEXITCODE -ne 0) { throw "Reference FFmpeg installation failed" }
+          }
+          ./scripts/verify_ffmpeg_reference.ps1 -Mode system
+      - name: Compile Ruff and mypy
+        run: |
+          python -m compileall -q src
+          python -m ruff check src tests
+          python -m mypy src/aavc
+      - name: Full technical and real FFmpeg tests
+        run: python -m pytest -m "not visual" -q
+      - name: Build onedir and scan distributable
+        shell: pwsh
+        run: ./scripts/package.ps1
+      - name: Verify packaged EXE
+        shell: pwsh
+        run: ./scripts/verify_portable.ps1
+      - name: Prove PATH and temporary app-local FFmpeg precedence
+        shell: pwsh
+        env:
+          FFMPEG_REFERENCE: '9.0.2'
+        run: ./scripts/verify_ffmpeg_reference.ps1 -Mode both
+      - name: Assemble non-published candidate and verify hashes
+        shell: pwsh
+        env:
+          FFMPEG_REFERENCE: '9.0.2'
+        run: ./scripts/build_v2_0_2_2_candidate.ps1 -Channel final-verification
+      - name: STEP07 real portable special-path smoke matrix
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          $ErrorActionPreference = "Stop"
+          $archive = (Resolve-Path release_candidate_0_2_2/AI-Automatic-Video-Composer-0.2.2-win64.zip).Path
+          $root = Join-Path $env:RUNNER_TEMP "step07-portable-path-matrix"
+          New-Item -ItemType Directory -Force $root | Out-Null
+          $cases = @(
+            "ASCII",
+            "folder with spaces",
+            "O'Brien project",
+            "Ünicode-日本語",
+            ("deep-" + ("nested-folder-" * 11))
+          )
+          $index = 0
+          foreach ($case in $cases) {
+            $index += 1
+            $target = Join-Path $root $case
+            Expand-Archive -Path $archive -DestinationPath $target -Force
+            $exe = Join-Path $target "AI Automatic Video Composer.exe"
+            if (-not (Test-Path $exe)) { throw "Special-path EXE missing in case $index" }
+            $marker = Join-Path $root "smoke-case-$index.txt"
+            $process = Start-Process -FilePath $exe -ArgumentList @(
+              "--foundation-smoke", "--foundation-smoke-file", $marker
+            ) -Wait -PassThru
+            if ($process.ExitCode -ne 0) { throw "Special-path EXE failed case $index" }
+            if ((Get-Content $marker -Raw) -notmatch "AAVC_FOUNDATION_SMOKE_OK") {
+              throw "Special-path smoke token missing case $index"
+            }
+            if ($index -eq 4) {
+              $capture = Join-Path $root "special-unicode-UI-002.png"
+              $process = Start-Process -FilePath $exe -ArgumentList @(
+                "--ui-state", "UI-002", "--capture-path", $capture
+              ) -Wait -PassThru
+              if ($process.ExitCode -ne 0 -or -not (Test-Path $capture)) {
+                throw "Unicode path offscreen UI capture failed"
+              }
+              if ((Get-Item $capture).Length -lt 1000) { throw "Unicode path UI PNG too small" }
+            }
+            Write-Host "STEP07_PORTABLE_PATH_CASE_${index}_PASS"
+            Remove-Item $target -Recurse -Force
+          }
+          Write-Host "STEP07_PORTABLE_PATH_MATRIX_PASS=5"
+      - name: Record immutable RC evidence
+        shell: pwsh
+        run: |
+          @(
+            "step07_gate=FINAL_SOURCE_VERIFIED",
+            "source_commit=eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef",
+            "stable_v0.2.1=eb94efebf142ba8203dfc3ae3c5fa861222a0926",
+            "version=0.2.2",
+            "platform=windows-latest",
+            "project_schema_max=4",
+            "animation_contract=advanced-v1",
+            "ffmpeg_reference=9.0.2",
+            "portable_special_path_cases=5",
+            "release_published=false",
+            "candidate_hashes=PASS"
+          ) | Set-Content release_candidate_0_2_2/STEP07_FINAL_BUILD_EVIDENCE.txt -Encoding utf8
+      - name: Upload non-published candidate evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: AAVC-0.2.2-STEP07-FINAL-CANDIDATE-APPROVED
+          path: release_candidate_0_2_2/*
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    name: publish-v0.2.2-after-final-codeql-and-windows
+    if: "${{ github.event_name == 'push' && github.ref == 'refs/heads/release/v0.2.2-step07-publication-guard' && startsWith(github.event.head_commit.message, 'release(v2): publish 0.2.2 stable guarded') }}"
+    needs:
+      - candidate-check
+      - codeql-python
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - name: Checkout exactly final source without write credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef
+      - name: Download same-run verified final candidate
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: AAVC-0.2.2-STEP07-FINAL-CANDIDATE-APPROVED
+          path: release_bundle
+      - name: Verify exact-source ZIP and final metadata before any write
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef"
+          cd release_bundle
+          sha256sum -c SHA256SUMS.txt
+          tr -d '\r' < BUILD_INFO.txt > BUILD_INFO.normalized.txt
+          grep -Fx "release_commit=eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef" BUILD_INFO.normalized.txt
+          grep -Fx "version=0.2.2" BUILD_INFO.normalized.txt
+          grep -Fx "channel=final-verification" BUILD_INFO.normalized.txt
+          grep -Fx "schema_max=4" BUILD_INFO.normalized.txt
+          grep -Fx "animation_contract=advanced-v1" BUILD_INFO.normalized.txt
+          grep -Fx "ffmpeg_reference=9.0.2" BUILD_INFO.normalized.txt
+          test -f RELEASE_NOTES_0.2.2.md
+          test -f V2_FINAL_RELEASE_MANIFEST_0.2.2.md
+          test -f STEP07_FINAL_BUILD_EVIDENCE.txt
+          test -f AI-Automatic-Video-Composer-0.2.2-win64.zip
+          test -f AI-Automatic-Video-Composer-0.2.2-source.zip
+          unzip -Z -1 AI-Automatic-Video-Composer-0.2.2-win64.zip | grep -Fx "AI Automatic Video Composer.exe"
+          if unzip -Z -1 AI-Automatic-Video-Composer-0.2.2-win64.zip | grep -E '(^|/)(ffmpeg|ffprobe)\.exe$'; then
+            echo "::error::Bundled FFmpeg binary forbidden"; exit 1
+          fi
+          echo "STEP07_FINAL_ARTIFACT_AND_IDENTITY_PASS"
+      - name: Refuse any existing v0.2.2 tag or release and validate prior stable
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          expected="eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef"
+          base="$(gh api "repos/$GITHUB_REPOSITORY/branches/main" --jq .commit.sha)"
+          test "$base" = "$expected" || { echo "::error::main changed since final source freeze"; exit 1; }
+          stable="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v0.2.1" --jq .object.sha)"
+          test "$stable" = "eb94efebf142ba8203dfc3ae3c5fa861222a0926" || { echo "::error::v0.2.1 historical tag changed"; exit 1; }
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v0.2.2" >/dev/null 2>&1; then
+            echo "::error::v0.2.2 tag already exists; refusing any overwrite"; exit 1
+          fi
+          if gh release view v0.2.2 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::v0.2.2 GitHub Release exists; refusing any overwrite"; exit 1
+          fi
+          echo "STEP07_RELEASE_IMMUTABILITY_GUARDS_PASS"
+      - name: Publish v0.2.2 stable once against exact final SHA
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create v0.2.2 release_bundle/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef" \
+            --title "AI Automatic Video Composer v0.2.2" \
+            --notes-file release_bundle/RELEASE_NOTES_0.2.2.md
+      - name: Verify published immutable tag release and asset inventory
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tagged="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v0.2.2" --jq '.object.sha')"
+          test "$tagged" = "eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef" || { echo "::error::published tag points to wrong SHA"; exit 1; }
+          gh release view v0.2.2 --repo "$GITHUB_REPOSITORY" \
+            --json tagName,isDraft,isPrerelease \
+            --jq 'select(.tagName == "v0.2.2" and .isDraft == false and .isPrerelease == false)' \
+            | grep -q v0.2.2
+          names="$(gh release view v0.2.2 --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name')"
+          for expected in AI-Automatic-Video-Composer-0.2.2-win64.zip AI-Automatic-Video-Composer-0.2.2-source.zip BUILD_INFO.txt SHA256SUMS.txt RELEASE_NOTES_0.2.2.md; do
+            printf '%s\n' "$names" | grep -Fx "$expected"
+          done
+          echo "STEP07_V0_2_2_STABLE_RELEASE_PUBLISHED_AND_VERIFIED=eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef"
