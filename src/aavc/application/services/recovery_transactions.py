@@ -8,10 +8,11 @@ project as a side effect of merely hovering/previewing.
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
+from copy import deepcopy
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
-from typing import NoReturn
 
 from aavc.application.services.project_session import ProjectSession
 from aavc.application.services.recovery_coordinator import (
@@ -20,7 +21,6 @@ from aavc.application.services.recovery_coordinator import (
 )
 from aavc.domain.project.models import ProjectState
 from aavc.persistence.serializer import (
-    load_project,
     loads_project,
     temporary_sibling_path,
 )
@@ -103,10 +103,16 @@ class RecoveryTransactions:
         *,
         store: ProvenanceStore | None = None,
         coordinator: RecoveryCoordinator | None = None,
+        fault_hook: Callable[[str], None] | None = None,
     ) -> None:
         self.session = session
         self.store = store or ProvenanceStore()
         self.coordinator = coordinator
+        self._fault_hook = fault_hook
+
+    def _fault(self, phase: str) -> None:
+        if self._fault_hook is not None:
+            self._fault_hook(phase)
 
     def _fence(self) -> None:
         if self.coordinator is not None:
@@ -138,6 +144,7 @@ class RecoveryTransactions:
                 held = self.store.quarantine_candidate(path, probe)
             try:
                 # Defend an external change that arrived while staging files.
+                self._fault("before_manual_save")
                 if _sha(path) != self.session.saved_disk_sha256:
                     raise RecoveryRaceChanged("BASELINE_CHANGED")
                 saved = self.session.save()
@@ -171,6 +178,9 @@ class RecoveryTransactions:
             )
             if any(p.exists() or p.is_symlink() for p in paths):
                 raise RecoveryRaceChanged("SAVE_AS_RECOVERY_COLLISION")
+            self._fault("before_save_as_commit")
+            if any(p.exists() or p.is_symlink() for p in paths):
+                raise RecoveryRaceChanged("SAVE_AS_RECOVERY_COLLISION")
             result = self.session.save(destination)
             self._fence()
             return result
@@ -194,7 +204,7 @@ class RecoveryTransactions:
             if candidate.disk_sha256 != saved_digest:
                 raise RecoveryRaceChanged("RECOVERY_RACE_CHANGED")
             return RecoveryPreflight(
-                path, saved_digest, candidate, self.session.path, self.session.current
+                path, saved_digest, candidate, self.session.path, deepcopy(self.session.current)
             )
 
     def cancel(self, plan: RecoveryPreflight) -> None:
@@ -224,9 +234,10 @@ class RecoveryTransactions:
             if plan.candidate.status in ("VERIFIED", "UNCERTAIN"):
                 held = self.store.quarantine_candidate(plan.path, plan.candidate)
             try:
+                self._fault("before_disk_adoption")
                 opened = self.session.open(plan.path)
                 if self.session.saved_disk_sha256 != plan.saved_sha256:
-                    raise RecoveryRaceChanged("RECOVERY_RACE_CHANGED")
+                    raise RecoveryCommitPartial("DISCARD_COMMIT_PARTIAL")
             except Exception:
                 if held is not None:
                     try:
@@ -271,6 +282,7 @@ class RecoveryTransactions:
             ):
                 raise RecoveryRaceChanged("RECOVERY_RACE_CHANGED")
             backup = _numbered_backup(plan.path, original)
+            self._fault("after_backup")
             temp = temporary_sibling_path(plan.path, label="restore")
             try:
                 with temp.open("xb") as output:
@@ -278,6 +290,7 @@ class RecoveryTransactions:
                     output.flush()
                     os.fsync(output.fileno())
                 # Re-check every user-controlled path immediately before replace.
+                self._fault("before_restore_replace")
                 self._revalidate(plan)
                 if _sha(temp) != plan.candidate.snapshot_sha256:
                     raise RecoveryRaceChanged("RECOVERY_RACE_CHANGED")
@@ -313,10 +326,12 @@ class RecoveryTransactions:
                 self.coordinator.complete(request, success=False)
                 return False
             try:
+                digest = self.session.saved_disk_sha256
+                assert digest is not None
                 self.store.write_snapshot(
                     request.project_state,
                     request.path,
-                    saved_baseline_sha256=self.session.saved_disk_sha256,
+                    saved_baseline_sha256=digest,
                 )
             except Exception:
                 self.coordinator.complete(request, success=False)
