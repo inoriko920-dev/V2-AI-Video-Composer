@@ -1,0 +1,51 @@
+name: v0.3.1 STEP01 temporary Word staging
+on:
+  push:
+    branches:
+      - plan/v0.3.1-step01-contract-20261008
+    paths:
+      - .github/workflows/_v031_step01_word_staging_once.yml
+      - docs/v2_0_3_1_planning/_STAGING_GENERATE_STEP01_DOCX.py
+permissions:
+  contents: write
+jobs:
+  one-time-docx:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: true
+          fetch-depth: 1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Generate native planning Word file
+        run: |
+          python -m pip install "python-docx==1.2.0"
+          python docs/v2_0_3_1_planning/_STAGING_GENERATE_STEP01_DOCX.py
+      - name: Validate ZIP, Word table count, and all mandatory sections
+        run: |
+          python - <<'PY'
+          from zipfile import ZipFile
+          from docx import Document
+          from pathlib import Path
+          p=Path("docs/v2_0_3_1_planning/docx/01_ASTRA_V031_IMPLEMENTATION_RELEASE_CONTRACT.docx")
+          with ZipFile(p) as z:
+              assert z.testzip() is None
+              assert "word/document.xml" in z.namelist()
+          d=Document(p)
+          body="\n".join(p.text for p in d.paragraphs)+"\n"+"\n".join(c.text for t in d.tables for row in t.rows for c in row.cells)
+          for k in ("STEP 01","v0.3.1","0.3.0","FFmpeg","RED","GREEN","UAT","STEP 02","SOL"):
+              assert k in body,k
+          assert len(d.tables)>=6
+          print("DOCX_INTEGRITY_AND_CONTENT_PASS",p.stat().st_size,len(d.tables))
+          PY
+      - name: Commit only native DOCX to isolated planning branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- docs/v2_0_3_1_planning/docx/01_ASTRA_V031_IMPLEMENTATION_RELEASE_CONTRACT.docx
+          git diff --cached --quiet && { echo "No new Word artifact"; exit 1; }
+          git commit -m "docs(v0.3.1): stage native STEP01 release contract DOCX"
+          git push origin HEAD:refs/heads/plan/v0.3.1-step01-contract-20261008
