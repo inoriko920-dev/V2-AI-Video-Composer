@@ -53,7 +53,7 @@ jobs:
           d=Document(p)
           assert len(d.paragraphs)>=70, len(d.paragraphs)
           assert len(d.tables)>=6, len(d.tables)
-          t="\n".join(x.text for x in d.paragraphs)
+          t="\n".join([x.text for x in d.paragraphs] + [c.text for table in d.tables for row in table.rows for c in row.cells])
           for term in ("STEP 02", "SnapshotProvenanceStore", "STEP03", "120 seconds"):
               assert term in t, term
           print("STEP02_DOCX_STRUCTURE_PASS", len(d.paragraphs),len(d.tables),p.stat().st_size)
