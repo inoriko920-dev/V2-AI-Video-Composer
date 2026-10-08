@@ -1,3 +1,11 @@
+# CURRENT SOL HANDOFF — W06-C TRANSACTIONS ONLY (8 OCT 2026 WIB)
+
+W06-A (#57) and W06-B (#58) are PASS in main. Explicit next user `lanjutkan` grants W06-C only. New `RecoveryTransactions` offers byte-guarded manual Save/Save As, read-only target preflight with old dirty guard priority, explicit Cancel no-op, verified/uncertain candidate processing, numbered pre-recovery backup, real session adoption and failure/partial-commit reporting. Shared W06-B lock and W06-A token fencing prevent same-app Save/snapshot overlap; uncooperative external writers are not guaranteed safe. Test-first RED `37751809493` and GREEN `37752401663` (32 cases). Read `06_W06_C_RECOVERY_TRANSACTIONS_IMPLEMENTATION_EVIDENCE.md`.
+
+W06-C PASS only after full final-head CI, CodeQL, backend, Windows, merge, main verification. No Qt integration, no new UI, no release. **W06-D only on a new later user command.**
+
+---
+
 # CURRENT SOL HANDOFF — W06-B PROVENANCE ADAPTER ONLY (8 OCT 2026 WIB)
 
 W06-A is PASS in main (#57). W06-B branch holds `src/aavc/persistence/snapshot_provenance.py`, isolated RED→GREEN tests and `06_W06_B_SNAPSHOT_PROVENANCE_IMPLEMENTATION_EVIDENCE.md`. 27 focused cases GREEN `37750579176`; full PR gate still pending. Preserve existing `RecoveryManager` and frozen UI. Do not confuse a safe **snapshot storage adapter** with end-to-end autosave or automatically restored projects: actual Save/Open transaction, dialog, QTimer and W06-C/D/E remain pending. W06-C only on new user instruction AFTER W06-B final-head green merge.
