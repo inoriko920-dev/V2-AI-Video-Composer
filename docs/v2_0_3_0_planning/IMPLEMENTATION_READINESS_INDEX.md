@@ -1,3 +1,9 @@
+# CURRENT SOL HANDOFF — W06-B PROVENANCE ADAPTER ONLY (8 OCT 2026 WIB)
+
+W06-A is PASS in main (#57). W06-B branch holds `src/aavc/persistence/snapshot_provenance.py`, isolated RED→GREEN tests and `06_W06_B_SNAPSHOT_PROVENANCE_IMPLEMENTATION_EVIDENCE.md`. 27 focused cases GREEN `37750579176`; full PR gate still pending. Preserve existing `RecoveryManager` and frozen UI. Do not confuse a safe **snapshot storage adapter** with end-to-end autosave or automatically restored projects: actual Save/Open transaction, dialog, QTimer and W06-C/D/E remain pending. W06-C only on new user instruction AFTER W06-B final-head green merge.
+
+---
+
 # CURRENT SOL HANDOFF — W06-A RECOVERY COORDINATOR ONLY (8 OCT 2026 WIB)
 
 The STEP05 DoR is PASS in main (#56). This user's new `lanjutkan` authorized W06-A only: `src/aavc/application/services/recovery_coordinator.py`, dedicated fake-clock tests and `06_W06_A_COORDINATOR_IMPLEMENTATION_EVIDENCE.md`. TEST-FIRST evidence: RED `37748470074`; GREEN `37748722597` 18/18. The new coordinator is intentionally unbound to the editor and never touches project/snapshot files. W06-B owns the persistent snapshot writer, descriptor and lease, W06-C owns real Save/Open transaction ordering, W06-D Qt UI/timers.

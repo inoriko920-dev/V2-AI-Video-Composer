@@ -1,3 +1,9 @@
+# ACTIVE V2 v0.3.0 — STEP06 W06-B ONLY (8 OCT 2026 WIB)
+
+Authorized scope: new provenance sidecar / strict disk and snapshot SHA-256 inspection, safe checked quarantine staging, isolated failure-injection tests and wave evidence; reuse RecoveryManager and canonical serializer. W06-A completed via #57. W06-B green only after PR CI/CodeQL/Windows/backend and merge. No production Qt integration, no Save/Restore/Discard session transaction, no new UI, no v0.3.0 release, no schema/version/provider/FFmpeg changes. Old 42 UI screens and 3 approved recovery dialogs frozen. **W06-C requires next separate `lanjutkan`** after W06-B PASS. Original legacy repo and v0.2.2 tag immutable.
+
+---
+
 # ACTIVE V2 v0.3.0 — STEP06 W06-A SOL IMPLEMENTATION ONLY (8 OCT 2026 WIB)
 
 W06-A is explicitly authorized after STEP05 PR #56 merged and verified. Read `V2_0.3.0_PLANNING_STATUS.md` top and `docs/v2_0_3_0_planning/06_W06_A_COORDINATOR_IMPLEMENTATION_EVIDENCE.md`, STEP05 plan, STEP04 tests and STEP01/02 architecture. Scope is ONLY pure monotonic autosave coordinator, semantic-revision and epoch fences with deterministic tests; no file IO, Qt, sidecars, Save/Restore integration, runtime version/release, or UI changes. W06-A PASS only after final-head checks and merged PR. W06-B requires separate new user turn. Legacy original repo and v0.2.2 stable are immutable; 3 approved recovery-dialog assets and 42 frozen UI remain unchanged.
