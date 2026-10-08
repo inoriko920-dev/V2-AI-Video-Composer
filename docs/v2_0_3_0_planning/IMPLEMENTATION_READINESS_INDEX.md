@@ -1,3 +1,7 @@
+# CURRENT READINESS — V2 0.3.0
+
+**STEP00 PASS / STEP01 PASS / STEP02 NEXT.** STEP01 PR #49 merged. CI run 37730948284 PASS; CodeQL 37730948270 PASS; Windows acceptance 37730948312 PASS; backend 37730948224 PASS. No coding, UI image generation, schema/version changes or release publication authorized. Published v0.2.2 remains immutable. The future STEP03 UI image-prompt stop is mandatory.
+
 # V2 0.3.0 — New Planning / AI Handoff Index
 
 **Authority:** New ASTRA planning cycle; STEP00 PASS. STEP01 functional spec is the ONLY current work. No SOL coding or release publication authorized.
@@ -16,7 +20,7 @@
 
 ## Current authority and hard gates
 - STEP 00 product audit and scope: **PASS / COMPLETE after PR #48 CI/CodeQL/Windows checks and merge**.
-- STEP 01 functional flow planning: **DOCX PASS / PR-head CI/CodeQL/Windows and merge PENDING**.
+- STEP 01 functional flow planning: **PASS / COMPLETE**.
 - STEP 02 architecture/error policy planning: **NOT STARTED**.
 - STEP 03 **UI prompt hard stop**: **NOT STARTED**; special user approval and one final UI reference DOCX mandatory.
 - STEP 04 testing plan: **NOT STARTED**.
@@ -53,7 +57,7 @@
 - Timer cadence proposed: 20s debounce, maximum 120s dirty lag, 60s poll and bounded errors.
 - Functional 24-case matrix and coordinator state transition contract are the source for STEP02 architecture and STEP04 test plans.
 - STEP03 image prompt phase must STOP pending approved final UI images and one committed final UI reference DOCX, even after bare 'lanjutkan'.
-- Current gate: DOCX committed and 9-page visual QA PASS; PR checks and merge outstanding. STEP02 not authorized until STEP01 PASS.
+- STEP01 gate: PASS. Native DOCX committed; 9-page visual QA PASS; PR #49 merged as 38094913ebcab3d1992b252659d40a0049caf6a6; CI, CodeQL, Windows acceptance and backend PASS. STEP02 is NEXT only on new explicit user 'lanjutkan'.
 
 ## STEP01 planning-document audit
 - Source spec: docs/v2_0_3_0_planning/01_AUTOSAVE_RECOVERY_FUNCTIONAL_LIFECYCLE_SPEC.md.
