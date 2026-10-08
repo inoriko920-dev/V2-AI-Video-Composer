@@ -80,13 +80,11 @@ jobs:
           if ($LASTEXITCODE -eq 0) { throw "v0.2.2 release unexpectedly exists" }
           Write-Host "STEP07_FINAL_PREPUBLICATION_GUARD_PASS"
           exit 0
-      - name: Final immutable source identity
+      - name: Confirm frozen commit before installing dependencies
         shell: pwsh
         run: |
           $commit = (git rev-parse HEAD).Trim()
           if ($commit -ne "eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef") { throw "Final publication source SHA changed" }
-          $expectedVersion = (python -c "from aavc import __version__; print(__version__)").Trim()
-          if ($expectedVersion -ne "0.2.2") { throw "Wrong v0.2.2 final version" }
       - name: Reject source secrets
         run: python scripts/check_no_secrets.py
       - name: Install pinned dependencies
@@ -95,6 +93,13 @@ jobs:
           python -m pip install -r requirements.lock
           python -m pip install -e .
           python -m pip check
+      - name: Verify installed v0.2.2 runtime and package metadata
+        shell: pwsh
+        run: |
+          $runtime = (python -c "from aavc import __version__; print(__version__)").Trim()
+          $metadata = (python -c "from importlib.metadata import version; print(version('ai-automatic-video-composer'))").Trim()
+          if ($runtime -ne "0.2.2" -or $metadata -ne "0.2.2") { throw "Final version mismatch: runtime=$runtime metadata=$metadata" }
+          Write-Host "STEP07_FINAL_VERSION_IDENTITY_PASS=0.2.2"
       - name: Enforce exact reference FFmpeg (not latest)
         shell: pwsh
         env:
