@@ -81,7 +81,7 @@ while i < len(lines):
                         if k == 0:
                             run.font.bold = True
         continue
-    m = re.match(r"^(#{1,3})\\s+(.+)$", raw)
+    m = re.match(r"^(#{1,3})\s+(.+)$", raw)
     if m:
         level = len(m.group(1))
         if level == 1:
@@ -90,8 +90,8 @@ while i < len(lines):
             d.add_heading(m.group(2), level=level-1)
     elif raw.startswith("- "):
         d.add_paragraph(raw[2:], style="List Bullet")
-    elif re.match(r"^\\d+\\.\\s+", raw):
-        d.add_paragraph(re.sub(r"^\\d+\\.\\s+", "", raw), style="List Number")
+    elif re.match(r"^\d+\.\s+", raw):
+        d.add_paragraph(re.sub(r"^\d+\.\s+", "", raw), style="List Number")
     else:
         text = raw.replace("**", "").replace("`", "")
         d.add_paragraph(text)
