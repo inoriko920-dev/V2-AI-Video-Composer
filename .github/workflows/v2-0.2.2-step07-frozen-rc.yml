@@ -57,6 +57,7 @@ jobs:
           gh release view v0.2.2 --json id 2>$null
           if ($LASTEXITCODE -eq 0) { throw "v0.2.2 release unexpectedly exists" }
           Write-Host "STEP07_RC_PUBLICATION_ABSENT_PASS"
+          exit 0
       - name: Reject source secrets
         run: python scripts/check_no_secrets.py
       - name: Install pinned dependencies
