@@ -36,8 +36,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         from PySide6.QtGui import QFont, QFontDatabase
         from PySide6.QtWidgets import QApplication
 
-        from aavc.presentation.windows.background_work_window import (
-            create_background_work_main_window as create_main_window,
+        from aavc.presentation.windows.recovery_main_window import (
+            create_recovery_main_window as create_main_window,
         )
     except ModuleNotFoundError as exc:
         services.jobs.shutdown(wait=False)

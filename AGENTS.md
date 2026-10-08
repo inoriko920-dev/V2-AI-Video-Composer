@@ -1,3 +1,9 @@
+# CURRENT V2 v0.3.0 — W06-D RECOVERY UI IMPLEMENTATION ONLY (8 OCT 2026 WIB)
+
+Latest user `lanjutkan` authorizes W06-D only, after W06-C PR #59 PASS. Source-of-truth is the top of `V2_0.3.0_PLANNING_STATUS.md` and `docs/v2_0_3_0_planning/06_W06_D_QT_AUTOSAVE_UI_IMPLEMENTATION_EVIDENCE.md`, plus the already approved STEP03-R three PNGs/one DOCX. Preserve all 42 original Qt screens. New UI limited to DLG-01 verified, DLG-02 uncertain/second confirmation in same component, and DLG-03 invalid native QMessageBox; no new screens or redesign. Bind W06-A scheduler / W06-B persistence / W06-C transactions using existing Qt status bar and one worker. Guard Save/Discard/Cancel before any recovery probe. No provider, FFmpeg, render engine, schema, release, version, original repo or stable v0.2.2 tag change. W06-D PASS requires PR-head CI/CodeQL/backend/Windows and main merge; W06-E only on **separate later `lanjutkan`**.
+
+---
+
 # ACTIVE V2 v0.3.0 — STEP06 W06-C SOL ONLY (8 OCT 2026 WIB)
 
 Previous W06-A/B fully merged. User's latest `lanjutkan` authorizes W06-C transactions (Save/Save As/Open preflight/Restore/Discard), one shared process lease with W06-B, SHA-256 baseline comparisons, epoch fences, non-clobber backups, rollback/partial-commit evidence and test-first verification. Read `V2_0.3.0_PLANNING_STATUS.md` current top and `docs/v2_0_3_0_planning/06_W06_C_RECOVERY_TRANSACTIONS_IMPLEMENTATION_EVIDENCE.md`. No Qt, dialog designs, QTimer, AI/FFmpeg/animation changes or version/release. W06-C is PASS only after final-head CI/CodeQL/Windows/backend and main merge. W06-D Qt wiring requires a **new subsequent user instruction**. v0.2.2 tag, legacy repo and 3 approved UI recovery PNGs are immutable.

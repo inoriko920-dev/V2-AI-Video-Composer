@@ -1,3 +1,11 @@
+# CURRENT SOL HANDOFF — STEP06 W06-D APPROVED UI + QT ONLY (8 OCT 2026 WIB)
+
+W06-A/B/C are merged and PASS (#57/#58/#59). W06-D adds precisely the three approved recovery dialog variants from STEP03-R and an application-owned QTimer/writer bridge over the unchanged Qt editor shell. `recovery_choice.py`, `recovery_main_window.py` and the startup leaf-factory change are authoritative; the existing `GuardedMainWindow` Save/Discard/Cancel still takes precedence. New `06_W06_D_QT_AUTOSAVE_UI_IMPLEMENTATION_EVIDENCE.md` documents RED→GREEN `37754531463`, user-facing error safety and remaining W06-E gates.
+
+Do NOT treat W06-D as PASS until final-head CI, CodeQL, backend, Windows acceptance and screenshot UI parity, then merged main verification. No Qt UI changes outside three approved dialogs + old QStatusBar. Release stable v0.2.2 stays unmodified. W06-E needs a **new user instruction** after merge.
+
+---
+
 # CURRENT SOL HANDOFF — W06-C TRANSACTIONS ONLY (8 OCT 2026 WIB)
 
 W06-A (#57) and W06-B (#58) are PASS in main. Explicit next user `lanjutkan` grants W06-C only. New `RecoveryTransactions` offers byte-guarded manual Save/Save As, read-only target preflight with old dirty guard priority, explicit Cancel no-op, verified/uncertain candidate processing, numbered pre-recovery backup, real session adoption and failure/partial-commit reporting. Shared W06-B lock and W06-A token fencing prevent same-app Save/snapshot overlap; uncooperative external writers are not guaranteed safe. Test-first RED `37751809493` and GREEN `37752401663` (32 cases). Read `06_W06_C_RECOVERY_TRANSACTIONS_IMPLEMENTATION_EVIDENCE.md`.
