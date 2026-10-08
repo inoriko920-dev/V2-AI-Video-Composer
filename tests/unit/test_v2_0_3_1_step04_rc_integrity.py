@@ -10,7 +10,6 @@ import zipfile
 from pathlib import Path
 
 import pytest
-
 from scripts.verify_v2_0_3_1_rc_bundle import (
     ARCHIVES,
     BundleError,
@@ -91,9 +90,11 @@ def test_qa_02_reject_unsafe_zip_entries(invalid: str, expected: str) -> None:
     with zipfile.ZipFile(buffer, "w") as archive:
         for name, payload in entries.items():
             archive.writestr(name, payload)
-    with zipfile.ZipFile(io.BytesIO(buffer.getvalue())) as archive:
-        with pytest.raises(BundleError, match=expected):
-            inspect_zip(archive, "win64")
+    with (
+        zipfile.ZipFile(io.BytesIO(buffer.getvalue())) as archive,
+        pytest.raises(BundleError, match=expected),
+    ):
+        inspect_zip(archive, "win64")
 
 
 def test_qa_03_reject_windows_case_fold_collision() -> None:
@@ -103,9 +104,11 @@ def test_qa_03_reject_windows_case_fold_collision() -> None:
             archive.writestr(name, data)
         archive.writestr("Scene/One.png", b"A")
         archive.writestr("scene/ONE.PNG", b"B")
-    with zipfile.ZipFile(io.BytesIO(buffer.getvalue())) as archive:
-        with pytest.raises(BundleError, match="case-insensitive"):
-            inspect_zip(archive, "win64")
+    with (
+        zipfile.ZipFile(io.BytesIO(buffer.getvalue())) as archive,
+        pytest.raises(BundleError, match="case-insensitive"),
+    ):
+        inspect_zip(archive, "win64")
 
 
 def test_qa_04_reject_missing_executable(tmp_path: Path) -> None:
@@ -177,9 +180,11 @@ def test_qa_10_reject_zip_symlink() -> None:
         link.create_system = 3
         link.external_attr = (stat.S_IFLNK | 0o777) << 16
         archive.writestr(link, "../private.txt")
-    with zipfile.ZipFile(io.BytesIO(buffer.getvalue())) as archive:
-        with pytest.raises(BundleError, match="symbolic link"):
-            inspect_zip(archive, "win64")
+    with (
+        zipfile.ZipFile(io.BytesIO(buffer.getvalue())) as archive,
+        pytest.raises(BundleError, match="symbolic link"),
+    ):
+        inspect_zip(archive, "win64")
 
 
 def test_qa_11_reject_unlisted_archive(tmp_path: Path) -> None:
