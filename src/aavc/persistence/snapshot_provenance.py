@@ -10,11 +10,12 @@ from __future__ import annotations
 import json
 import os
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
 from threading import RLock
-from typing import Callable, Literal
+from typing import Literal
 from uuid import uuid4
 
 from aavc.domain.project.models import ProjectState
