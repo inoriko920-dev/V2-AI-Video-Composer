@@ -13,7 +13,7 @@
 8. STEP 01–05 and final UI reference DOCX, once those actually exist and are accepted
 
 ## Current authority and hard gates
-- STEP 00 product audit and scope: **IN PROGRESS pending DOCX and PR green gate**.
+- STEP 00 product audit and scope: **DOCX SOURCE GATE PASS; CI/CODEQL PR GATE PENDING**.
 - STEP 01 functional flow planning: **NOT STARTED**.
 - STEP 02 architecture/error policy planning: **NOT STARTED**.
 - STEP 03 **UI prompt hard stop**: **NOT STARTED**; special user approval and one final UI reference DOCX mandatory.
@@ -35,3 +35,11 @@
 - Frozen stable SHA `eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef`, released at https://github.com/inoriko920-dev/V2-AI-Video-Composer/releases/tag/v0.2.2 .
 - Documentation and DOCX generator created on branch `v2/0.3.0-planning-step00`.
 - Current branch changes are planning-only. No app source code/UI/schema/release workflow modifications are allowed.
+
+## Generated DOCX provenance
+- Canonical file: `docs/v2_0_3_0_planning/docx/00_V2_0.3.0_PRODUCT_GAP_AUDIT_AND_RECOVERY_SCOPE.docx` (actual DOCX bytes committed to repo).
+- Reproducible generator: `docs/v2_0_3_0_planning/_generator/generate_step00_docx.py`.
+- Actions evidence: generation `37728819011` PASS, independent read-only review `37728948765` PASS, refined generator/QA `37729351791` PASS.
+- Visual QA: rendered 5 pages; tables legible, repeated headers, no extra/orphan page.
+- One-shot write-capable workflow removed itself without writing to main. Review workflow removed before merge.
+- Only next authorized action after CI/CodeQL and merge: STEP01 functional recovery lifecycle planning.
