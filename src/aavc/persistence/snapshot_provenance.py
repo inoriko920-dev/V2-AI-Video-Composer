@@ -10,7 +10,8 @@ from __future__ import annotations
 import json
 import os
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
@@ -117,6 +118,16 @@ class ProvenanceStore:
     ) -> None:
         self._manager = manager or RecoveryManager()
         self._fault_hook = fault_hook
+
+    @contextmanager
+    def locked_transaction(self) -> Iterator[None]:
+        """Serialize W06-C Save/Open/Restore against W06-B snapshot writes.
+
+        Does not protect against independent external processes: byte-digest
+        compare-and-swap checks are mandatory before each destructive action.
+        """
+        with _GLOBAL_IO_LEASE:
+            yield
 
     def _fault(self, phase: str) -> None:
         if self._fault_hook is not None:
