@@ -1,0 +1,85 @@
+name: One-shot V2 v0.3.0 STEP01 Detailed DOCX
+
+on:
+  push:
+    branches:
+      - v2/0.3.0-planning-step01
+    paths:
+      - .github/workflows/v2-0.3.0-step01-docx-once.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: v2-0-3-0-step01-docx-once
+  cancel-in-progress: false
+
+jobs:
+  docx:
+    if: github.repository == 'inoriko920-dev/V2-AI-Video-Composer'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout dedicated STEP01 planning branch only
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: v2/0.3.0-planning-step01
+          persist-credentials: true
+          fetch-depth: 0
+      - name: Verify branch scope and required sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = 'refs/heads/v2/0.3.0-planning-step01'
+          test "$(git symbolic-ref --short HEAD)" = 'v2/0.3.0-planning-step01'
+          test -s docs/v2_0_3_0_planning/01_AUTOSAVE_RECOVERY_FUNCTIONAL_LIFECYCLE_SPEC.md
+          test -s docs/v2_0_3_0_planning/_generator/generate_step01_docx.py
+          test ! -f docs/v2_0_3_0_planning/docx/01_V2_0.3.0_AUTOSAVE_RECOVERY_FUNCTIONAL_LIFECYCLE_SPEC.docx
+      - name: Python for document generation
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12'
+      - name: Generate and verify canonical detailed DOCX
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check "python-docx==1.2.0"
+          python docs/v2_0_3_0_planning/_generator/generate_step01_docx.py
+          WORD=docs/v2_0_3_0_planning/docx/01_V2_0.3.0_AUTOSAVE_RECOVERY_FUNCTIONAL_LIFECYCLE_SPEC.docx
+          test -s "$WORD"
+          unzip -t "$WORD" | tail -n 2
+          python - <<'PY'
+          from pathlib import Path
+          from docx import Document
+          p=Path('docs/v2_0_3_0_planning/docx/01_V2_0.3.0_AUTOSAVE_RECOVERY_FUNCTIONAL_LIFECYCLE_SPEC.docx')
+          doc=Document(p)
+          assert len(doc.paragraphs)>90, len(doc.paragraphs)
+          assert len(doc.tables)>=5, len(doc.tables)
+          lines='\n'.join(x.text for x in doc.paragraphs)
+          for s in ('STEP 01','RECOVERABLE_UNCERTAIN','RCV-24','STEP02','STEP03'):
+              assert s in lines,s
+          print('STEP01_DETAILED_DOCX_STRUCTURE_PASS',len(doc.paragraphs),len(doc.tables),p.stat().st_size)
+          PY
+          sha256sum "$WORD"
+      - name: Upload actual generated DOCX for visual QA
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: V2-0.3.0-STEP01-DOCX-VISUAL-QA
+          path: docs/v2_0_3_0_planning/docx/01_V2_0.3.0_AUTOSAVE_RECOVERY_FUNCTIONAL_LIFECYCLE_SPEC.docx
+          if-no-files-found: error
+          retention-days: 5
+      - name: Commit ONLY Word output and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git symbolic-ref --short HEAD)" = 'v2/0.3.0-planning-step01'
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          WORD=docs/v2_0_3_0_planning/docx/01_V2_0.3.0_AUTOSAVE_RECOVERY_FUNCTIONAL_LIFECYCLE_SPEC.docx
+          git add "$WORD"
+          git rm .github/workflows/v2-0.3.0-step01-docx-once.yml
+          git diff --cached --name-only | grep -Fx "$WORD"
+          git diff --cached --name-only | grep -Fx '.github/workflows/v2-0.3.0-step01-docx-once.yml'
+          test "$(git diff --cached --name-only | wc -l)" -eq 2
+          git commit -m 'docs(v0.3.0): commit STEP01 functional spec Word and self-retire generator'
+          git push origin HEAD:refs/heads/v2/0.3.0-planning-step01
