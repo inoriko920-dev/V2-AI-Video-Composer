@@ -1,8 +1,6 @@
 # V2 v0.3.1 — Candidate Distribution Contract (STEP02, source only)
 
-**Current state:** NOT_PUBLISHED. **NO TAG, no tag, no GitHub Release, no new
-portable ZIP and no public download.** This file documents future constraints
-rather than claiming a distributable already exists.
+**Current state:** NOT_PUBLISHED. **NO TAG, no tag, no GitHub Release, and no public download.** STEP03 may create an expiring **Actions artifact** containing a verified Windows candidate portable ZIP and matching source.zip. That technical artifact is not an official release, and its exact source SHA must be checked against its own BUILD_INFO.txt; this manifest does not invent any build checksum.
 
 **Repository:** `inoriko920-dev/V2-AI-Video-Composer`  
 **Candidate version:** `version=0.3.1`; future candidate tag `v0.3.1`.  
@@ -20,9 +18,9 @@ known merged PR #65 already implements this. PR #64 is CI/documentation only.
 Project schemas v3 and v4, `advanced-v1`, the autosave recovery model, all 21
 effects, frozen UI, and credentials remain unchanged.
 
-## Future source and artifact identity contract — not yet executed
+## Source and candidate artifact identity contract — verified only after a successful STEP03 Actions run
 
-A STEP03 read-only builder must produce these **candidate-only** artifacts from
+A STEP03 read-only builder produces these **candidate-only** artifacts from
 the exact same Git commit and version as the tested executable:
 
 - `AI-Automatic-Video-Composer-0.3.1-win64.zip`: entire onedir package, root
@@ -38,9 +36,11 @@ the exact same Git commit and version as the tested executable:
 - `RELEASE_NOTES_0.3.1.md`, `V2_FINAL_RELEASE_MANIFEST_0.3.1.md`,
   `USER_GUIDE.md`, `MAINTENANCE.md`, `BACKUP_AND_RECOVERY.md`.
 
-**READY_FOR_PUBLICATION is a future technical artifact state, not PUBLISHED**.
-No release_commit or ZIP SHA-256 values are asserted before the STEP03 exact
-source build. A future final release must be explicitly approved and checked
+**READY_FOR_PUBLICATION is a technical artifact state, not PUBLISHED**.
+No release_commit or ZIP SHA-256 values are asserted in this source file because
+the resulting ZIP hashes depend on the exact successful STEP03 build. Use that
+workflow run's BUILD_INFO.txt and SHA256SUMS.txt as authoritative candidate
+evidence. A future final release must be explicitly approved and checked
 against public bytes and tag identity again.
 
 ## Hard gates for STEP03/04/05
