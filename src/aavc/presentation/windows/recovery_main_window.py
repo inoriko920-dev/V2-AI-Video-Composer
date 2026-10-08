@@ -209,9 +209,9 @@ class RecoveryMainWindow(BackgroundWorkMainWindow):
             if plan.equivalent_snapshot:
                 # No recoverable delta: never offer a redundant Restore,
                 # and never silently remove the user's forensic sidecar.
-                project = self._recovery_transactions.open_identical_saved(plan)
+                identical_project = self._recovery_transactions.open_identical_saved(plan)
                 self._status("Proyek tersimpan berhasil dibuka")
-                self._refresh_after_open(project)
+                self._refresh_after_open(identical_project)
                 return
             choice = choose_recovery(
                 self.window, plan.candidate.status, Path(chosen).name
