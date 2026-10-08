@@ -113,7 +113,8 @@ jobs:
               assert archive.testzip() is None, 'Source ZIP CRC mismatch'
               for name in ('pyproject.toml', 'src/aavc/__init__.py', 'RELEASE_NOTES_0.3.0.md', 'V2_FINAL_RELEASE_MANIFEST_0.3.0.md'):
                   blob = subprocess.check_output(['git', 'show', expected_sha + ':' + name])
-                  assert archive.read(name) == blob, f'Source differs from frozen Git blob: {name}'
+                  packaged = archive.read(name)
+                  assert packaged == blob or packaged.replace(b'\\r\\n', b'\\n') == blob, f'Source differs beyond Windows CRLF conversion: {name}'
           with zipfile.ZipFile(root / portable_name) as archive:
               assert archive.testzip() is None, 'Windows portable ZIP CRC mismatch'
               names = [name.replace('\\', '/').lower() for name in archive.namelist()]
