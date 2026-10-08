@@ -1,5 +1,5 @@
 # Fully resolved dependency snapshot for Windows / CPython 3.12.10.
-# Revalidated for the V2 0.2.0rc1 release-candidate gate; dependency versions unchanged.
+# Reviewed for V2 0.2.2 W06-D; runtime/tooling dependency versions intentionally unchanged.
 # Regenerate deliberately after dependency review; do not use broad ranges here.
 # PEP 517 build isolation is pinned separately in pyproject.toml (setuptools==80.10.2).
 
