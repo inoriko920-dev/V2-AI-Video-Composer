@@ -31,9 +31,8 @@ def _preserve_pre_recovery_project(project: Path) -> Path:
             continue
 
         try:
-            with output:
-                with project.open("rb") as source:
-                    shutil.copyfileobj(source, output)
+            with output, project.open("rb") as source:
+                shutil.copyfileobj(source, output)
             shutil.copystat(project, backup)
             return backup
         except Exception:
