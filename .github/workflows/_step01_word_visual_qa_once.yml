@@ -1,0 +1,38 @@
+name: Temporary STEP01 Word visual QA
+on:
+  push:
+    branches: [plan/v0.3.1-step01-contract-20261008]
+    paths: [.github/workflows/_step01_word_visual_qa_once.yml]
+permissions:
+  contents: read
+jobs:
+  render-docx:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Install office renderer and PDF inspection tools
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq libreoffice-writer poppler-utils
+      - name: Convert DOCX to PDF and PNG page previews
+        run: |
+          mkdir -p artifacts/word_visual_qa
+          libreoffice -env:UserInstallation=file:///tmp/word-step01-lo --headless \
+            --convert-to pdf --outdir artifacts/word_visual_qa \
+            docs/v2_0_3_1_planning/docx/01_ASTRA_V031_IMPLEMENTATION_RELEASE_CONTRACT.docx
+          pdf=artifacts/word_visual_qa/01_ASTRA_V031_IMPLEMENTATION_RELEASE_CONTRACT.pdf
+          test -s "$pdf"
+          pdfinfo "$pdf" | grep -E '^(Pages|Page size):'
+          pdftoppm -png -r 100 "$pdf" artifacts/word_visual_qa/page >/dev/null 2>&1
+          test "$(find artifacts/word_visual_qa -maxdepth 1 -name 'page-*.png' | wc -l)" -ge 5
+          ls -lah artifacts/word_visual_qa | head -25
+          echo "STEP01_WORD_RENDERED_PAGES_PASS"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: V031-STEP01-WORD-VISUAL-QA
+          path: artifacts/word_visual_qa/*
+          if-no-files-found: error
+          retention-days: 7
