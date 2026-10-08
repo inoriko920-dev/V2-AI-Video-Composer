@@ -1,3 +1,9 @@
+# ACTIVE V2 v0.3.0 — STEP06 W06-A SOL IMPLEMENTATION ONLY (8 OCT 2026 WIB)
+
+W06-A is explicitly authorized after STEP05 PR #56 merged and verified. Read `V2_0.3.0_PLANNING_STATUS.md` top and `docs/v2_0_3_0_planning/06_W06_A_COORDINATOR_IMPLEMENTATION_EVIDENCE.md`, STEP05 plan, STEP04 tests and STEP01/02 architecture. Scope is ONLY pure monotonic autosave coordinator, semantic-revision and epoch fences with deterministic tests; no file IO, Qt, sidecars, Save/Restore integration, runtime version/release, or UI changes. W06-A PASS only after final-head checks and merged PR. W06-B requires separate new user turn. Legacy original repo and v0.2.2 stable are immutable; 3 approved recovery-dialog assets and 42 frozen UI remain unchanged.
+
+---
+
 # CURRENT V2 v0.3.0 — STEP05 DOCUMENTATION-ONLY OVERRIDE (8 OCT 2026)
 
 Source-of-truth: `V2_0.3.0_PLANNING_STATUS.md` latest top section, `docs/v2_0_3_0_planning/05_IMPLEMENTATION_READINESS_AND_SOL_WAVE_AUTHORIZATION_PLAN.md`, STEP04 testing plan, STEP01/02 safety contracts, and the approved three-dialog STEP03-R visuals/Word. STEP03-R PR #54 and STEP04 PR #55 are merged; the original 13-image mandate is archived. The user authorized **STEP05 planning only**; no Qt/Python production changes, runtime tests, dependencies, release/version bumps, or new GitHub workflow permanent changes in STEP05. Stable v0.2.2 tag and legacy original repo immutable. After STEP05 DoR PASS, a separate new user turn is required before any W06-A code. SOL waves W06-A..E are sequential test-first, one wave per turn, each wave independently proven green/merged.
