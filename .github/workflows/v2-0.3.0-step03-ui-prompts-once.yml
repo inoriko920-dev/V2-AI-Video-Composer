@@ -64,7 +64,7 @@ jobs:
               txt=list((b/'prompt_ui_step03').glob(f'{ident}_*.txt'))
               assert len(txt)==1, (ident,txt)
               text=txt[0].read_text(encoding='utf-8')
-              assert 'A. MASTER DESIGN' in text and 'C. UNIQUE IMAGE STATE' in text and 'STOP' in text
+              assert 'A. MASTER DESIGN' in text and 'C. UNIQUE IMAGE STATE' in text and 'HARD STOP' in text
               assert len(text)>900, (ident,len(text))
           print('STEP03_13_TXT_DOCX_STRUCTURAL_PASS',len(doc.paragraphs),len(doc.tables))
           PY
