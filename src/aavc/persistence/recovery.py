@@ -14,6 +14,33 @@ class RecoverySnapshot:
     recovery_path: Path
 
 
+def _preserve_pre_recovery_project(project: Path) -> Path:
+    """Save the previous disk state without ever replacing an older backup.
+
+    Exclusive creation also protects against concurrent restore attempts choosing
+    the same numbered backup filename.
+    """
+    index = 0
+    while True:
+        suffix = ".pre-recovery.bak" if index == 0 else f".pre-recovery.{index}.bak"
+        backup = project.with_suffix(project.suffix + suffix)
+        try:
+            output = backup.open("xb")
+        except FileExistsError:
+            index += 1
+            continue
+
+        try:
+            with output, project.open("rb") as source:
+                shutil.copyfileobj(source, output)
+            shutil.copystat(project, backup)
+            return backup
+        except Exception:
+            # Failed copies must not reserve a partially written backup slot.
+            backup.unlink(missing_ok=True)
+            raise
+
+
 class RecoveryManager:
     def recovery_path_for(self, project_path: str | Path) -> Path:
         path = Path(project_path)
@@ -48,9 +75,8 @@ class RecoveryManager:
         # A truncated/corrupt/future-schema autosave must fail closed.
         load_project(recovery)
 
-        backup = project.with_suffix(project.suffix + ".pre-recovery.bak")
         if project.exists():
-            shutil.copy2(project, backup)
+            _preserve_pre_recovery_project(project)
         temp = temporary_sibling_path(project, label="restore")
         try:
             shutil.copy2(recovery, temp)
