@@ -1,3 +1,9 @@
+# STEP07 RELEASE CANDIDATE PREPARATION HANDOFF — NOT PUBLIC RELEASE
+
+W06-A..E merged to main. Current branch `release/v0.3.0-rc-preparation` aligns runtime and package identity 0.3.0, adds notes/manifest/user guide and a read-only Windows CI candidate/ZIP/checksum build. Explicit authority is detailed in `07_V0_3_0_RC_PREPARATION_AND_RELEASE_GATE.md`. Stable tag v0.2.2 immutable; no stable v0.3.0 tag or GitHub Release may be created during this work. RED first `37764379227`; six contract tests GREEN `37765138335`; full Windows RC must be verified on final branch and exact-source commit. Exit only after PR-head CI/CodeQL/backend/Windows/RC candidate and merged-main tree PASS. Public publisher requires separate explicit user turn.
+
+---
+
 # ACTIVE W06-E FINAL ACCEPTANCE HANDOFF (8 OCT 2026 WIB)
 
 W06-A/B/C/D are merged into V2 main (#57–#60). W06-E finishes cross-wave safety/regression tests, not public release. `RecoveryPreflight.equivalent_snapshot` + `RecoveryTransactions.open_identical_saved` prevent false repeated recovery after restored identical valid content, without touching retained forensic sidecars. The W06-D worker now writes only captured immutable state through W06-B store and does not read live session/coordinator from its worker thread. Test-first RED `37762298469`, GREEN 10 tests `37762488770`; details in `06_W06_E_FINAL_ACCEPTANCE_AND_RELEASE_READINESS_EVIDENCE.md`. Final PR-head CI, CodeQL, Windows acceptance and backend gates remain HOLD until verified.
