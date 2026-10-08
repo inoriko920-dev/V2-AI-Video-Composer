@@ -37,8 +37,8 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or $old -ne "eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef") {
             throw "Published v0.2.2 tag is not immutable"
           }
-          git show-ref --verify --quiet "refs/tags/v0.3.0"
-          if ($LASTEXITCODE -eq 0) { throw "Stable v0.3.0 tag exists: abort RC" }
+          $existing = @(git tag --list "v0.3.0")
+          if ($existing -contains "v0.3.0") { throw "Stable v0.3.0 tag exists: abort RC" }
 
       - name: Reject committed secrets
         run: python scripts/check_no_secrets.py
