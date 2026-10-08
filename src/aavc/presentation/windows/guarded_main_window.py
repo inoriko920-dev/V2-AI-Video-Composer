@@ -192,7 +192,7 @@ class GuardedMainWindow(MainWindow):
         result = QMessageBox.StandardButton(box.exec())
 
         if result == QMessageBox.StandardButton.Save:
-            super().save_project()
+            self.save_project()
             return resolve_unsaved_choice(
                 True,
                 "save",
