@@ -22,7 +22,7 @@ jobs:
       - name: Install render dependencies
         shell: bash
         run: |
-          python -m pip install 'Pillow==11.3.0' 'python-docx==1.2.0'
+          python -m pip install 'Pillow==12.3.0' 'python-docx==1.2.0'
           sudo apt-get update -qq
           sudo apt-get install -y -qq fonts-inter
           test -f /usr/share/fonts/opentype/inter/Inter-Regular.otf
