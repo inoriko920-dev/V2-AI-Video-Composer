@@ -73,7 +73,7 @@ def write_txts(content: str) -> int:
         text_data=(
             "AAVC V2 0.3.0 — STEP03 UI PROMPT (REFERENCE ONLY)\n"
             + f"State ID: {ident}\nOutput: {stem}.png\n"
-            + "DO NOT IMPLEMENT QT OR MOVE TO STEP04 FROM THIS PROMPT.\n\n"
+            + "HARD STOP: DO NOT IMPLEMENT QT OR MOVE TO STEP04 FROM THIS PROMPT. Await reviewed final PNGs and ONE approved UI reference DOCX committed to V2 GitHub.\n\n"
             + "A. MASTER DESIGN\n" + master
             + "\n\nB. NEGATIVE REQUIREMENTS\n" + NEGATIVE
             + "\n\nC. UNIQUE IMAGE STATE\n" + unique
