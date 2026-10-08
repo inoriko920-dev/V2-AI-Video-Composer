@@ -1,5 +1,9 @@
 # Maintenance Policy — AAVC v0.3.0
 
+## Jalur patch kandidat v0.3.1 — source saja
+
+`0.3.1` saat ini adalah identitas **source development**, bukan rilis baru. Scope perubahan hanya nama rekaman WAV kanonis dan sinkronisasi paket/tes; `v0.3.0` tetap stable publik. Pengemasan release-candidate, checksum dari build baru, pengujian PC pemilik, dan publikasi adalah tahap terpisah. Jangan gunakan ZIP lama sebagai bukti v0.3.1. Tag dan aset v0.3.0/v0.2.2 wajib tetap immutable.
+
 ## Pemeliharaan v0.3.0
 
 Versi **0.3.0** menambahkan autosave dan dialog pemulihan lokal melalui satu ProjectSession, tanpa skema proyek v5 atau perubahan 21 efek native. Paket distribusi harus lulus checksum arsip Windows+source, FFmpeg eksternal versi referensi 9.0.2, tes Windows, dan verifikasi screenshot UI. Status publikasi dan tag harus diperiksa langsung pada GitHub Releases; versi terdahulu tidak ditimpa.
