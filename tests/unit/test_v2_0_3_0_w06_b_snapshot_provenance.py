@@ -29,7 +29,7 @@ def project(title: str = "Fixture", *, schema: int = 3) -> ProjectState:
         asset_directory="synthetic_assets",
         scenes=(Scene(1, ("asset-1",), ("synthetic",), 3.0),),
         bindings=(AssetBinding("asset-1", "synthetic", None, "MISSING"),),
-        metadata={"fixture": "W06-B"},
+        metadata={"fixture": "W06-B", **({"animation_keyframe_contract": "advanced-v1"} if schema == 4 else {})},
     )
 
 
@@ -262,7 +262,10 @@ def test_write_cannot_replace_existing_symlink_snapshot(tmp_path: Path) -> None:
     store = ProvenanceStore()
     target = tmp_path / "foreign.txt"
     target.write_text("untouched", encoding="utf-8")
-    store.snapshot_path(path).symlink_to(target)
+    try:
+        store.snapshot_path(path).symlink_to(target)
+    except (NotImplementedError, OSError):
+        pytest.skip("symlinks unavailable")
     with pytest.raises(ValueError, match="PATH_ALIAS_UNSAFE"):
         capture(store, path, h)
     assert target.read_text("utf-8") == "untouched"
