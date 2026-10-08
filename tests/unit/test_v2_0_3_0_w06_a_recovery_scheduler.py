@@ -96,7 +96,7 @@ def test_sch_03_rcv_03_continuous_edits_hard_cap_120s(tmp_path: Path) -> None:
         assert c.tick(session) is None
     clock.advance(10)
     _change(session, 20.0)
-    assert _scheduled(c, session).revision == 12
+    assert _scheduled(c, session).revision == 13
 
 
 def test_sch_04_poll_60s_does_not_force_duplicate_write(tmp_path: Path) -> None:
@@ -207,6 +207,7 @@ def test_sch_09_rcv_15_single_global_inflight_writer(tmp_path: Path) -> None:
     first = _scheduled(c, session)
     assert c.tick(session) is None
     _change(session, 5)
+    assert c.tick(session) is None  # observe committed edit while writer owns slot
     clock.advance(20)
     assert c.tick(session) is None
     assert c.complete(first, success=True)
