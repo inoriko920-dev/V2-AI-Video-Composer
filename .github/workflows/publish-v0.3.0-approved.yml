@@ -1,0 +1,205 @@
+name: Approved one-time publication v0.3.0
+
+on:
+  push:
+    branches:
+      - publish/v0.3.0-approved-20261008
+    paths:
+      - .github/workflows/publish-v0.3.0-approved.yml
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: approved-v0-3-0-publication-once
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == 'inoriko920-dev/V2-AI-Video-Composer'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      SOURCE_SHA: d5a085fe239763e469ad30e91f526179fe8b2595
+      PREVIOUS_SHA: eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef
+      RELEASE_TAG: v0.3.0
+      ARTIFACT_RUN: '37770636024'
+      ARTIFACT_NAME: AAVC-0.3.0-FINAL-READY-NOT-PUBLISHED
+    steps:
+      - name: Check out exact approved source, not publication-branch modifications
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: d5a085fe239763e469ad30e91f526179fe8b2595
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Gate commit, prior tag, and absent new tag/release
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/branches/main" --jq '.commit.sha')" = "$SOURCE_SHA"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v0.2.2" --jq '.object.sha')" = "$PREVIOUS_SHA"
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "::error::v0.3.0 tag already exists: refusing to overwrite"
+            exit 1
+          fi
+          if gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "::error::v0.3.0 GitHub Release already exists: refusing duplicate"
+            exit 1
+          fi
+          echo "PRE_PUBLICATION_GATES_PASS"
+
+      - name: Download final Windows-verified artifact from frozen source
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p candidate
+          gh run download "$ARTIFACT_RUN" --repo "$GITHUB_REPOSITORY" --name "$ARTIFACT_NAME" --dir candidate
+          find candidate -type f -printf '%P\n' | sort
+
+      - name: Independently verify release assets and stage exact bytes
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python - <<'PY'
+          import hashlib
+          import os
+          from pathlib import Path
+          import shutil
+          import zipfile
+
+          expected_sha = os.environ['SOURCE_SHA']
+          source_name = 'AI-Automatic-Video-Composer-0.3.0-source.zip'
+          portable_name = 'AI-Automatic-Video-Composer-0.3.0-win64.zip'
+          required = [
+              source_name,
+              portable_name,
+              'SHA256SUMS.txt',
+              'BUILD_INFO.txt',
+              'RELEASE_NOTES_0.3.0.md',
+              'V2_FINAL_RELEASE_MANIFEST_0.3.0.md',
+              'USER_GUIDE.md',
+              'MAINTENANCE.md',
+              'BACKUP_AND_RECOVERY.md',
+          ]
+          found = list(Path('candidate').rglob('SHA256SUMS.txt'))
+          assert len(found) == 1, f'Expected one checksum manifest, found {len(found)}'
+          root = found[0].parent
+          for name in required:
+              assert (root / name).is_file(), f'Missing required release asset: {name}'
+          info = (root / 'BUILD_INFO.txt').read_text(encoding='utf-8-sig')
+          for line in (
+              'version=0.3.0',
+              'release_commit=' + expected_sha,
+              'publication_status=READY_FOR_PUBLICATION',
+              'ffmpeg_distribution=external-only',
+          ):
+              assert line in info.splitlines(), f'Missing exact BUILD_INFO assertion: {line}'
+          recorded = {}
+          for line in (root / 'SHA256SUMS.txt').read_text(encoding='utf-8-sig').splitlines():
+              if line.strip():
+                  checksum, name = line.split(maxsplit=1)
+                  recorded[name.strip('* ')] = checksum.lower()
+          assert set(recorded) == {source_name, portable_name}, recorded
+          for name, digest in recorded.items():
+              actual = hashlib.file_digest((root / name).open('rb'), 'sha256').hexdigest()
+              assert actual == digest, f'SHA256 MISMATCH: {name}'
+              print(f'VERIFIED_SHA256 {actual}  {name}')
+          with zipfile.ZipFile(root / source_name) as archive:
+              assert archive.testzip() is None, 'Source ZIP CRC mismatch'
+              for name in ('pyproject.toml', 'src/aavc/__init__.py', 'RELEASE_NOTES_0.3.0.md', 'V2_FINAL_RELEASE_MANIFEST_0.3.0.md'):
+                  assert archive.read(name) == Path(name).read_bytes(), f'Source differs from frozen commit: {name}'
+          with zipfile.ZipFile(root / portable_name) as archive:
+              assert archive.testzip() is None, 'Windows portable ZIP CRC mismatch'
+              names = [name.replace('\\', '/').lower() for name in archive.namelist()]
+              assert 'ai automatic video composer.exe' in names, 'Missing portable root EXE'
+              assert 'tools/ffmpeg/readme.md' in names, 'Missing external FFmpeg instructions'
+              assert not any(name.endswith('/ffmpeg.exe') or name.endswith('/ffprobe.exe') or name in ('ffmpeg.exe', 'ffprobe.exe') for name in names), 'Forbidden bundled FFmpeg binaries'
+          target = Path('release-upload')
+          target.mkdir(exist_ok=False)
+          for name in required:
+              shutil.copyfile(root / name, target / name)
+          print('EXACT_MAIN_SOURCE_AND_NINE_RELEASE_ASSETS_PASS')
+          PY
+
+      - name: Create immutable stable tag and upload verified assets to a draft release
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$RELEASE_TAG" -f sha="$SOURCE_SHA" >/dev/null
+          test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq '.object.sha')" = "$SOURCE_SHA"
+          gh release create "$RELEASE_TAG" release-upload/* \
+            --repo "$GITHUB_REPOSITORY" --verify-tag --draft \
+            --title "AI Automatic Video Composer v0.3.0" \
+            --notes-file release-upload/RELEASE_NOTES_0.3.0.md
+          echo "TAG_AND_DRAFT_WITH_ASSETS_CREATED"
+
+      - name: Verify all draft asset bytes, checksums and tag before public promotion
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" > draft-release.json
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+          import json
+          import os
+
+          obj = json.loads(Path('draft-release.json').read_text())
+          assert obj['tag_name'] == os.environ['RELEASE_TAG']
+          assert obj['draft'] is True
+          published = {a['name']: a for a in obj['assets']}
+          files = {p.name: p for p in Path('release-upload').iterdir() if p.is_file()}
+          assert set(files) == set(published), (sorted(files), sorted(published))
+          for name, path in files.items():
+              asset = published[name]
+              assert asset['size'] == path.stat().st_size, f'GitHub asset size mismatch: {name}'
+              expected = 'sha256:' + hashlib.file_digest(path.open('rb'), 'sha256').hexdigest()
+              if asset.get('digest'):
+                  assert asset['digest'].lower() == expected, f'GitHub asset digest mismatch: {name}'
+          print('DRAFT_ASSETS_NINE_OF_NINE_VERIFIED')
+          PY
+          test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq '.object.sha')" = "$SOURCE_SHA"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v0.2.2" --jq '.object.sha')" = "$PREVIOUS_SHA"
+
+      - name: Publish stable release after all gates pass
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease=false --latest
+          echo "GITHUB_RELEASE_PUBLICATION_REQUESTED"
+
+      - name: Verify published release and independently redownload all nine assets
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" > published-release.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          obj = json.loads(Path('published-release.json').read_text())
+          assert obj['draft'] is False and obj['prerelease'] is False
+          assert obj['tag_name'] == 'v0.3.0' and obj['published_at']
+          assert len(obj['assets']) == 9, f"Unexpected number of public assets: {len(obj['assets'])}"
+          print('PUBLIC_RELEASE_METADATA_PASS:', obj['html_url'])
+          PY
+          mkdir public-redownload
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --dir public-redownload
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+          original = {p.name: p for p in Path('release-upload').iterdir() if p.is_file()}
+          public = {p.name: p for p in Path('public-redownload').iterdir() if p.is_file()}
+          assert original.keys() == public.keys(), 'Public assets do not match original asset set'
+          for name, src in original.items():
+              a = hashlib.file_digest(src.open('rb'), 'sha256').hexdigest()
+              b = hashlib.file_digest(public[name].open('rb'), 'sha256').hexdigest()
+              assert a == b, f'Publicly downloaded bytes changed: {name}'
+          print('PUBLIC_RELEASE_NINE_OF_NINE_SHA256_PASS')
+          PY
+          test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq '.object.sha')" = "$SOURCE_SHA"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v0.2.2" --jq '.object.sha')" = "$PREVIOUS_SHA"
+          echo "FINAL_V0_3_0_PUBLICATION_PASS"
