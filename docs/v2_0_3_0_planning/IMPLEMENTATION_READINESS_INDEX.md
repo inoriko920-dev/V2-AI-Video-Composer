@@ -1,3 +1,10 @@
+# ACTIVE HANDOFF — STEP03 UI IMAGE PROMPT HARD STOP
+
+Read `docs/v2_0_3_0_planning/03_PROMPT_GAMBAR_UI_RECOVERY_MASTER.md` followed by its detailed DOCX `docs/v2_0_3_0_planning/docx/03_V2_0.3.0_STEP03_UI_IMAGE_PROMPTS_ONLY.docx`; individual ready-to-run prompts live in `docs/v2_0_3_0_planning/prompt_ui_step03/UI-REC-01_*.txt` through `UI-REC-13_*.txt`.
+
+**Current authority: ASTRA prompts only, HARD STOP afterwards.** Generate all 13 UI reference PNGs one by one in the later image phase, review/revise, create ONE final UI image reference DOCX and commit approved artefacts to this V2 repository. **A new generic "lanjutkan" is not permission to skip that visual approval gate or start STEP04.** Stable v0.2.2 tag/source must remain immutable; original legacy repository untouched.
+
+---
 # CURRENT READINESS — v0.3.0 STEP02
 
 **STEP00 PASS / STEP01 PASS / STEP02 COMPLETE only after PR #51 green merge / STEP03 NEXT on subsequent explicit turn.** Planning only; no SOL code or UI is authorized.
