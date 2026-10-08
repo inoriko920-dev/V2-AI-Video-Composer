@@ -1,3 +1,12 @@
+# CURRENT READINESS — v0.3.0 STEP02
+
+**STEP00 PASS / STEP01 PASS / STEP02 PENDING Word+PR gate / STEP03 NOT STARTED.** Planning only; no SOL code or UI is authorized.
+
+Read after STEP01: `docs/v2_0_3_0_planning/02_RECOVERY_ARCHITECTURE_ATOMICITY_SCHEDULER_PLAN.md` and its actual repository DOCX `docs/v2_0_3_0_planning/docx/02_V2_0.3.0_RECOVERY_ARCHITECTURE_ATOMICITY_SCHEDULER_PLAN.docx`.
+
+STEP02 source-of-truth architecture: RecoveryCoordinator is application-only; existing RecoveryManager/persistence serializer handles byte safety; single writer/path lease; Qt adapter is scheduling-only; sidecar SHA-256 is integrity check, not cryptographic authentication; two-file snapshot+metadata cannot be assumed atomic; stale tokens and Save As collisions fail closed. Current published v0.2.2 is immutable. STEP03 future UI prompt **HARD STOP** remains mandatory.
+
+---
 # CURRENT READINESS — V2 0.3.0
 
 **STEP00 PASS / STEP01 PASS / STEP02 NEXT.** STEP01 PR #49 merged. CI run 37730948284 PASS; CodeQL 37730948270 PASS; Windows acceptance 37730948312 PASS; backend 37730948224 PASS. No coding, UI image generation, schema/version changes or release publication authorized. Published v0.2.2 remains immutable. The future STEP03 UI image-prompt stop is mandatory.
@@ -21,7 +30,7 @@
 ## Current authority and hard gates
 - STEP 00 product audit and scope: **PASS / COMPLETE after PR #48 CI/CodeQL/Windows checks and merge**.
 - STEP 01 functional flow planning: **PASS / COMPLETE**.
-- STEP 02 architecture/error policy planning: **NOT STARTED**.
+- STEP 02 architecture/error policy planning: **CURRENT / Word and CI gate pending**.
 - STEP 03 **UI prompt hard stop**: **NOT STARTED**; special user approval and one final UI reference DOCX mandatory.
 - STEP 04 testing plan: **NOT STARTED**.
 - STEP 05 coding authorization: **NOT STARTED**.
