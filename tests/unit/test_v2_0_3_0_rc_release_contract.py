@@ -62,7 +62,9 @@ def test_rc_03_candidate_workflow_is_read_only_and_never_publishes() -> None:
 def test_rc_04_active_windows_acceptance_verifies_published_stable() -> None:
     """After public release, acceptance must verify it, not rebuild a retired RC."""
     workflow = read(".github/workflows/v2-user-acceptance.yml")
-    assert '"0.3.0"' in workflow
+    # The active application version is checked by STEP02; this test protects
+    # the independent, immutable public 0.3.0 verification path.
+    assert "Verify immutable public v0.3.0" in workflow
     assert "Verify immutable public v0.3.0" in workflow
     assert "refs/tags/v0.3.0^{commit}" in workflow
     assert "d5a085fe239763e469ad30e91f526179fe8b2595" in workflow
