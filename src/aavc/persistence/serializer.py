@@ -427,18 +427,30 @@ def temporary_sibling_path(path: str | Path, *, label: str) -> Path:
 
 
 def _existing_schema_version(path: Path) -> int | None:
-    if not path.is_file():
+    """Read and validate an existing destination before allowing a normal Save.
+
+    A corrupt existing project must never be treated like a fresh destination.
+    Future-schema files retain the separate downgrade-protection error.
+    """
+    if not path.exists() and not path.is_symlink():
         return None
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
-        return None
-    if not isinstance(payload, dict):
-        return None
-    version = payload.get("schema_version", 1)
-    if type(version) is not int or version < 1:
-        return None
-    return version
+        raw = path.read_text(encoding="utf-8")
+        payload = json.loads(raw)
+        if not isinstance(payload, dict):
+            raise ValueError("root JSON bukan object")
+        version = payload.get("schema_version", 1)
+        if type(version) is not int or version < 1:
+            raise ValueError("schema_version tidak valid")
+        if version <= MAX_SUPPORTED_SCHEMA_VERSION:
+            # Even syntactically valid JSON (e.g. {}) may be a broken project.
+            loads_project(raw)
+        return version
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
+        raise ValueError(
+            f"PROJECT_DESTINATION_UNREADABLE: project sudah ada tetapi "
+            f"tidak dapat dibaca dengan aman: {path}"
+        ) from error
 
 
 def migration_backup_path(
@@ -464,7 +476,12 @@ def save_project(
     temporary = temporary_sibling_path(destination, label="save")
     try:
         temporary.write_text(dumps_project(project), encoding="utf-8")
-        existing_version = _existing_schema_version(destination)
+        # Autosave is an explicitly replaceable snapshot, unlike user project files.
+        existing_version = (
+            None
+            if allow_schema_downgrade and not create_schema_backup
+            else _existing_schema_version(destination)
+        )
         if (
             existing_version is not None
             and existing_version > project.schema_version
