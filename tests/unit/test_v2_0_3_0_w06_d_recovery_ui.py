@@ -16,7 +16,7 @@ from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
 
 from aavc.application.commands import SetSceneDuration
 from aavc.bootstrap.composition_root import build_foundation_services
-from aavc.domain.project.models import ProjectState, Scene
+from aavc.domain.project.models import AssetBinding, ProjectState, Scene
 from aavc.persistence.serializer import load_project, save_project
 from aavc.persistence.snapshot_provenance import ProvenanceStore
 from aavc.presentation.dialogs.recovery_choice import RecoveryChoiceDialog, choose_recovery
