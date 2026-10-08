@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from hashlib import sha256
 from pathlib import Path
 
 from aavc.application.commands.project_commands import ProjectCommand
@@ -7,6 +8,14 @@ from aavc.application.commands.transaction import ProjectTransaction
 from aavc.application.services.history import ProjectHistory
 from aavc.domain.project.models import ProjectState
 from aavc.persistence.project_repository import ProjectRepository
+
+
+def _digest_existing(path: Path) -> str | None:
+    """Fingerprint the saved on-disk project for W06-C CAS protection."""
+    try:
+        return sha256(path.read_bytes()).hexdigest()
+    except FileNotFoundError:
+        return None
 
 
 class ProjectSession:
@@ -17,6 +26,7 @@ class ProjectSession:
         self._history: ProjectHistory | None = None
         self._path: Path | None = None
         self._saved_state: ProjectState | None = None
+        self._saved_disk_sha256: str | None = None
 
     @property
     def current(self) -> ProjectState | None:
@@ -25,6 +35,11 @@ class ProjectSession:
     @property
     def path(self) -> Path | None:
         return self._path
+
+    @property
+    def saved_disk_sha256(self) -> str | None:
+        """Digest of the last known real Save/Open bytes, never an autosave."""
+        return self._saved_disk_sha256
 
     @property
     def has_project(self) -> bool:
@@ -54,6 +69,7 @@ class ProjectSession:
         # path, callers are declaring the supplied state to be the persisted
         # baseline. Without a path there is no persisted baseline yet.
         self._saved_state = project if path is not None else None
+        self._saved_disk_sha256 = _digest_existing(self._path) if self._path else None
         return project
 
     def create(self, project: ProjectState, path: str | Path) -> ProjectState:
@@ -65,6 +81,7 @@ class ProjectSession:
         self._history = ProjectHistory(project)
         self._path = saved.resolve()
         self._saved_state = project
+        self._saved_disk_sha256 = _digest_existing(self._path)
         return project
 
     def open(self, path: str | Path) -> ProjectState:
@@ -75,6 +92,7 @@ class ProjectSession:
         self._history = ProjectHistory(project)
         self._path = source
         self._saved_state = project
+        self._saved_disk_sha256 = _digest_existing(source)
         return project
 
     def save(self, path: str | Path | None = None) -> Path:
@@ -85,6 +103,7 @@ class ProjectSession:
         saved = self._repository.save(project, destination)
         self._path = saved.resolve()
         self._saved_state = project
+        self._saved_disk_sha256 = _digest_existing(self._path)
         return self._path
 
     def execute(self, command: ProjectCommand) -> ProjectState:
