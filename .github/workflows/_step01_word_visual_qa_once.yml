@@ -29,6 +29,7 @@ jobs:
           pdftoppm -png -r 100 "$pdf" artifacts/word_visual_qa/page >/dev/null 2>&1
           test "$(find artifacts/word_visual_qa -maxdepth 1 -name 'page-*.png' | wc -l)" -ge 5
           ls -lah artifacts/word_visual_qa | head -25
+          cp docs/v2_0_3_1_planning/docx/01_ASTRA_V031_IMPLEMENTATION_RELEASE_CONTRACT.docx artifacts/word_visual_qa/
           echo "STEP01_WORD_RENDERED_PAGES_PASS"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
