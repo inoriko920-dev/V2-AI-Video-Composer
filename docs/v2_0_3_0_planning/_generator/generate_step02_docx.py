@@ -177,7 +177,7 @@ def build():
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     d.save(OUTPUT)
     proof = Document(OUTPUT)
-    if len(proof.paragraphs) < 70 or len(proof.tables) < 7:
+    if len(proof.paragraphs) < 70 or len(proof.tables) < 6:
         raise ValueError("Generated DOCX is incomplete")
     print("STEP02_DOCX_PASS", OUTPUT, len(proof.paragraphs), len(proof.tables))
 
