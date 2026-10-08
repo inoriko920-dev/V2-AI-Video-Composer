@@ -15,14 +15,16 @@ def read(relative: str) -> str:
     return (ROOT / relative).read_text(encoding="utf-8")
 
 
-def test_rc_01_package_runtime_and_release_notes_are_v030() -> None:
-    assert 'version = "0.3.0"' in read("pyproject.toml")
-    assert '__version__ = "0.3.0"' in read("src/aavc/__init__.py")
+def test_rc_01_historical_v030_metadata_and_notes_still_exist() -> None:
+    """Retired release source must stay auditable as active app evolves."""
+    historical_builder = read("scripts/build_v2_0_3_0_candidate.ps1")
+    historical_rc = read(".github/workflows/v2-0.3.0-rc.yml")
     assert (ROOT / "RELEASE_NOTES_0.3.0.md").is_file()
-    assert "RELEASE_NOTES_0.3.0.md" in read("aavc.spec")
-    assert "RELEASE_NOTES_0.3.0.md" in read("scripts/verify_portable.ps1")
+    assert "RELEASE_NOTES_0.3.0.md" in historical_builder
+    assert "version=0.3.0" in historical_builder
+    assert "0.3.0" in historical_rc
+    assert (ROOT / "V2_FINAL_RELEASE_MANIFEST_0.3.0.md").is_file()
     assert "RELEASE_NOTES_0.2.2.md" not in read("aavc.spec")
-
 
 def test_rc_02_candidate_builder_preserves_exact_source_and_sha() -> None:
     candidate = read("scripts/build_v2_0_3_0_candidate.ps1")
@@ -60,7 +62,9 @@ def test_rc_03_candidate_workflow_is_read_only_and_never_publishes() -> None:
 def test_rc_04_active_windows_acceptance_verifies_published_stable() -> None:
     """After public release, acceptance must verify it, not rebuild a retired RC."""
     workflow = read(".github/workflows/v2-user-acceptance.yml")
-    assert '"0.3.0"' in workflow
+    # The active application version is checked by STEP02; this test protects
+    # the independent, immutable public 0.3.0 verification path.
+    assert "Verify immutable public v0.3.0" in workflow
     assert "Verify immutable public v0.3.0" in workflow
     assert "refs/tags/v0.3.0^{commit}" in workflow
     assert "d5a085fe239763e469ad30e91f526179fe8b2595" in workflow

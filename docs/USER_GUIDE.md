@@ -2,6 +2,10 @@
 
 > **Cakupan versi:** Panduan ini mencakup fitur aplikasi **v0.3.0**, termasuk autosave dan pemulihan proyek. Ketersediaan rilis resmi dapat diperiksa melalui halaman GitHub Releases. Bagian historis v0.2.1 di bawah tetap dipertahankan sebagai catatan fitur sebelumnya.
 
+## Catatan source kandidat v0.3.1 (STEP02)
+
+Branch pengembangan menggunakan identitas paket `0.3.1`, tetapi **belum ada distribusi baru**; rilis publik terakhir tetap `v0.3.0`. Perubahan patch hanyalah normalisasi nama berkas rekaman mikrofon menjadi `.wav` termasuk masukan `.WAV` dan `.WaV`. Fitur lain dan alur pemulihan proyek tidak berubah. Untuk penggunaan stabil, tetap gunakan unduhan v0.3.0 resmi. Pengujian langsung di PC Windows 11 pemilik tetap PENDING.
+
 ## Pemulihan dan autosave lokal (v0.3.0)
 
 Setelah sebuah proyek pertama kali **disimpan manual** sebagai `.aavcproj`, perubahan berikutnya dapat membuat cadangan otomatis berupa `.aavcproj.autosave` dan metadata `.autosave.meta.json` di folder proyek. Timer memeriksa kelayakan berkala; cadangan biasanya dijadwalkan setelah jeda edit, **bukan** disimpan setiap saat dan **bukan** pengganti Simpan manual.

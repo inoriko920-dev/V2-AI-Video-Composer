@@ -76,4 +76,5 @@ def test_final_05_windows_workflows_verify_nonpublished_candidate() -> None:
     assert "build_v2_0_3_0_candidate.ps1 -Channel rc" in rc
     for expression in ("gh release create", "git push --tags", "git tag -f"):
         assert not re.search(r"(?m)^\s*" + re.escape(expression), rc)
-    assert "version = \"0.3.0\"" in doc("pyproject.toml")
+    # Frozen historical RC keeps its version; active source may advance.
+    assert "version=0.3.0" in doc("scripts/build_v2_0_3_0_candidate.ps1")
