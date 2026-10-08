@@ -1,7 +1,8 @@
-# AI Automatic Video Composer v0.3.0 — Release Candidate Notes
+# AI Automatic Video Composer v0.3.0 — Release Notes
 
-**Status:** RELEASE CANDIDATE / **NOT PUBLISHED**. This is preparation for a
-future stable GitHub Release, not a public-download announcement.
+These notes describe the features and limitations of version 0.3.0. The
+availability, authenticity, and source commit of a distributed package must be
+checked on the repository's GitHub Releases page, not inferred from this file.
 
 **Target:** Windows 11 x64, portable PyInstaller onedir.
 **Upgrade baseline:** Stable [v0.2.2](https://github.com/inoriko920-dev/V2-AI-Video-Composer/releases/tag/v0.2.2).
@@ -44,9 +45,9 @@ future stable GitHub Release, not a public-download announcement.
   right-side AI controls, Gemini credential model, 21 native effects, and
   external FFmpeg architecture remain intact.
 - Python 3.12.10, PySide6 6.11.2 and pinned dependency lock are retained.
-- This RC is built from a dedicated source commit and must pass full Windows
+- Each distributable must match a fully verified source commit and pass Windows
   tests, portable EXE launch, screenshot capture, security scan and SHA-256
-  validation before a public release can be considered.
+  validation. Compare the distributed files with SHA256SUMS.txt.
 
 ## Using autosave responsibly
 
@@ -78,7 +79,6 @@ FFmpeg/ffprobe are **not bundled** in the ZIP. Install a compatible pair in
 `tools/ffmpeg/` beside the portable executable or on your Windows `PATH`.
 Acceptance uses reviewed FFmpeg 9.0.2; other builds may differ.
 
-**Do not publish from this branch.** Candidate ZIPs and checksums are CI
-artifacts only. A future release requires an exact-source freeze, separate
-Windows acceptance and a guarded publisher with narrow permissions.
-Published `v0.2.2`, `v0.2.1` and earlier releases remain unchanged.
+Verify any downloaded Windows ZIP and source ZIP against their release-page
+SHA-256 checksums. The source ZIP is a snapshot and does not contain all Git
+branches, tags or commit history. Historical stable releases remain immutable.
