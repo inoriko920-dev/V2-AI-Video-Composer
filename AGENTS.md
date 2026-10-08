@@ -1,3 +1,11 @@
+# Current v0.3.0 recovery planning override (2026-10-08 WIB)
+
+**Do not interpret prior v0.2.2 STEP13 coding PASS as permission to code v0.3.0.**
+For v0.3.0 GAP-03A, STEP00/01/02 planning is PASS. STEP03 original 13-image prompt requirement was explicitly reduced with user approval to **THREE recovery-dialog image references** only; **preserve existing main UI 1:1**. Read latest `V2_0.3.0_PLANNING_STATUS.md`, then `docs/v2_0_3_0_planning/03_STEP03_DIALOG_ONLY_UI_SCOPE_REVISION.md` and its DOCX; the original 13 UI prompts are historical superseded source. **HARD STOP until three images are reviewed/approved and a single final image-embedded UI reference DOCX is committed.** Do not start STEP04 or SOL implementation from a generic `lanjutkan`. Qt/status bar and existing unsaved guard must be reused rather than making thirteen new windows.
+
+The original application repository and published v0.2.2 tag/assets are immutable for this cycle.
+
+---
 # AGENTS.md — V2 AI Video Composer
 
 ## Project identity

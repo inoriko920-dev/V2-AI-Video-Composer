@@ -1,3 +1,5 @@
+> **UPDATED 2026-10-08 — SUPERSEDED SCOPE (ARCHIVAL ONLY).** Pengguna menyetujui UI lama dipertahankan 1:1, hanya **tiga referensi dialog** yang dibutuhkan. **Dokumen yang berlaku:** `docs/v2_0_3_0_planning/03_STEP03_DIALOG_ONLY_UI_SCOPE_REVISION.md`, `prompt_ui_step03_revised/`. Paket 13 prompt lama tetap diarsipkan untuk audit, tidak wajib digenerasikan atau disetujui. STEP03 visual HARD STOP tetap berlaku untuk tiga dialog + satu DOCX final berisi gambar disetujui. Tidak ada STEP04/coding sampai gate itu PASS.
+
 # STEP03 — UI Image Prompt Completion & Hard Stop Handoff (v0.3.0)
 
 **PROMPTS COMPLETE / VISUAL REFERENCE GATE HOLD.** This document records only prompt output. There are NO approved UI pictures, no approved composite UI reference DOCX, no Qt implementation and no STEP04 authorization.

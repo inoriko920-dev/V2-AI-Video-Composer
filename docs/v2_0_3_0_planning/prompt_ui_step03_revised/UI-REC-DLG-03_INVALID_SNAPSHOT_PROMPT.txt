@@ -1,0 +1,19 @@
+VISUAL REFERENCE ONLY • V2 AI VIDEO COMPOSER • STEP03-R • 8 Oktober 2026 WIB
+HARD STOP: no Qt production implementation, no STEP04 until 3 visual references are reviewed and one image-filled final reference DOCX is approved and committed.
+SOURCE DESIGN: existing actual Windows Qt UI screenshot UI-013_ACTUAL.png from STEP09 UI capture run 37734080472, not UI-002 (UI-002 is HOME). Preserve inherited desktop app shell 100% unchanged.
+RESOLUTION: 1920x1080. ONE screenshot per dialog concept, not a collage or marketing poster.
+LANGUAGE: every visible UI label in Bahasa Indonesia.
+STYLE: actual Windows 11/PySide6 native desktop UI, restrained white and blue, thin gray borders, dark gray text, small but readable. The existing menu strip, tool bar, left asset grid, video preview, right properties panel and bottom timeline must retain their exact existing geometry and content. Only add ONE modest centered modal of approx 600-670px width, and a subtle scrim. No extra controls in background.
+DO NOT CHANGE app name, project data, panel arrangement, timeline media, assets or layout. No generic new editor imitation.
+NO bogus time/disk sizes or absolute filesystem paths; no user credential fields, watermark, dark mode, neon, English buttons, invented branding, cloud backup guarantees or automatic data overwrite.
+CANCEL: safe default focused; Esc cancels with zero disk and current-session changes. Modal keyboard navigation order stable. Simulated UI references are NOT production screens.
+
+TITLE: Cadangan Tidak Dapat Dibaca
+Scenario: invalid/unreadable/future schema autosave. REUSE visual language of existing native Qt QMessageBox; do not invent new error framework.
+Header "Cadangan Tidak Dapat Dibaca".
+Body "Cadangan otomatis tidak dapat dibuka dengan aman. File proyek tersimpan tidak diubah."
+Additional: "File cadangan tetap disimpan untuk pemeriksaan."
+Exactly two buttons: "Buka Proyek Tersimpan" (secondary blue) and "Batal" (safe default focused).
+No "Pulihkan" option for invalid snapshot and no delete controls.
+Same dialog type can show other existing Qt error messages in later implementation, e.g. failed pre-recovery backup "Pemulihan belum selesai. Jangan hapus berkas cadangan.", but never claim pre-recovery disk unchanged after partial-commit.
+Do not create any other app screen and do not show code/stack trace or raw filesystem paths.

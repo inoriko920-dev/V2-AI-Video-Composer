@@ -1,3 +1,12 @@
+# LATEST AI HANDOFF OVERRIDE — STEP03-R (8 OCT 2026 WIB)
+
+**AUTHORITATIVE NEW UI POLICY: EXISTING MAIN UI 1:1; ONLY THREE NEW RECOVERY DIALOG REFERENCES.** User explicitly approved this reduction, superseding thirteen legacy images. The original 13 TXT and 6-page prompt DOCX are archival history, NOT pending gates.
+
+Read in order: `docs/UI_FREEZE.md`; `docs/v2_0_3_0_planning/03_STEP03_DIALOG_ONLY_UI_SCOPE_REVISION.md`; `docs/v2_0_3_0_planning/docx/03_V2_0.3.0_DIALOG_ONLY_SCOPE_REVISION.docx`; three `prompt_ui_step03_revised/*.txt`; STEP01/02 recovery safety contract. Real editor is `UI-013_ACTUAL.png`, not `UI-002_ACTUAL.png` (Home), from CI captured STEP09 artifacts.
+
+**STATUS: Revised prompt planning ready; WAITING FOR THREE approved dialog PNGs + ONE FINAL IMAGE-EMBEDDED USER-APPROVED UI REFERENCE DOCX in the repo.** Reuse old QStatusBar, GuardedMainWindow and QMessageBox for minor scenarios instead of bespoke new screens. Do not create an extra UI rebuild, modify Python/PySide6 source, advance STEP04, or publish release. Next generic "lanjutkan" does not remove this user approval hard stop.
+
+---
 # V2 0.3.0 — HANDOFF ON STEP03 HARD STOP
 
 **STOP — STEP03 PROMPTS ONLY COMPLETE; ALL 13 UI IMAGES UNGENERATED/UNAPPROVED.** Main authority is `docs/v2_0_3_0_planning/03_UI_PROMPT_COMPLETION_AND_APPROVAL_GATE.md` and `03_PROMPT_GAMBAR_UI_RECOVERY_MASTER.md`.
