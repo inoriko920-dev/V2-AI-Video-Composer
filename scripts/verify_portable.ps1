@@ -42,3 +42,14 @@ Write-Host "PORTABLE_SMOKE_OK"
 Write-Host "EXE=$exe"
 Write-Host "FFMPEG_SLOT_OK=$ffmpegReadme"
 Write-Host "FINAL_RELEASE_DOCS_OK"
+
+# AAVC intentionally does not ship third-party FFmpeg/ffprobe executables.
+$embeddedFfmpeg = Get-ChildItem $dist -Recurse -File | Where-Object {
+  $_.Name -ieq "ffmpeg.exe" -or $_.Name -ieq "ffprobe.exe"
+}
+if ($embeddedFfmpeg) { throw "Public portable must not bundle ffmpeg.exe / ffprobe.exe" }
+
+$python = if (Test-Path ".venv\Scripts\python.exe") { ".venv\Scripts\python.exe" } else { "python" }
+& $python -m scripts.verify_artifact_security $dist
+if ($LASTEXITCODE -ne 0) { throw "Portable content secret scan failed" }
+Write-Host "ARTIFACT_SECRET_SCAN_PASS"
