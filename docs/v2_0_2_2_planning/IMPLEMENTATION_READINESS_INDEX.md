@@ -24,7 +24,8 @@ Read in this order:
 - STEP 06 / W06-B: PASS / COMPLETE
 - STEP 06 / W06-C: PASS / COMPLETE
 - STEP 06 / W06-D: PASS / COMPLETE
-- STEP 06 / W06-E: NEXT / AUTHORIZED
+- STEP 06 / W06-E: PASS / COMPLETE — final PR HEAD gates and freeze before merge-to-release promotion
+- STEP 07: NEXT / NOT STARTED (v0.2.2 candidate RC + final release gate; explicit next user turn)
 - application coding: AUTHORIZED ONLY FOR STEP 06 WAVES
 - UI redesign: BLOCKED / not planned
 - schema change: BLOCKED
@@ -34,7 +35,7 @@ Read in this order:
 ## Handoff
 Another AI must not infer v0.2.2 scope from old Wave J or v0.2.1 implementation branches.
 Read STEP 00–05 in order. The canonical base is current post-release `main`.
-Start the next implementation turn only with W06-E. W06-A, W06-B, W06-C and W06-D are complete. Complete one W06 wave per user turn.
+STEP 06 waves W06-A through W06-E are complete subject to final documentation-only PR checks and verified source freeze. The NEXT explicit user turn may start only STEP 07. Do not publish, create tags, or run STEP 07 within the W06-E turn.
 Do not implement deferred GAP-03A runtime autosave/recovery UI integration.
 No new UI-image prompt step is required unless implementation unexpectedly changes the visual design.
 
@@ -77,3 +78,17 @@ No new UI-image prompt step is required unless implementation unexpectedly chang
 - Windows acceptance 37722774954 PASS — 795 passed, portable EXE, app-local/PATH FFmpeg 9.0.2, artifact security scan and candidate SHA-256
 - 0.2.2 is PRE-RELEASE ONLY; no tag or GitHub Release created; v0.2.1 immutable
 - W06-E consolidated implementation closure is the next and only authorized wave
+
+## W06-E consolidated evidence and release handoff
+
+- canonical closure: docs/v2_0_2_2_planning/W06_E_CONSOLIDATED_IMPLEMENTATION_CLOSURE.md
+- W06-E PR: #45, docs/status/handoff only, no production code changes
+- consolidated CI 37723924727 PASS — 750 tests passed, 45 deselected
+- consolidated Windows technical acceptance 37723924715 PASS — 795 tests passed; real FFmpeg/21 effects/schema/Save Recovery/portable/EXE/UI/FFmpeg PATH-app-local/artifact scanner/sha256
+- consolidated CodeQL 37723924701 PASS
+- consolidated backend 37723924731 PASS
+- final W06-E PR documentation-head checks must pass before merge
+- freeze exact resulting W06-E merge commit SHA in dedicated RC source branch and verify branch SHA
+- STEP07 release pipeline remains separate and not started; no v0.2.2 tag or release yet
+- published v0.2.1 tag stays at eb94efebf142ba8203dfc3ae3c5fa861222a0926
+- deferred GAP-03A autosave/recovery lifecycle is NOT implemented
