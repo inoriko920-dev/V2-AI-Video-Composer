@@ -1,3 +1,11 @@
+# CURRENT V2 STATUS — PUBLIC STABLE v0.3.0 (8 OCT 2026 WIB)
+
+The current public stable is **v0.3.0**, source/tag `d5a085fe239763e469ad30e91f526179fe8b2595`. User-approved publication and public asset checks: [GitHub Actions #37775119272](https://github.com/inoriko920-dev/V2-AI-Video-Composer/actions/runs/37775119272) **SUCCESS**, nine public assets checked; [exact-source Windows qualification #37770636024](https://github.com/inoriko920-dev/V2-AI-Video-Composer/actions/runs/37770636024) **PASS** (907 tests and five-path portable validation). [Public release](https://github.com/inoriko920-dev/V2-AI-Video-Composer/releases/tag/v0.3.0). Last published stable `v0.2.2` remains unchanged. The historical Wave J/v0.2.0 status recorded below is a **completed earlier milestone**, not current product state.
+
+**Next:** postrelease docs-only closure, then manual Windows 11 user acceptance (PENDING). No new product coding or tagging approved by this status update. Details: `docs/v2_0_3_0_planning/10_POST_RELEASE_PUBLICATION_CLOSURE.md`.
+
+---
+
 # V2 IMPLEMENTATION STATUS
 
 Last updated: 2026-10-07  
