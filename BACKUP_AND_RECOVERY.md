@@ -1,5 +1,9 @@
 # Backup & Recovery — AAVC
 
+## Catatan kompatibilitas source kandidat v0.3.1
+
+v0.3.1 STEP02 tidak mengubah format data, aturan autosave, file `.aavcproj`, backup sebelum Restore, atau pilihan dialog. Pengguna rilis publik v0.3.0 tetap mengikuti panduan backup yang sama; versi patch baru baru boleh disebarkan setelah seluruh gate dan izin terpisah. File proyek serta berkas recovery adalah data pribadi pengguna dan tidak boleh ikut paket distribusi.
+
 ## Autosave dan pemulihan proyek v0.3.0
 
 Rangkaian W06-A–E menyambungkan autosave lokal, provenance SHA-256, pilihan dialog pemulihan, backup pra-Restore bernomor, dan serialisasi operasi Save/Open. File cadangan, metadata dan backup proyek adalah **data milik pengguna**, bukan bagian dari ZIP aplikasi; jangan dibundel dalam GitHub Release.
