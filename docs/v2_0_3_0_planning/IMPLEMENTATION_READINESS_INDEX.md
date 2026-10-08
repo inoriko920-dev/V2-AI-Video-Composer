@@ -16,7 +16,7 @@
 
 ## Current authority and hard gates
 - STEP 00 product audit and scope: **PASS / COMPLETE after PR #48 CI/CodeQL/Windows checks and merge**.
-- STEP 01 functional flow planning: **IN PROGRESS — requires DOCX + CI/CodeQL/Windows PASS and merge**.
+- STEP 01 functional flow planning: **DOCX PASS / PR-head CI/CodeQL/Windows and merge PENDING**.
 - STEP 02 architecture/error policy planning: **NOT STARTED**.
 - STEP 03 **UI prompt hard stop**: **NOT STARTED**; special user approval and one final UI reference DOCX mandatory.
 - STEP 04 testing plan: **NOT STARTED**.
@@ -53,4 +53,12 @@
 - Timer cadence proposed: 20s debounce, maximum 120s dirty lag, 60s poll and bounded errors.
 - Functional 24-case matrix and coordinator state transition contract are the source for STEP02 architecture and STEP04 test plans.
 - STEP03 image prompt phase must STOP pending approved final UI images and one committed final UI reference DOCX, even after bare 'lanjutkan'.
-- Current gate: Word file, QA and green PR checks; STEP02 not authorized until STEP01 is PASS.
+- Current gate: DOCX committed and 9-page visual QA PASS; PR checks and merge outstanding. STEP02 not authorized until STEP01 PASS.
+
+## STEP01 planning-document audit
+- Source spec: docs/v2_0_3_0_planning/01_AUTOSAVE_RECOVERY_FUNCTIONAL_LIFECYCLE_SPEC.md.
+- Detailed DOCX: docs/v2_0_3_0_planning/docx/01_V2_0.3.0_AUTOSAVE_RECOVERY_FUNCTIONAL_LIFECYCLE_SPEC.docx (52,688 bytes, 9 pages, readable and rendered).
+- Deterministic generator: docs/v2_0_3_0_planning/_generator/generate_step01_docx.py.
+- GitHub Action DOCX creation: 37730728343 PASS; ephemeral writer deleted itself from dedicated branch.
+- Tests and feature implementation still NOT AUTHORIZED. All referenced RCV-01 to RCV-24 are *planned*, not passing automated runtime tests.
+- UI STEP03 hard stop and all planning DOCX prerequisites unchanged.
