@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - release/v0.3.0-rc-preparation
+      - release/v0.3.0-final-documentation-freeze
   workflow_dispatch:
 
 permissions:
@@ -122,7 +123,7 @@ jobs:
           $info = Get-Content "$bundle/BUILD_INFO.txt" -Raw
           $expected = (git rev-parse HEAD).Trim()
           if (-not $info.Contains("release_commit=$expected")) { throw "Candidate source SHA mismatch" }
-          if (-not $info.Contains("version=0.3.0") -or -not $info.Contains("publication_status=NOT_PUBLISHED")) {
+          if (-not $info.Contains("version=0.3.0") -or -not $info.Contains("publication_status=READY_FOR_PUBLICATION")) {
             throw "Invalid candidate version or publication state"
           }
           foreach ($line in Get-Content "$bundle/SHA256SUMS.txt") {
