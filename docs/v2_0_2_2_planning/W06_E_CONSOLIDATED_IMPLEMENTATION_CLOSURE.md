@@ -1,6 +1,6 @@
 # STEP 06 / W06-E — Consolidated Implementation Closure
 
-Status: **GATE IN PROGRESS — verify final PR head before marking PASS**
+Status: **PASS — consolidated acceptance verified; final documentation-only PR head must be rechecked before merge**
 Scope: Documentation, consolidated regression verification and exact source freeze only.
 V2 repository: inoriko920-dev/V2-AI-Video-Composer
 Implementation closure PR: #45
@@ -36,6 +36,16 @@ The W06-A, W06-B, W06-C and W06-D implementation reports under docs/v2_0_2_2_pla
 - W06-D PR head Windows user acceptance 37723264307: PASS, 795 passed, real 21-effect FFmpeg render, packaged EXE smoke, real UI capture, FFmpeg local/PATH proof, SHA256 candidate.
 - W06-D PR head CodeQL 37723264300 and backend 37723264344: PASS.
 - This baseline includes all W06-A through W06-D merged code. W06-E changes only documentation/handoff. The final W06-E PR checks must run against its own full source tree before closure.
+
+## W06-E consolidated acceptance evidence — first W06-E PR head
+
+- PR #45 initial documentation-only SHA `a756793f33ee27f77c02cab358168e1d5e0a3394`.
+- Windows CI run **37723924727: PASS** — **750 passed, 45 deselected**; compile, Ruff, mypy, eight STEP09 screenshots and upload PASS.
+- Windows user acceptance run **37723924715: PASS** — **795 passed**, including real FFmpeg all-21-effects and advanced animation integration; portable build, EXE smoke, real UI capture, built-artifact secret scan, FFmpeg 9.0.2 app-local/PATH precedence, and exact-source candidate SHA256 PASS.
+- CodeQL run **37723924701: PASS**.
+- Optional Backend Spike run **37723924731: PASS**.
+- Workstream change audit at this PR point: `docs/v2_0_2_2_planning/W06_E_CONSOLIDATED_IMPLEMENTATION_CLOSURE.md` only. Subsequent W06-E updates are documentation/status/handoff only.
+- W06-E final-head CI/CodeQL/Windows checks must PASS again before merge and source freeze, even though only documentation changes after these proof runs.
 
 ## Consolidated gate criteria
 
