@@ -1,6 +1,6 @@
 # V2 0.2.2 Planning Readiness Index
 
-Status: **PLANNING COMPLETE / IMPLEMENTATION AUTHORIZED FOR STEP 06**
+Status: **V0.2.2 FULL CYCLE COMPLETE / PUBLISHED / VERIFIED — STEP00–07 PASS**
 
 Read in this order:
 1. `V2_0.2.2_PLANNING_STATUS.md`
@@ -12,6 +12,16 @@ Read in this order:
 7. `docs/v2_0_2_2_planning/05_IMPLEMENTATION_AUTHORIZATION_AND_MODULE_CHANGE_MAP.md`
 8. `docs/v2_0_2_1_planning/FINAL_RELEASE_CLOSURE.md`
 9. `V2_0.2.1_FINAL_STATUS.md`
+
+## Current source of truth after release
+- Published: https://github.com/inoriko920-dev/V2-AI-Video-Composer/releases/tag/v0.2.2
+- Release source/tag `eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef`
+- STEP07 final Actions run `37727140284` PASS: CodeQL, 795 Windows tests, 5 portable path cases, FFmpeg reference, archived final bundle hashes, guarded publication
+- Windows ZIP SHA256 `80232a96deedff0ee382c42e377999a8f9c5434e075b99c415a41a2e538d07e7`
+- Complete record: `docs/v2_0_2_2_planning/STEP07_FINAL_RELEASE_CLOSURE.md`
+- Historical entries below retain their as-of-wave language and are not current release status.
+- Remaining deferred: GAP-03A (production autosave scheduler and startup recovery UX).
+- Next action: no STEP remaining in v0.2.2; use a separately scoped new release cycle for future work.
 
 ## Current authorization
 - STEP 00: PASS
@@ -25,8 +35,8 @@ Read in this order:
 - STEP 06 / W06-C: PASS / COMPLETE
 - STEP 06 / W06-D: PASS / COMPLETE
 - STEP 06 / W06-E: PASS / COMPLETE — final PR HEAD gates and freeze before merge-to-release promotion
-- STEP 07: NEXT / NOT STARTED (v0.2.2 candidate RC + final release gate; explicit next user turn)
-- application coding: AUTHORIZED ONLY FOR STEP 06 WAVES
+- STEP 07: PASS / COMPLETE — v0.2.2 stable published (run 37727140284)
+- application coding: CLOSED FOR v0.2.2; future work requires a separately authorized version
 - UI redesign: BLOCKED / not planned
 - schema change: BLOCKED
 - runtime dependency addition: BLOCKED
@@ -35,7 +45,7 @@ Read in this order:
 ## Handoff
 Another AI must not infer v0.2.2 scope from old Wave J or v0.2.1 implementation branches.
 Read STEP 00–05 in order. The canonical base is current post-release `main`.
-STEP 06 waves W06-A through W06-E are complete subject to final documentation-only PR checks and verified source freeze. The NEXT explicit user turn may start only STEP 07. Do not publish, create tags, or run STEP 07 within the W06-E turn.
+STEP 06 waves W06-A through W06-E are complete, and STEP 07 has now published stable v0.2.2. Treat the tag SHA eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef and historical tags as immutable. Begin a NEW version planning cycle before future code changes.
 Do not implement deferred GAP-03A runtime autosave/recovery UI integration.
 No new UI-image prompt step is required unless implementation unexpectedly changes the visual design.
 
