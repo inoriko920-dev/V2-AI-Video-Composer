@@ -14,7 +14,7 @@ an earlier passing build**.
 
 ## Source of truth
 
-STEP00–05 v0.3.0 planning and approved UI final DOCX+three PNGs are retained
+The central v0.3.0 feature is local **autosave** and guarded project recovery.\n\nSTEP00–05 v0.3.0 planning and approved UI final DOCX+three PNGs are retained
 under `docs/v2_0_3_0_planning/`. W06-A through W06-E are merged in main and
 validated; see `06_W06_E_FINAL_ACCEPTANCE_AND_RELEASE_READINESS_EVIDENCE.md`
 for the final cross-wave safety matrix. No additional project serializer,
