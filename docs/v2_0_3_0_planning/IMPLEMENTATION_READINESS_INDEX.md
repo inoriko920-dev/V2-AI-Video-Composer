@@ -13,7 +13,7 @@
 8. STEP 01–05 and final UI reference DOCX, once those actually exist and are accepted
 
 ## Current authority and hard gates
-- STEP 00 product audit and scope: **DOCX SOURCE GATE PASS; CI/CODEQL PR GATE PENDING**.
+- STEP 00 product audit and scope: **PASS / COMPLETE after PR #48 CI/CodeQL/Windows checks and merge**.
 - STEP 01 functional flow planning: **NOT STARTED**.
 - STEP 02 architecture/error policy planning: **NOT STARTED**.
 - STEP 03 **UI prompt hard stop**: **NOT STARTED**; special user approval and one final UI reference DOCX mandatory.
