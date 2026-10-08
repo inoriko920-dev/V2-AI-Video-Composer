@@ -1,3 +1,11 @@
+# CURRENT SOL HANDOFF — W06-A RECOVERY COORDINATOR ONLY (8 OCT 2026 WIB)
+
+The STEP05 DoR is PASS in main (#56). This user's new `lanjutkan` authorized W06-A only: `src/aavc/application/services/recovery_coordinator.py`, dedicated fake-clock tests and `06_W06_A_COORDINATOR_IMPLEMENTATION_EVIDENCE.md`. TEST-FIRST evidence: RED `37748470074`; GREEN `37748722597` 18/18. The new coordinator is intentionally unbound to the editor and never touches project/snapshot files. W06-B owns the persistent snapshot writer, descriptor and lease, W06-C owns real Save/Open transaction ordering, W06-D Qt UI/timers.
+
+Before W06-A is declared PASS require final-head CI+CodeQL+Windows+backend success and merged main verification. W06-B is next on **separate** explicit `lanjutkan`; no W06-B code or UI changes in W06-A.
+
+---
+
 # ACTIVE V2 v0.3.0 HANDOFF — STEP05 DoR / NO CODING (8 OCT 2026 WIB)
 
 The three revised STEP03-R dialog PNGs and one final image-filled DOCX are approved and in main via PR #54; STEP04 testing Markdown + Word are in main via PR #55. Latest user `lanjutkan` grants only STEP05 planning. Read `05_IMPLEMENTATION_READINESS_AND_SOL_WAVE_AUTHORIZATION_PLAN.md` and the matching Word for required source-of-truth inventory, five W06-A..E wave scopes, test-first RED/GREEN gates and final implementation-authorization conditions.
