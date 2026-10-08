@@ -296,3 +296,29 @@ def test_descriptor_not_published_when_snapshot_rejected(tmp_path: Path) -> None
     with pytest.raises(RecoveryRaceChanged, match="BASELINE_CHANGED"):
         capture(store, path, digest, "changed")
     assert store.metadata_path(path).read_bytes() == before
+
+
+def test_quarantine_retirement_deletes_only_owned_staged_files(tmp_path: Path) -> None:
+    path, digest = baseline(tmp_path)
+    store = ProvenanceStore()
+    capture(store, path, digest)
+    held = store.quarantine_candidate(path, store.inspect(path))
+    neighbour = tmp_path / "another-project.autosave"
+    neighbour.write_bytes(b"private-other-project")
+    store.retire_quarantine(held)
+    assert not held.snapshot_copy.exists()
+    assert held.metadata_copy is not None and not held.metadata_copy.exists()
+    assert neighbour.read_bytes() == b"private-other-project"
+    assert path.exists()
+
+
+def test_quarantine_retirement_refuses_modified_staged_file(tmp_path: Path) -> None:
+    path, digest = baseline(tmp_path)
+    store = ProvenanceStore()
+    capture(store, path, digest)
+    held = store.quarantine_candidate(path, store.inspect(path))
+    held.snapshot_copy.write_bytes(b"other-writer-replaced-contents")
+    with pytest.raises(RecoveryRaceChanged, match="QUARANTINE_CHANGED"):
+        store.retire_quarantine(held)
+    assert held.snapshot_copy.read_bytes() == b"other-writer-replaced-contents"
+    assert held.metadata_copy is not None and held.metadata_copy.is_file()
