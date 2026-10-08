@@ -10,9 +10,11 @@ from pathlib import Path
 
 import pytest
 
-from aavc.application.commands import SetSceneDuration
 from aavc.application.services.project_session import ProjectSession
-from aavc.application.services.recovery_transactions import RecoveryRaceChanged, RecoveryTransactions
+from aavc.application.services.recovery_transactions import (
+    RecoveryRaceChanged,
+    RecoveryTransactions,
+)
 from aavc.domain.project.models import AssetBinding, ProjectState, Scene
 from aavc.persistence.serializer import load_project, save_project
 from aavc.persistence.snapshot_provenance import ProvenanceStore
