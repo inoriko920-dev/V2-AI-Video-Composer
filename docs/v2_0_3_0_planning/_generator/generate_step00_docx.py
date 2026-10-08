@@ -41,14 +41,14 @@ def build():
     section = d.sections[0]
     section.page_height = Cm(29.7)
     section.page_width = Cm(21)
-    section.top_margin = Cm(1.7)
-    section.bottom_margin = Cm(1.7)
+    section.top_margin = Cm(1.62)
+    section.bottom_margin = Cm(1.52)
     section.left_margin = Cm(2)
     section.right_margin = Cm(2)
     normal = d.styles["Normal"]
     normal.font.name = "Aptos"
     normal.font.size = Pt(9.3)
-    normal.paragraph_format.space_after = Pt(4)
+    normal.paragraph_format.space_after = Pt(3.5)
     for sty, size in (("Heading 1", 13), ("Heading 2", 10.7)):
         style = d.styles[sty]
         style.font.color.rgb = NAVY
@@ -84,6 +84,11 @@ def build():
         row.cells[0].text = key
         row.cells[1].text = val
         no_split(row)
+        for cell in row.cells:
+            for paragraph in cell.paragraphs:
+                paragraph.paragraph_format.space_after = Pt(0)
+                for run in paragraph.runs:
+                    run.font.size = Pt(7.5)
         for run in row.cells[0].paragraphs[0].runs:
             run.bold = True
     d.add_paragraph()
@@ -109,11 +114,16 @@ def build():
         for index, cells in enumerate(records):
             row = out.add_row()
             no_split(row)
+            if index == 0:
+                heading_prop = OxmlElement("w:tblHeader")
+                heading_prop.set(qn("w:val"), "1")
+                row._tr.get_or_add_trPr().append(heading_prop)
             for ci, cell in enumerate(row.cells):
                 p = cell.paragraphs[0]
+                p.paragraph_format.space_after = Pt(0)
                 inline(p, cells[ci] if ci < len(cells) else "")
                 for run in p.runs:
-                    run.font.size = Pt(8)
+                    run.font.size = Pt(7.5)
                     if index == 0:
                         run.bold = True
                         run.font.color.rgb = NAVY
