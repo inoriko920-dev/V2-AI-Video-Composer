@@ -51,6 +51,18 @@ class RecoveryPreflight:
     prior_path: Path | None
     prior_state: ProjectState | None
 
+    @property
+    def equivalent_snapshot(self) -> bool:
+        """Validated candidate bytes are already identical to saved disk bytes.
+
+        Do not show Restore again after a successful explicit recovery. Keep
+        the sidecar intact: this is only an Open preference, not cleanup.
+        """
+        return (
+            self.candidate.status in ("VERIFIED", "UNCERTAIN")
+            and self.candidate.snapshot_sha256 == self.saved_sha256
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class RestoreOutcome:
@@ -221,6 +233,22 @@ class RecoveryTransactions:
             raise RecoveryRaceChanged("RECOVERY_RACE_CHANGED")
         if plan.candidate.status in ("VERIFIED", "UNCERTAIN"):
             self.store.revalidate(plan.path, plan.candidate)
+
+    def open_identical_saved(self, plan: RecoveryPreflight) -> ProjectState:
+        """Open identical disk/snapshot *without* silently discarding either.
+
+        A valid, fully revalidated candidate contains no recoverable delta.
+        If the user has edited either side after preflight, fail closed.
+        """
+        with self.store.locked_transaction():
+            self._revalidate(plan)
+            if not plan.equivalent_snapshot:
+                raise RecoveryRaceChanged("RECOVERY_RACE_CHANGED")
+            opened = self.session.open(plan.path)
+            if self.session.saved_disk_sha256 != plan.saved_sha256:
+                raise RecoveryCommitPartial("OPEN_IDENTICAL_COMMIT_PARTIAL")
+            self._fence()
+            return opened
 
     def use_saved(self, plan: RecoveryPreflight) -> ProjectState:
         """User-selected disk version; quarantine only verified/uncertain candidate.
