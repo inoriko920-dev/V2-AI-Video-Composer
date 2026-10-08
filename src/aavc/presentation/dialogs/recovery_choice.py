@@ -7,7 +7,7 @@ DLG-03 reuses the native QMessageBox visual idiom. Cancel/Esc is always safe.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
