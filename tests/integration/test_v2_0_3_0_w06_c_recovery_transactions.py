@@ -348,3 +348,161 @@ def test_rcv_01_scheduler_persists_snapshot_without_cleaning_session(tmp_path: P
     assert store.inspect(s.path).status == "VERIFIED"
     assert s.path.read_bytes() == before_disk and s.is_dirty and s.can_undo
     assert c.last_success_revision == req.revision
+
+
+def test_rcv_05_external_edit_before_manual_save_rolls_back_quarantine(tmp_path: Path) -> None:
+    s = session(tmp_path)
+    assert s.path is not None
+    store = ProvenanceStore()
+    snapshot(s, store)
+    old_candidate = store.snapshot_path(s.path).read_bytes()
+    s.execute(SetSceneDuration(1, 7))
+    external = save_project(project("external"), tmp_path / "external.aavcproj").read_bytes()
+
+    def fault(phase: str) -> None:
+        if phase == "before_manual_save":
+            assert s.path is not None
+            s.path.write_bytes(external)
+
+    with pytest.raises(RecoveryRaceChanged, match="BASELINE_CHANGED"):
+        RecoveryTransactions(s, store=store, fault_hook=fault).save()
+    assert s.path.read_bytes() == external
+    assert store.snapshot_path(s.path).read_bytes() == old_candidate
+    assert store.inspect(s.path).status == "UNCERTAIN"
+    assert s.is_dirty
+
+
+def test_rcv_24_race_creates_sidecar_before_save_as_commit(tmp_path: Path) -> None:
+    s = session(tmp_path)
+    store = ProvenanceStore()
+    new_path = tmp_path / "new.aavcproj"
+    foreign = store.metadata_path(new_path)
+
+    def fault(phase: str) -> None:
+        if phase == "before_save_as_commit":
+            foreign.write_bytes(b"owned by another writer")
+
+    with pytest.raises(RecoveryRaceChanged, match="SAVE_AS_RECOVERY_COLLISION"):
+        RecoveryTransactions(s, store=store, fault_hook=fault).save_as(new_path)
+    assert s.path is not None and s.path.name == "A.aavcproj"
+    assert not new_path.exists()
+    assert foreign.read_bytes() == b"owned by another writer"
+
+
+def test_rcv_09_discard_fault_after_quarantine_rolls_back(tmp_path: Path) -> None:
+    target = session(tmp_path, "target")
+    assert target.path is not None
+    store = ProvenanceStore()
+    snapshot(target, store)
+    before = store.snapshot_path(target.path).read_bytes()
+    active = session(tmp_path, "active")
+    old_path = active.path
+
+    def fault(phase: str) -> None:
+        if phase == "before_disk_adoption":
+            raise OSError("synthetic open failure")
+
+    tx = RecoveryTransactions(active, store=store, fault_hook=fault)
+    with pytest.raises(OSError, match="synthetic open failure"):
+        tx.use_saved(tx.probe_open(target.path))
+    assert active.path == old_path
+    assert store.snapshot_path(target.path).read_bytes() == before
+    assert store.inspect(target.path).status == "VERIFIED"
+
+
+def test_at_10_external_disk_changes_just_before_restore_replace(tmp_path: Path) -> None:
+    s = session(tmp_path)
+    assert s.path is not None
+    path = s.path
+    store = ProvenanceStore()
+    snapshot(s, store)
+    original = path.read_bytes()
+    external = original + b" - external writer"
+
+    def fault(phase: str) -> None:
+        if phase == "before_restore_replace":
+            path.write_bytes(external)
+
+    tx = RecoveryTransactions(s, store=store, fault_hook=fault)
+    with pytest.raises(RecoveryRaceChanged, match="RECOVERY_RACE_CHANGED"):
+        tx.restore(tx.probe_open(path))
+    assert path.read_bytes() == external
+    assert store.snapshot_path(path).is_file()
+    assert not list(tmp_path.glob(".*aavc-restore-*.tmp"))
+    backups = list(tmp_path.glob("*.pre-recovery.bak"))
+    assert len(backups) == 1 and backups[0].read_bytes() == original
+
+
+def test_at_11_snapshot_changes_just_before_restore_replace(tmp_path: Path) -> None:
+    s = session(tmp_path)
+    assert s.path is not None
+    path = s.path
+    store = ProvenanceStore()
+    snapshot(s, store)
+    before = path.read_bytes()
+
+    def fault(phase: str) -> None:
+        if phase == "before_restore_replace":
+            store.snapshot_path(path).write_bytes(b"new snapshot from process B")
+
+    tx = RecoveryTransactions(s, store=store, fault_hook=fault)
+    with pytest.raises(RecoveryRaceChanged, match="RECOVERY_RACE_CHANGED"):
+        tx.restore(tx.probe_open(path))
+    assert path.read_bytes() == before
+    assert not list(tmp_path.glob(".*aavc-restore-*.tmp"))
+
+
+def test_at_14_backup_creation_failure_does_not_touch_disk(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    s = session(tmp_path)
+    assert s.path is not None
+    store = ProvenanceStore()
+    snapshot(s, store)
+    old = s.path.read_bytes()
+    original_open = Path.open
+
+    def fault_open(self: Path, mode: str = "r", *args: object, **kwargs: object):
+        if ".pre-recovery" in self.name and mode == "xb":
+            raise PermissionError("backup blocked")
+        return original_open(self, mode, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", fault_open)
+    tx = RecoveryTransactions(s, store=store)
+    with pytest.raises(PermissionError, match="backup blocked"):
+        tx.restore(tx.probe_open(s.path))
+    assert s.path.read_bytes() == old
+    assert store.snapshot_path(s.path).exists()
+
+
+def test_rcv_11_invalid_candidate_preserved_when_explicit_saved_version_opened(tmp_path: Path) -> None:
+    s = session(tmp_path, "target")
+    assert s.path is not None
+    store = ProvenanceStore()
+    store.snapshot_path(s.path).write_bytes(b"corrupt autosave preserve")
+    old = store.snapshot_path(s.path).read_bytes()
+    active = session(tmp_path, "active")
+    tx = RecoveryTransactions(active, store=store)
+    plan = tx.probe_open(s.path)
+    assert plan.candidate.status == "INVALID"
+    loaded = tx.use_saved(plan)
+    assert loaded.title == "target"
+    assert store.snapshot_path(s.path).read_bytes() == old
+    assert active.path == s.path
+
+
+def test_restore_fault_after_backup_preserves_disk_and_backup(tmp_path: Path) -> None:
+    s = session(tmp_path)
+    assert s.path is not None
+    store = ProvenanceStore()
+    snapshot(s, store)
+    before = s.path.read_bytes()
+
+    def fault(phase: str) -> None:
+        if phase == "after_backup":
+            raise OSError("synthetic interrupted after backup")
+
+    tx = RecoveryTransactions(s, store=store, fault_hook=fault)
+    with pytest.raises(OSError, match="synthetic interrupted"):
+        tx.restore(tx.probe_open(s.path))
+    assert s.path.read_bytes() == before
+    assert s.path.with_suffix(s.path.suffix + ".pre-recovery.bak").read_bytes() == before
+    assert store.snapshot_path(s.path).exists()
