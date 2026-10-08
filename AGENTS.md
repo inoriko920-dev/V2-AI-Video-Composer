@@ -1,3 +1,9 @@
+# CURRENT V2 v0.3.0 — STEP05 DOCUMENTATION-ONLY OVERRIDE (8 OCT 2026)
+
+Source-of-truth: `V2_0.3.0_PLANNING_STATUS.md` latest top section, `docs/v2_0_3_0_planning/05_IMPLEMENTATION_READINESS_AND_SOL_WAVE_AUTHORIZATION_PLAN.md`, STEP04 testing plan, STEP01/02 safety contracts, and the approved three-dialog STEP03-R visuals/Word. STEP03-R PR #54 and STEP04 PR #55 are merged; the original 13-image mandate is archived. The user authorized **STEP05 planning only**; no Qt/Python production changes, runtime tests, dependencies, release/version bumps, or new GitHub workflow permanent changes in STEP05. Stable v0.2.2 tag and legacy original repo immutable. After STEP05 DoR PASS, a separate new user turn is required before any W06-A code. SOL waves W06-A..E are sequential test-first, one wave per turn, each wave independently proven green/merged.
+
+---
+
 # CURRENT 2026-10-08 v0.3.0 STEP04 OVERRIDE — PLANNING ONLY
 
 STEP03-R visual gate is **PASS** (PR #54 merged): only three approved recovery dialogs and a single final image-filled UI DOCX; original 42 main UI screens frozen. Current user instruction allows **STEP04 deterministic testing/failure-injection/Windows planning** ONLY. Read `V2_0.3.0_PLANNING_STATUS.md`, then `docs/v2_0_3_0_planning/04_RECOVERY_FAILURE_INJECTION_WINDOWS_TEST_PLAN.md`, STEP01/02 specs, final approved UI DOCX. A 13-image demand is archival/superseded. Do not implement production tests, coordinator, Qt UI, serializer, release or metadata in STEP04. STEP05 requires next separate user request after STEP04 document/PR PASS; STEP06 coding prohibited until authorized readiness gate. v0.2.2 stable tag/source and legacy repository are immutable.
