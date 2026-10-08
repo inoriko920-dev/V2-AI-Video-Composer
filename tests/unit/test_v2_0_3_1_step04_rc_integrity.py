@@ -74,7 +74,7 @@ def test_qa_01_valid_control_candidate_and_expected_source(tmp_path: Path) -> No
         ("../escape.txt", "ZIP path traversal"),
         ("/rooted.txt", "unsafe ZIP entry path"),
         ("C:/windows.txt", "ZIP path traversal"),
-        ("..\\escape.txt", "unsafe ZIP entry path"),
+        ("..\\escape.txt", "ZIP path traversal"),
         (".env", "forbidden file"),
         ("user.key", "forbidden file"),
         ("ffmpeg.exe", "forbidden file"),
