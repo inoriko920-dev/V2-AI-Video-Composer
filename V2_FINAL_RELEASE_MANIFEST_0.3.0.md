@@ -1,40 +1,44 @@
-# V2 v0.3.0 — Non-Published Release Candidate Manifest
+# V2 v0.3.0 — Distribution Manifest
 
-**Status: NOT PUBLISHED / RC PREPARATION.**
+**Distribution metadata:** this document defines required package contents.
+It does not itself establish whether a public GitHub Release exists; confirm
+publication and tag identity from the GitHub Releases page.
 
 **Repository:** `inoriko920-dev/V2-AI-Video-Composer`.
-**Target version and future tag:** `0.3.0` / `v0.3.0`.
+**Package version and matching release tag:** `0.3.0` / `v0.3.0`.
 **Platform:** Windows 11 x64 portable PyInstaller onedir.
 **Previous immutable stable:** `v0.2.2` at
 `eeabf1ffbfac6cbb6cafc82116fc3599bdbc2bef`.
-**Pre-RC source:** `7d9ad7eda513daccea13a00c44d3d79bf76d9106`
-(W06-E PR #61 merged).
-**Exact RC source:** determined by the final merge/source SHA, **never infer from
-an earlier passing build**.
+**Exact distribution source:** the 40-character SHA in `BUILD_INFO.txt` must
+match the released tag target and the source archive. Never substitute a
+previously validated build from a different commit.
 
 ## Source of truth
 
-The central v0.3.0 feature is local **autosave** and guarded project recovery.\n\nSTEP00–05 v0.3.0 planning and approved UI final DOCX+three PNGs are retained
+The central v0.3.0 feature is local **autosave** and guarded project recovery.
+
+STEP00–05 v0.3.0 planning and approved UI final DOCX+three PNGs are retained
 under `docs/v2_0_3_0_planning/`. W06-A through W06-E are merged in main and
 validated; see `06_W06_E_FINAL_ACCEPTANCE_AND_RELEASE_READINESS_EVIDENCE.md`
 for the final cross-wave safety matrix. No additional project serializer,
 second Undo stack, UI redesign, provider, FFmpeg binary or credential source.
 
-## Required RC assets, same source commit
+## Required distribution assets, same source commit
 
 - `AI-Automatic-Video-Composer-0.3.0-win64.zip` — full portable folder,
   verified root EXE and FFmpeg installation instructions, no FFmpeg binary.
 - `AI-Automatic-Video-Composer-0.3.0-source.zip` — **exact `git archive HEAD`**
   source snapshot (not a full history disaster-recovery bundle).
 - `BUILD_INFO.txt` — `version=0.3.0`, `release_commit` exact 40-character
-  SHA, `channel=rc`, schema max 4, `advanced-v1`, Python/PySide6/
-  PyInstaller versions and `publication_status=NOT_PUBLISHED`.
+  SHA, a build channel, schema max 4, `advanced-v1`, Python/PySide6/
+  PyInstaller versions and `publication_status=READY_FOR_PUBLICATION`.
+  The status describes build validation, not a claim that GitHub has published it.
 - `SHA256SUMS.txt` — independent SHA-256 of the two ZIPs, recomputed before
   artifact acceptance.
 - `RELEASE_NOTES_0.3.0.md`, this manifest, `USER_GUIDE.md`,
   `MAINTENANCE.md` and `BACKUP_AND_RECOVERY.md`.
 
-## Hard gates to graduate from RC
+## Verification gates for a release
 
 1. No preexisting `v0.3.0` Git tag or GitHub Release; never force-move a tag.
 2. `v0.2.2` continues to resolve exactly to
@@ -52,12 +56,11 @@ second Undo stack, UI redesign, provider, FFmpeg binary or credential source.
 8. Only a separate, explicitly approved guarded **publication** stage may
    create the stable tag/release and publish user-facing ZIPs.
 
-## Current release decision
+## Evidence and provenance
 
-The workflow under `.github/workflows/v2-0.3.0-rc.yml` has **read-only GitHub
-content permission** and can only upload an expiring workflow artifact.
-It cannot and must not create a public release.
-
-**Windows acceptance and a non-published RC are not proof that v0.3.0 has
-already been released.** Record actual run, SHA and hashes only after execution.
-No guarantees are made against arbitrary external editors or sudden power loss.
+The read-only workflow under `.github/workflows/v2-0.3.0-rc.yml` validates and
+uploads a temporary Actions artifact; it has no GitHub Release creation rights.
+A separate explicitly approved publisher must verify exact bytes and the
+release tag before sharing assets publicly. GitHub Release API and published
+asset hashes are authoritative for actual publication. No guarantees are made
+against arbitrary external editors or sudden power loss.

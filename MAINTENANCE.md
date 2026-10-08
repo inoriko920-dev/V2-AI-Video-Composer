@@ -1,14 +1,14 @@
-# Maintenance Policy — AAVC 0.2.x
+# Maintenance Policy — AAVC v0.3.0
 
-## Kandidat v0.3.0 — belum dipublikasikan
+## Pemeliharaan v0.3.0
 
-Versi **0.3.0** memasuki proses RC; stable publik masih **v0.2.2**, tidak pernah ditimpa. Perubahan ini menambahkan autosave dan dialog recovery lokal melalui satu ProjectSession, tanpa skema proyek v5 atau perubahan 21 efek native. Syarat rilis meliputi checksum arsip Windows+source, FFmpeg eksternal versi referensi 9.0.2, tes Windows, screenshot UI lama, dan persetujuan publikasi terpisah.
+Versi **0.3.0** menambahkan autosave dan dialog pemulihan lokal melalui satu ProjectSession, tanpa skema proyek v5 atau perubahan 21 efek native. Paket distribusi harus lulus checksum arsip Windows+source, FFmpeg eksternal versi referensi 9.0.2, tes Windows, dan verifikasi screenshot UI. Status publikasi dan tag harus diperiksa langsung pada GitHub Releases; versi terdahulu tidak ditimpa.
 
 ---
 
 
 ## Stable line
-`0.2.x` is the current maintained V2 Windows desktop line. Version 0.2.1 can read schema v3 and v4; schema v4 is activated only by explicit advanced edits and uses `animation_keyframe_contract=advanced-v1`. Published `v0.2.0`, `v0.1.1`, and `v0.1.0` remain frozen and are never moved or overwritten.
+`0.2.x` is the preceding maintained V2 Windows desktop line. Version 0.2.1 can read schema v3 and v4; schema v4 is activated only by explicit advanced edits and uses `animation_keyframe_contract=advanced-v1`. Published `v0.2.0`, `v0.1.1`, and `v0.1.0` remain frozen and are never moved or overwritten.
 
 ## Change classes
 - Patch (`0.2.x`): bug fixes, UI collision fixes, provider compatibility, security hardening, packaging fixes.

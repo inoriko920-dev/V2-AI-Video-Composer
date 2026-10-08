@@ -1,12 +1,12 @@
 # Backup & Recovery — AAVC
 
-## Update kandidat 0.3.0 — BELUM DIPUBLIKASIKAN
+## Autosave dan pemulihan proyek v0.3.0
 
 Rangkaian W06-A–E menyambungkan autosave lokal, provenance SHA-256, pilihan dialog pemulihan, backup pra-Restore bernomor, dan serialisasi operasi Save/Open. File cadangan, metadata dan backup proyek adalah **data milik pengguna**, bukan bagian dari ZIP aplikasi; jangan dibundel dalam GitHub Release.
 
 Pemulihan hanya tersedia untuk proyek yang pernah disimpan manual. Snapshot yang valid tidak selalu dapat dipulihkan otomatis: metadata yang hilang/rusak atau baseline yang telah berubah membutuhkan pemeriksaan lebih lanjut dan persetujuan eksplisit. Setelah Restore sukses, file snapshot yang identik boleh tetap tersimpan tanpa memunculkan konflik ulang.
 
-ZIP source rilis adalah snapshot `git archive HEAD`, **bukan** seluruh branch, tag dan riwayat Git. Untuk pemulihan repo 100% tetap gunakan Git Bundle backup satu aplikasi secara terpisah. Tag `v0.2.2` tetap beku; kandidat v0.3.0 bukan bukti rilis publik.
+ZIP source rilis adalah snapshot `git archive HEAD`, **bukan** seluruh branch, tag dan riwayat Git. Untuk pemulihan repo 100% tetap gunakan Git Bundle backup satu aplikasi secara terpisah. Tag `v0.2.2` tetap beku. Status publikasi v0.3.0 harus diperiksa langsung pada halaman GitHub Releases.
 
 ---
 

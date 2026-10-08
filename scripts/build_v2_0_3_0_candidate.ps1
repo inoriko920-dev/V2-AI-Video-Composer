@@ -51,7 +51,7 @@ try {
   git archive --format=zip "--output=$source" HEAD
   if ($LASTEXITCODE -ne 0) { throw "git archive exact source failed" }
 
-  # Do not claim these to be published/immutable. STEP07 owns publication.
+  # Build-time READY_FOR_PUBLICATION is not evidence of GitHub Release publication.
   Copy-Item "RELEASE_NOTES_0.3.0.md" (Join-Path $release "RELEASE_NOTES_0.3.0.md")
   Copy-Item "V2_FINAL_RELEASE_MANIFEST_0.3.0.md" (Join-Path $release "V2_FINAL_RELEASE_MANIFEST_0.3.0.md")
   Copy-Item "docs\USER_GUIDE.md" (Join-Path $release "USER_GUIDE.md")
@@ -74,7 +74,7 @@ try {
     "pyinstaller=$pyinstaller",
     "ffmpeg_reference=$ffmpegReference",
     "ffmpeg_distribution=external-only",
-    "publication_status=NOT_PUBLISHED"
+    "publication_status=READY_FOR_PUBLICATION"
   ) | Set-Content (Join-Path $release "BUILD_INFO.txt") -Encoding utf8
 
   Add-Type -AssemblyName System.IO.Compression
