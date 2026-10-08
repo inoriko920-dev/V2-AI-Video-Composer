@@ -1,3 +1,19 @@
+# V2 0.3.0 — HANDOFF ON STEP03 HARD STOP
+
+**STOP — STEP03 PROMPTS ONLY COMPLETE; ALL 13 UI IMAGES UNGENERATED/UNAPPROVED.** Main authority is `docs/v2_0_3_0_planning/03_UI_PROMPT_COMPLETION_AND_APPROVAL_GATE.md` and `03_PROMPT_GAMBAR_UI_RECOVERY_MASTER.md`.
+
+The **DOCX in `docx/03_V2_0.3.0_STEP03_UI_IMAGE_PROMPTS_ONLY.docx` is a prompt book, not final UI artwork approval.** Each `prompt_ui_step03/UI-REC-XX_*.txt` is one independently generated PNG assignment. Wait for all 13 image results, user review/revisions and ONE actually image-filled, approved `03_V2_0.3.0_APPROVED_FINAL_UI_IMAGE_REFERENCES.docx` to be committed before resuming factory STEP04. No coding, UI Qt, project schema/version, release tag or old repo mutations.
+
+Next bare "lanjutkan" **does not allow bypassing** the visual gate. Explicit image generation/review instructions are permitted, but do not start STEP04 from that request.
+
+---
+# ACTIVE HANDOFF — STEP03 UI IMAGE PROMPT HARD STOP
+
+Read `docs/v2_0_3_0_planning/03_PROMPT_GAMBAR_UI_RECOVERY_MASTER.md` followed by its detailed DOCX `docs/v2_0_3_0_planning/docx/03_V2_0.3.0_STEP03_UI_IMAGE_PROMPTS_ONLY.docx`; individual ready-to-run prompts live in `docs/v2_0_3_0_planning/prompt_ui_step03/UI-REC-01_*.txt` through `UI-REC-13_*.txt`.
+
+**Current authority: ASTRA prompts only, HARD STOP afterwards.** Generate all 13 UI reference PNGs one by one in the later image phase, review/revise, create ONE final UI image reference DOCX and commit approved artefacts to this V2 repository. **A new generic "lanjutkan" is not permission to skip that visual approval gate or start STEP04.** Stable v0.2.2 tag/source must remain immutable; original legacy repository untouched.
+
+---
 # CURRENT READINESS — v0.3.0 STEP02
 
 **STEP00 PASS / STEP01 PASS / STEP02 COMPLETE only after PR #51 green merge / STEP03 NEXT on subsequent explicit turn.** Planning only; no SOL code or UI is authorized.

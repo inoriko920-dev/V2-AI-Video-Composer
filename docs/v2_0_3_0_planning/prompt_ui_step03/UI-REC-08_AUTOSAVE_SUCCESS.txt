@@ -1,0 +1,18 @@
+AAVC V2 0.3.0 — STEP03 UI PROMPT (REFERENCE ONLY)
+State ID: UI-REC-08
+Output: UI-REC-08_AUTOSAVE_SUCCESS.png
+HARD STOP: DO NOT IMPLEMENT QT OR MOVE TO STEP04 FROM THIS PROMPT. Await reviewed final PNGs and ONE approved UI reference DOCX committed to V2 GitHub.
+
+A. MASTER DESIGN
+Render a single high-fidelity 1920x1080 16:9 Windows 11 desktop application screenshot, not code, not a marketing mockup, not a mobile app. Preserve the existing V2 AI Video Composer professional Filmora-inspired WHITE and calm BLUE PySide6/Qt visual language from UI-001 through UI-042; reference UI-002 editor layout: fixed top menu/toolbar; ~300px left navigation/assets rail; large central preview; ~360px right properties/AI panel; bottom multitrack timeline at least 180px tall. Indonesian controls, crisp small typography, subtle shadows and focus ring, consistent spacing, realistic native desktop elements. Example project name "Proyek Dokumenter Suez", neutral placeholders only. Protect all assets and text inside a 2% screen-margin safe area. No layout redesign, no English/Mandarin labels, no spurious generated text, no watermark, no developer debug text. Respect **B. PROMPT STATE** literally. Output one distinct PNG per scene only, no grid or montage.
+
+## 5. Prompt per gambar — isi wajib lengkap, bukan ringkasan
+
+B. NEGATIVE REQUIREMENTS
+JANGAN: dark mode, tema hitam/neon, bahasa Mandarin/Inggris pada kontrol, teks lorem ipsum/acak, watermark, brand asing, UI mobile, 3D isometrik, gambar poster, ilustrasi kartun, komik, foto orang, panel editor baru, redesign timeline, tombol Generate Video/Publish/Cloud Sync palsu, proses pemulihan otomatis tanpa konfirmasi, tulisan 'Proyek disimpan' untuk snapshot otomatis, tampilkan API key/password/nomor akun, hapus cadangan tanpa izin, ikon bahaya besar yang dramatis, dialog melebar melampaui layar, elemen overlay bertumpuk atau terpotong.
+
+C. UNIQUE IMAGE STATE
+Tidak ada modal. Editor yang sama dengan proyek tetap dirty ("Proyek Dokumenter Suez *"), status bar kanan menampilkan ikon check lingkar biru kecil dan teks "Cadangan otomatis dibuat"; tooltip/tulisan pembantu "Perubahan belum disimpan ke proyek utama"; tombol "Simpan" tetap aktif. Visual harus bisa membedakan snapshot backup dari manual save. Jangan membuat judul kehilangan tanda *; jangan menulis "Semua perubahan sudah disimpan".
+
+D. OUTPUT RULE
+One single 1920x1080 PNG per file; existing frozen UI preserved, no watermark, all text legible and Indonesian. Final visual still needs user review/approval.
