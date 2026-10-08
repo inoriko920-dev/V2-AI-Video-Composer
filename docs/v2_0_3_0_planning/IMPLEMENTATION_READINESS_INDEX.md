@@ -1,3 +1,11 @@
+# ACTIVE HANDOFF — STEP04 TEST-FIRST PLANNING (8 OCT 2026 WIB)
+
+The previous STEP03-R UI gate is **COMPLETE/PASS** after PR #54 merged: three approved PNGs, original editor screenshot, and one final image-filled reference DOCX are authoritative. The user's new `lanjutkan` authorizes **STEP04 planning only**. Read `04_RECOVERY_FAILURE_INJECTION_WINDOWS_TEST_PLAN.md` and the matching DOCX after STEP01/STEP02 safety contracts and before planning STEP05. Matrix IDs: RCV-01..24, SCH-01..12, AT-01..20, UI-01..12, COMP-01..10. Treat all as proposed future tests, **not executed tests**.
+
+STEP04 cannot be declared PASS until both Markdown and real native DOCX have been committed in this V2 repository; PR-head CI + CodeQL + Windows + backend are SUCCESS; the PR is merged and main/trusted stable tag verified. This STEP cannot authorize SOL implementation, Qt changes or release. Following STEP04 PASS, require a separate user turn for STEP05 source-of-truth and wave authorization. Maintain original 42-screen frozen editor and exactly 3 approved dialog references.
+
+---
+
 # LATEST AI HANDOFF OVERRIDE — STEP03-R (8 OCT 2026 WIB)
 
 **AUTHORITATIVE NEW UI POLICY: EXISTING MAIN UI 1:1; ONLY THREE NEW RECOVERY DIALOG REFERENCES.** User explicitly approved this reduction, superseding thirteen legacy images. The original 13 TXT and 6-page prompt DOCX are archival history, NOT pending gates.

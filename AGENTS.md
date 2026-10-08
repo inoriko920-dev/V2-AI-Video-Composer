@@ -1,3 +1,9 @@
+# CURRENT 2026-10-08 v0.3.0 STEP04 OVERRIDE — PLANNING ONLY
+
+STEP03-R visual gate is **PASS** (PR #54 merged): only three approved recovery dialogs and a single final image-filled UI DOCX; original 42 main UI screens frozen. Current user instruction allows **STEP04 deterministic testing/failure-injection/Windows planning** ONLY. Read `V2_0.3.0_PLANNING_STATUS.md`, then `docs/v2_0_3_0_planning/04_RECOVERY_FAILURE_INJECTION_WINDOWS_TEST_PLAN.md`, STEP01/02 specs, final approved UI DOCX. A 13-image demand is archival/superseded. Do not implement production tests, coordinator, Qt UI, serializer, release or metadata in STEP04. STEP05 requires next separate user request after STEP04 document/PR PASS; STEP06 coding prohibited until authorized readiness gate. v0.2.2 stable tag/source and legacy repository are immutable.
+
+---
+
 # Current v0.3.0 recovery planning override (2026-10-08 WIB)
 
 **Do not interpret prior v0.2.2 STEP13 coding PASS as permission to code v0.3.0.**
