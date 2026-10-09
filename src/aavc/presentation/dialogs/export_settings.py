@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import re
 from collections.abc import Callable
 from pathlib import Path
-import re
 from typing import Any
 
 from aavc.application.services.export_service import ExportOptions
@@ -56,7 +56,10 @@ def build_export_options(
     # The name input is a filename, not another path selector. Windows treats
     # backslashes, device names and special characters differently from POSIX,
     # so validate portably before joining the chosen output directory.
-    if re.search(r'[<>:"/\\|?*\\x00-\\x1f]', name):
+    if any(
+        character in '<>:"/|?*' or character == chr(92) or ord(character) < 32
+        for character in name
+    ):
         raise ValueError("Nama file output tidak boleh berisi path atau karakter terlarang")
     stem = name[:-4] if name.lower().endswith(".mp4") else name
     device_name = stem.split(".", 1)[0].upper()
