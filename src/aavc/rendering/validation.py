@@ -80,6 +80,12 @@ def verify_render_output(
     ffprobe: str,
     runner: ProcessRunner | None = None,
 ) -> RenderVerification:
+    if (
+        not math.isfinite(manifest.expected_duration_seconds)
+        or manifest.expected_duration_seconds <= 0
+    ):
+        raise RenderError("Manifest durasi render tidak valid")
+
     candidate = Path(path)
     if not candidate.is_file() or candidate.stat().st_size <= 0:
         raise RenderError("Output render kosong atau tidak ditemukan")

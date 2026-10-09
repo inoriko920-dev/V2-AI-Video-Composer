@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -81,7 +82,7 @@ def validate_render_plan(plan: RenderPlan) -> PreflightReport:
                 )
             )
         seen_scene_numbers.add(scene.scene_number)
-        if scene.duration_seconds <= 0:
+        if not math.isfinite(scene.duration_seconds) or scene.duration_seconds <= 0:
             issues.append(
                 PreflightIssue(
                     "INVALID_SCENE_DURATION",
@@ -210,6 +211,15 @@ def validate_render_plan(plan: RenderPlan) -> PreflightReport:
                         f"Aset render tidak ditemukan: {path.name}",
                     )
                 )
+
+    if plan.scenes and not math.isfinite(plan.duration_seconds):
+        issues.append(
+            PreflightIssue(
+                "INVALID_TOTAL_DURATION",
+                PreflightSeverity.ERROR,
+                "Total durasi render tidak finite atau melampaui batas angka",
+            )
+        )
 
     for effect in sorted(fallback_effects):
         issues.append(
