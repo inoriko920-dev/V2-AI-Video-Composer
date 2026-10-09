@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -102,14 +103,33 @@ def verify_render_output(
 
     try:
         payload = json.loads(result.stdout)
-        streams = payload.get("streams", [])
-        format_info = payload.get("format", {})
-        video_stream = next(stream for stream in streams if stream.get("codec_type") == "video")
+        if not isinstance(payload, dict):
+            raise ValueError("ffprobe root is not an object")
+        streams = payload.get("streams")
+        format_info = payload.get("format")
+        if (
+            not isinstance(streams, list)
+            or not all(isinstance(stream, dict) for stream in streams)
+            or not isinstance(format_info, dict)
+        ):
+            raise ValueError("ffprobe streams/format have invalid structure")
+        video_stream = next(
+            stream for stream in streams if stream.get("codec_type") == "video"
+        )
         duration = float(format_info["duration"])
         width = int(video_stream["width"])
         height = int(video_stream["height"])
         fps = _parse_rate(video_stream.get("r_frame_rate"))
-    except (KeyError, TypeError, ValueError, StopIteration, json.JSONDecodeError) as error:
+        if (
+            not math.isfinite(duration)
+            or duration <= 0
+            or not math.isfinite(fps)
+            or fps <= 0
+            or width <= 0
+            or height <= 0
+        ):
+            raise ValueError("ffprobe video metadata is non-finite or non-positive")
+    except (KeyError, TypeError, ValueError, StopIteration) as error:
         raise RenderError("Output ffprobe tidak memiliki metadata video yang valid") from error
 
     has_audio = any(stream.get("codec_type") == "audio" for stream in streams)
