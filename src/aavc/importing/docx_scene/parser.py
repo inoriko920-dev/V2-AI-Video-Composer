@@ -12,14 +12,44 @@ from aavc.domain.project.models import Scene
 _SCENE_RE = re.compile(r"^tampilan\s+scene\s+(\d+)\s*:\s*([12])\s*$", re.I)
 _ASSET_RE = re.compile(r"^asset\s+(\d+)\s*:\s*(.+?)\s*$", re.I)
 _WORD_NS = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+_MAX_DOCUMENT_XML_BYTES = 16 * 1024 * 1024
 
 
 def _paragraphs_from_docx(path: Path) -> list[str]:
     try:
         with zipfile.ZipFile(path) as archive:
-            xml = archive.read("word/document.xml")
+            # Never decompress arbitrarily large DOCX XML into memory; a tiny
+            # ZIP can expand to hundreds of megabytes.
+            matches = [
+                item for item in archive.infolist()
+                if item.filename == "word/document.xml"
+            ]
+            if len(matches) != 1:
+                raise AAVCImportError(
+                    "DOCX memiliki word/document.xml hilang atau duplikat"
+                )
+            member = matches[0]
+            if member.file_size > _MAX_DOCUMENT_XML_BYTES:
+                raise AAVCImportError(
+                    "DOCX word/document.xml terlalu besar (batas 16 MiB)"
+                )
+            with archive.open(member) as stream:
+                # A bounded read also rejects mismatches between claimed and
+                # actual expansion sizes before XML parsing begins.
+                xml = stream.read(_MAX_DOCUMENT_XML_BYTES + 1)
+            if len(xml) > _MAX_DOCUMENT_XML_BYTES:
+                raise AAVCImportError(
+                    "DOCX word/document.xml terlalu besar (batas 16 MiB)"
+                )
         root = ET.fromstring(xml)
-    except (OSError, KeyError, zipfile.BadZipFile, ET.ParseError) as exc:
+    except (
+        OSError,
+        KeyError,
+        zipfile.BadZipFile,
+        ET.ParseError,
+        RuntimeError,
+        NotImplementedError,
+    ) as exc:
         raise AAVCImportError(f"DOCX tidak dapat dibaca: {path}") from exc
     lines: list[str] = []
     for paragraph in root.iter(f"{_WORD_NS}p"):
