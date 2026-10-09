@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
+import re
 from typing import Any
 
 from aavc.application.services.export_service import ExportOptions
@@ -52,6 +53,19 @@ def build_export_options(
         raise ValueError("Lokasi output wajib diisi")
     if not name:
         raise ValueError("Nama file output wajib diisi")
+    # The name input is a filename, not another path selector. Windows treats
+    # backslashes, device names and special characters differently from POSIX,
+    # so validate portably before joining the chosen output directory.
+    if re.search(r'[<>:"/\\|?*\\x00-\\x1f]', name):
+        raise ValueError("Nama file output tidak boleh berisi path atau karakter terlarang")
+    stem = name[:-4] if name.lower().endswith(".mp4") else name
+    device_name = stem.split(".", 1)[0].upper()
+    if (
+        not stem.strip(". ")
+        or device_name in {"CON", "PRN", "AUX", "NUL"}
+        or re.fullmatch(r"(?:COM|LPT)[1-9]", device_name)
+    ):
+        raise ValueError("Nama file output tidak valid atau khusus Windows")
 
     filename = name if name.lower().endswith(".mp4") else f"{name}.mp4"
     width, height = _RESOLUTION_BY_LABEL[resolution_label]
