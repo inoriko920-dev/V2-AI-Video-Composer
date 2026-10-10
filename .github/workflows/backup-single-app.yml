@@ -2,9 +2,6 @@ name: Backup V2 AI Video Composer
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - backup/v2-ai-video-composer-20261010-1125-wib
 
 permissions:
   contents: read
