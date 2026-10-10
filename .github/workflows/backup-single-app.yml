@@ -2,6 +2,9 @@ name: Backup V2 AI Video Composer
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - backup/v2-ai-video-composer-20261010-1125-wib
 
 permissions:
   contents: read
@@ -13,7 +16,7 @@ jobs:
     env:
       APP_NAME: V2-AI-Video-Composer
       REPO_FULL: ${{ github.repository }}
-      STABLE_RELEASE: v0.2.1
+      STABLE_RELEASE: v0.3.0
     steps:
       - name: Checkout full repository history
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -60,6 +63,21 @@ jobs:
           git for-each-ref --sort=refname --format='%(refname) %(objectname)' refs/tags > "$ROOT/TAGS.txt"
           git log --all --decorate --date=iso --pretty=format:'%H%x09%ad%x09%d%x09%s' > "$ROOT/COMMIT_HISTORY.txt"
 
+          # Check supported secret formats in current files and all historical diffs.
+          python scripts/check_no_secrets.py
+          git log --all --no-ext-diff --pretty= --patch | python -c '
+import sys
+from scripts.check_no_secrets import SECRET_PATTERNS
+detected = set()
+for line in sys.stdin:
+    for name, pattern in SECRET_PATTERNS:
+        if pattern.search(line):
+            detected.add(name)
+if detected:
+    print("POTENTIAL_SECRET_IN_GIT_HISTORY: " + ", ".join(sorted(detected)), file=sys.stderr)
+    sys.exit(1)
+print("GIT_HISTORY_SUPPORTED_SECRET_PATTERN_SCAN_PASS")
+'
           git archive --format=zip --output="$ROOT/SOURCE/${APP_NAME}-SOURCE-MAIN.zip" "$TARGET_SHA"
           test -s "$ROOT/SOURCE/${APP_NAME}-SOURCE-MAIN.zip"
           unzip -t "$ROOT/SOURCE/${APP_NAME}-SOURCE-MAIN.zip" >/dev/null
