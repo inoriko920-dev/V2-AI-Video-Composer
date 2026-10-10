@@ -1,0 +1,48 @@
+name: Export GitHub Metadata Single App
+
+on:
+  push:
+    branches:
+      - backup/v2-ai-video-composer-20261010-1125-wib
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  export-one-repo-metadata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - name: Checkout backup branch without persisting credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Compile exporter
+        run: python -m py_compile scripts/backup_github_metadata.py
+      - name: Export one repo metadata read-only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/backup_github_metadata.py
+      - name: Verify ZIP integrity and inspect manifest
+        run: |
+          python - <<'PY'
+          import json,zipfile,pathlib,hashlib
+          path=pathlib.Path("GITHUB-METADATA-V2-AI-Video-Composer.zip")
+          with zipfile.ZipFile(path) as z:
+              if z.testzip() is not None: raise RuntimeError("Bad archive")
+              names=z.namelist()
+              assert any(x.endswith("EXPORT_STATUS.json") for x in names)
+              assert any("/PULL_REQUESTS/" in x or x.startswith("github_metadata_export/PULL_REQUESTS/") for x in names)
+          print("METADATA_ARCHIVE_ZIP_PASS",len(names),path.stat().st_size,hashlib.sha256(path.read_bytes()).hexdigest())
+          PY
+      - name: Upload metadata supplement only
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: V2-AI-Video-Composer-GitHub-Metadata
+          path: GITHUB-METADATA-V2-AI-Video-Composer.zip
+          if-no-files-found: error
+          retention-days: 30
