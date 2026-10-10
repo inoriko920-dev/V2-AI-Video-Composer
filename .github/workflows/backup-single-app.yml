@@ -65,19 +65,7 @@ jobs:
 
           # Check supported secret formats in current files and all historical diffs.
           python scripts/check_no_secrets.py
-          git log --all --no-ext-diff --pretty= --patch | python -c '
-import sys
-from scripts.check_no_secrets import SECRET_PATTERNS
-detected = set()
-for line in sys.stdin:
-    for name, pattern in SECRET_PATTERNS:
-        if pattern.search(line):
-            detected.add(name)
-if detected:
-    print("POTENTIAL_SECRET_IN_GIT_HISTORY: " + ", ".join(sorted(detected)), file=sys.stderr)
-    sys.exit(1)
-print("GIT_HISTORY_SUPPORTED_SECRET_PATTERN_SCAN_PASS")
-'
+          git log --all --no-ext-diff --pretty= --patch | python -c 'import sys; from scripts.check_no_secrets import SECRET_PATTERNS; data=sys.stdin.read(); names=[name for name,pattern in SECRET_PATTERNS if pattern.search(data)]; print("GIT_HISTORY_SECRET_SCAN_PASS" if not names else "POTENTIAL_SECRET_IN_GIT_HISTORY_TYPES="+",".join(names)); sys.exit(1 if names else 0)'
           git archive --format=zip --output="$ROOT/SOURCE/${APP_NAME}-SOURCE-MAIN.zip" "$TARGET_SHA"
           test -s "$ROOT/SOURCE/${APP_NAME}-SOURCE-MAIN.zip"
           unzip -t "$ROOT/SOURCE/${APP_NAME}-SOURCE-MAIN.zip" >/dev/null
